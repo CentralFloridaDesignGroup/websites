@@ -1,0 +1,10 @@
+account_id = "2e430cced1ef956fb9115ac09acfc503"
+name = "wps-api"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+[env.production]
+name = "wps-api-prod"
+
+[env.preview]
+name = "wps-api-preview"

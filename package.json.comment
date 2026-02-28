@@ -1,0 +1,24 @@
+pnpm dev:main          # Start main site dev server
+pnpm dev:document      # Start document site dev server
+pnpm dev:api           # Start API workers dev server
+pnpm build:main        # Build main site
+pnpm build:document    # Build document site
+pnpm build:api         # Build API workers
+pnpm build             # Build all sites
+pnpm lint              # Lint entire workspace
+
+# Deploy all sites at once
+pnpm deploy
+
+# Deploy individual sites
+pnpm deploy:main
+pnpm deploy:document
+pnpm deploy:api
+
+# Deploy all sites at once with Preview flag
+pnpm deploy:preview
+
+# Deploy individual sites with preview flag
+pnpm deploy:preview:main
+pnpm deploy:preview:document
+pnpm deploy:preview:api

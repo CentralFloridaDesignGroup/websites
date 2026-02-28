@@ -1,0 +1,13 @@
+{
+  "name": "@wps/scripts",
+  "version": "1.0.0",
+  "description": "Shared utility scripts for SWP",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "sites-api",
+  "version": "1.0.0",
+  "description": "Cloudflare Workers API for SWP",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "tsc && wrangler deploy --dry-run",
+    "deploy": "tsc && wrangler deploy",
+    "deploy:preview": "tsc && wrangler deploy --env preview"
+  },
+  "dependencies": {
+    "@wps/scripts": "workspace:*",
+    "itty-router": "^4.2.2"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260305.0",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.69.0"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "name": "whitepointsurvey",
+  "version": "1.0.0",
+  "description": "SWP Cloudflare Pages Monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/**",
+    "sites/**"
+  ],
+  "scripts": {
+    "dev:main": "pnpm --filter sites-main run dev",
+    "dev:document": "pnpm --filter sites-document run dev",
+    "dev:api": "pnpm --filter sites-api run dev",
+    "build:main": "pnpm --filter sites-main run build",
+    "build:document": "pnpm --filter sites-document run build",
+    "build:api": "pnpm --filter sites-api run build",
+    "build": "pnpm --filter './sites/**' run build",
+    "deploy:main": "pnpm --filter sites-main run deploy",
+    "deploy:document": "pnpm --filter sites-document run deploy",
+    "deploy:api": "pnpm --filter sites-api run deploy",
+    "deploy": "pnpm run deploy:main && pnpm run deploy:document && pnpm run deploy:api",
+    "deploy:preview:main": "pnpm --filter sites-main run deploy:preview",
+    "deploy:preview:document": "pnpm --filter sites-document run deploy:preview",
+    "deploy:preview:api": "pnpm --filter sites-api run deploy:preview",
+    "deploy:preview": "pnpm run deploy:preview:main && pnpm run deploy:preview:document && pnpm run deploy:preview:api",
+    "lint": "eslint .",
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.35",
+    "@types/react": "^18.3.28",
+    "@types/react-dom": "^18.3.7",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint": "^8.57.1",
+    "tailwindcss": "^4.2.1",
+    "typescript": "^5.9.3",
+    "react-router-dom": "^7.13.1"
+  }
+}

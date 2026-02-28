@@ -1,0 +1,40 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "paths": {
+      "@styles/*": ["./styles/*"],
+      "@wps/input": ["./packages/@wps/input/src"],
+      "@wps/input/*": ["./packages/@wps/input/src/*"],
+      "@wps/layout": ["./packages/@wps/layout/src"],
+      "@wps/layout/*": ["./packages/@wps/layout/src/*"],
+      "@wps/scripts": ["./packages/@wps/scripts/src"],
+      "@wps/scripts/*": ["./packages/@wps/scripts/src/*"]
+    }
+  },
+  "include": ["packages", "sites"],
+  "references": [
+    { "path": "./packages/@wps/input" },
+    { "path": "./packages/@wps/layout" },
+    { "path": "./packages/@wps/scripts" },
+    { "path": "./sites/main" },
+    { "path": "./sites/document" },
+    { "path": "./sites/api" }
+  ]
+}

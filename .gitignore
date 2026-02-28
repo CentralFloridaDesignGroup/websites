@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+.pnpm/
+pnpm-lock.yaml
+
+# Build outputs
+dist/
+build/
+.turbo/
+
+# Development
+.env
+.env.local
+.env.*.local
+.dev.vars
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Cloudflare Workers
+.wrangler/
+wrangler.toml.local
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+Thumbs.db
