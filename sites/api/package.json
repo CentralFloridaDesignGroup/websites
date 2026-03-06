@@ -4,18 +4,21 @@
   "description": "Cloudflare Workers API for SWP",
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
+    "dev": "wrangler dev --port 8787",
+    "typecheck": "tsc --noEmit",
+    "d1:migrate:local": "wrangler d1 migrations apply compass --local",
+    "d1:migrate:remote": "wrangler d1 migrations apply compass --remote",
     "build": "tsc && wrangler deploy --dry-run",
-    "deploy": "tsc && wrangler deploy",
-    "deploy:preview": "tsc && wrangler deploy --env preview"
+    "deploy": "tsc && wrangler deploy --env production"
   },
   "dependencies": {
     "@wps/scripts": "workspace:*",
-    "itty-router": "^4.2.2"
+    "itty-router": "latest",
+    "jose": "^6.2.3"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260305.0",
-    "typescript": "^5.9.3",
-    "wrangler": "^4.69.0"
+    "@cloudflare/workers-types": "latest",
+    "typescript": "latest",
+    "wrangler": "latest"
   }
 }

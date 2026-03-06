@@ -1,11 +1,13 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
+    "jsx": "react-jsx",
     "outDir": "./dist",
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "composite": true
+    "composite": true,
+    "esModuleInterop": true
   },
   "include": ["src"],
   "exclude": ["dist"]

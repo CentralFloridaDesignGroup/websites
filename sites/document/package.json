@@ -7,24 +7,46 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "deploy": "pnpm run build && wrangler pages deploy dist",
-    "deploy:preview": "pnpm run build && wrangler pages deploy dist --branch preview"
+    "deploy": "pnpm run build && wrangler pages deploy dist --branch main",
+    "deploy:preview": "pnpm run build && wrangler pages deploy dist --branch preview",
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@azure/msal-browser": "latest",
+    "@azure/msal-react": "latest",
+    "@headlessui/react": "latest",
+    "@tailwindcss/vite": "latest",
+    "@types/leaflet": "latest",
+    "@types/papaparse": "latest",
     "@wps/input": "workspace:*",
     "@wps/layout": "workspace:*",
     "@wps/scripts": "workspace:*",
-    "@tailwindcss/vite": "^4.1.18",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "docx": "latest",
+    "docxtemplater": "latest",
+    "exceljs": "^4.4.0",
+    "file-saver": "latest",
+    "jspdf": "latest",
+    "jspdf-autotable": "latest",
+    "leaflet": "latest",
+    "lucide-react": "latest",
+    "papaparse": "latest",
+    "pizzip": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "react-leaflet": "latest",
+    "react-markdown": "latest",
+    "rehype-slug": "latest",
+    "remark-gfm": "latest"
   },
   "devDependencies": {
-    "@types/react": "^18.3.28",
-    "@types/react-dom": "^18.3.7",
-    "@vitejs/plugin-react": "^4.7.0",
-    "typescript": "^5.9.3",
-    "vite": "^5.4.21",
-    "wrangler": "^4.69.0",
-    "react-router-dom": "^7.13.1"
+    "@types/file-saver": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "@vitejs/plugin-react": "latest",
+    "react-router-dom": "latest",
+    "typescript": "latest",
+    "vite": "latest",
+    "wrangler": "latest"
   }
 }

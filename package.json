@@ -8,33 +8,34 @@
     "sites/**"
   ],
   "scripts": {
-    "dev:main": "pnpm --filter sites-main run dev",
-    "dev:document": "pnpm --filter sites-document run dev",
+    "dev:main": "pnpm -r --parallel --filter sites-main --filter sites-api run dev",
+    "dev:document": "pnpm -r --parallel --filter sites-document --filter sites-api run dev",
     "dev:api": "pnpm --filter sites-api run dev",
     "build:main": "pnpm --filter sites-main run build",
     "build:document": "pnpm --filter sites-document run build",
     "build:api": "pnpm --filter sites-api run build",
-    "build": "pnpm --filter './sites/**' run build",
+    "build": "pnpm run build:main && pnpm run build:document && pnpm run build:api",
     "deploy:main": "pnpm --filter sites-main run deploy",
     "deploy:document": "pnpm --filter sites-document run deploy",
     "deploy:api": "pnpm --filter sites-api run deploy",
     "deploy": "pnpm run deploy:main && pnpm run deploy:document && pnpm run deploy:api",
     "deploy:preview:main": "pnpm --filter sites-main run deploy:preview",
     "deploy:preview:document": "pnpm --filter sites-document run deploy:preview",
-    "deploy:preview:api": "pnpm --filter sites-api run deploy:preview",
-    "deploy:preview": "pnpm run deploy:preview:main && pnpm run deploy:preview:document && pnpm run deploy:preview:api",
+    "deploy:preview": "pnpm run deploy:preview:main && pnpm run deploy:preview:document",
+    "d1:migrate:local": "pnpm --filter sites-api run d1:migrate:local",
+    "d1:migrate:remote": "pnpm --filter sites-api run d1:migrate:remote",
     "lint": "eslint .",
-    "type-check": "tsc --noEmit"
+    "type-check": "pnpm --filter @wps/input exec tsc -b && pnpm --filter @wps/layout exec tsc -b && pnpm --filter @wps/scripts exec tsc -b && pnpm --filter sites-main exec tsc --noEmit && pnpm --filter sites-document exec tsc --noEmit && pnpm --filter sites-api exec tsc --noEmit"
   },
   "devDependencies": {
-    "@types/node": "^20.19.35",
-    "@types/react": "^18.3.28",
-    "@types/react-dom": "^18.3.7",
-    "@typescript-eslint/eslint-plugin": "^6.21.0",
-    "@typescript-eslint/parser": "^6.21.0",
-    "eslint": "^8.57.1",
-    "tailwindcss": "^4.2.1",
-    "typescript": "^5.9.3",
-    "react-router-dom": "^7.13.1"
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^25.9.2",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@typescript-eslint/eslint-plugin": "^8.61.0",
+    "@typescript-eslint/parser": "^8.61.0",
+    "eslint": "^10.4.1",
+    "react": "^19.2.7",
+    "typescript": "^5.9.3"
   }
 }

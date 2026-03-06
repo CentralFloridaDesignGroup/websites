@@ -1,6 +1,7 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
+    "jsx": "react-jsx",
     "outDir": "./dist",
     "declaration": true,
     "declarationMap": true,
@@ -8,5 +9,8 @@
     "composite": true
   },
   "include": ["src"],
-  "exclude": ["dist"]
+  "exclude": ["dist"],
+  "references": [
+    { "path": "../input" }
+  ]
 }

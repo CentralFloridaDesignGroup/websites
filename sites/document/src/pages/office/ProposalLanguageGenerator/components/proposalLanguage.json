@@ -1,0 +1,366 @@
+{
+  "templates": [
+    {
+      "id": "boundarySurvey",
+      "name": "Boundary Survey",
+      "description": "Language for a general boundary survey for both residential and commercial properties.",
+      "language": [
+        {
+          "type": "paragraph",
+          "content": "White Point Survey will prepare a boundary survey in conformance with Chapter 5J-17, Florida Administrative Codes, pursuant to Chapter 472, Florida Statutes. The survey will be tied to the Florida State Plane Coordinate System based on {coordinate_system}. The survey will show located or set property corners. {improvements_located} No elevations will be collected or shown on the survey. The survey will show the property's relation to the FEMA floodplain. The results of the survey will be represented by a survey map being either digitally signed or physically signed by a license surveyor. {additional_language}"
+        }
+      ],
+      "params": [
+        {
+          "key": "coordinate_system",
+          "label": "Coordinate System",
+          "type": "list",
+          "options": [
+            {
+              "value": "the North American Datum of 1983 (NAD 83), 2011 Adjustment, Florida East zone",
+              "label": "NAD 83 (2011) Florida East"
+            },
+            {
+              "value": "the North American Datum of 1983 (NAD 83), 2011 Adjustment, Florida West zone",
+              "label": "NAD 83 (2011) Florida West"
+            },
+            {
+              "value": "the North American Datum of 1983 (NAD 83), 2011 Adjustment, Florida North zone",
+              "label": "NAD 83 (2011) Florida North"
+            },
+            {
+              "value": "the State Plane Coordinate System of 2022 (SPCS22), Florida East zone",
+              "label": "NSRS 2022 Florida East"
+            },
+            {
+              "value": "the State Plane Coordinate System of 2022 (SPCS22), Florida Central zone",
+              "label": "NSRS 2022 Florida Central"
+            },
+            {
+              "value": "the State Plane Coordinate System of 2022 (SPCS22), Florida West zone",
+              "label": "NSRS 2022 Florida West"
+            },
+            {
+              "value": "an arbitrary horizontal coordinate system",
+              "label": "Arbitrary"
+            }
+          ]
+        },
+        {
+          "key": "improvements_located",
+          "label": "Improvements Located",
+          "type": "list",
+          "options": [
+            {
+              "value": "Improvements on the subject property will be located and shown on the survey. Improvements where the surveyor does not have reasonable access to will not be included.",
+              "label": "All reasonable improvements"
+            },
+            {
+              "value": "Improvements within 10 feet of the property boundary will be located and shown on the survey. Improvements where the surveyor does not have reasonable access to will not be included.",
+              "label": "Improvements within 10 feet of boundary"
+            },
+            {
+              "value": "Improvements on the subject property will not be located or shown on the survey.",
+              "label": "No improvements"
+            }
+          ]
+        },
+        {
+          "key": "additional_language",
+          "label": "Additional Language",
+          "type": "text",
+          "textarea": true,
+          "allowBlank": true
+        }
+      ],
+      "notes": []
+    },
+    {
+      "id": "TopographicSurvey",
+      "name": "Topographic Survey",
+      "description": "Language for a general topographic survey for both residential and commercial properties.",
+      "language": [
+        {
+          "type": "paragraph",
+          "content": "White Point Survey will prepare a topographic survey in conformance with Chapter 5J-17, Florida Administrative Codes, pursuant to Chapter 472, Florida Statutes. The survey will be tied to the Florida State Plane Coordinate System based on {coordinate_system}. The survey will include the following:"
+        },
+        {
+          "type": "list-bulleted",
+          "content": [
+            "The survey will be based on {vertical_datum}. Two benchmarks will be established on the property and shown on the survey. The survey will show the elevation of the benchmarks and the vertical datum used.",
+            "The elevation of all improvements on the property. The limits will be to {limits}.",
+            "{asce_c_investigation}"
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": "The results of the survey will be represented by a survey map being either digitally signed or physically signed by a license surveyor. {additional_language}"
+        }
+      ],
+      "params": [
+        {
+          "key": "coordinate_system",
+          "label": "Coordinate System",
+          "type": "list",
+          "options": [
+            {
+              "value": "the North American Datum of 1983 (NAD 83), 2011 Adjustment, Florida East zone",
+              "label": "NAD 83 (2011) Florida East"
+            },
+            {
+              "value": "the North American Datum of 1983 (NAD 83), 2011 Adjustment, Florida West zone",
+              "label": "NAD 83 (2011) Florida West"
+            },
+            {
+              "value": "the North American Datum of 1983 (NAD 83), 2011 Adjustment, Florida North zone",
+              "label": "NAD 83 (2011) Florida North"
+            },
+            {
+              "value": "the State Plane Coordinate System of 2022 (SPCS22), Florida East zone",
+              "label": "NSRS 2022 Florida East"
+            },
+            {
+              "value": "the State Plane Coordinate System of 2022 (SPCS22), Florida Central zone",
+              "label": "NSRS 2022 Florida Central"
+            },
+            {
+              "value": "the State Plane Coordinate System of 2022 (SPCS22), Florida West zone",
+              "label": "NSRS 2022 Florida West"
+            },
+            {
+              "value": "an arbitrary horizontal coordinate system",
+              "label": "Arbitrary"
+            }
+          ]
+        },
+        {
+            "key": "vertical_datum",
+            "label": "Vertical Datum",
+            "type": "list",
+            "options": [
+                {
+                    "value": "the North American Vertical Datum of 1988 (NAVD 88)",
+                    "label": "NAVD 88"
+                },
+                {
+                    "value": "the National Geodetic Vertical Datum of 1929 (NGVD 29)",
+                    "label": "NGVD 29"
+                },
+                {
+                    "value": "an arbitrary vertical datum",
+                    "label": "Arbitrary"
+                }
+            ]
+        },
+        {
+            "key": "limits",
+            "label": "Limits for Elevation of Improvements",
+            "type": "list",
+            "options": [
+                {
+                    "value": "the entire property, along with {distance} feet beyond the property boundary or to the edge of pavement, whichever is less",
+                    "label": "Entire property with overlap"
+                },
+                {
+                    "value": "within the designated area, along with {distance} feet beyond said area or to the edge of pavement, whichever is less",
+                    "label": "Specific area with overlap"
+                },
+                {
+                    "value": "the entire property",
+                    "label": "Entire property"
+                },
+                {
+                    "value": "within the designated area",
+                    "label": "Specific area"
+                }
+            ]
+        },
+        {
+            "key": "distance",
+            "label": "Distance for Overlap",
+            "type": "text",
+            "allowBlank": true
+        },
+        {
+            "key": "asce_c_investigation",
+            "label": "ASCE Level \"C\" Investigation",
+            "type": "list",
+            "options": [
+                {
+                    "value": "The inverts of all stormwater and sanitary sewer structures on the property will be investigated to determine if they are at least 5 feet below the ground surface. This investigation will be performed in accordance with the guidelines for an ASCE Level \"C\" investigation as outlined in the ASCE Manual of Practice No. 82, Guidelines for Subsurface Utility Engineering. The results of this investigation will be included in the survey map.",
+                    "label": "Include ASCE Level \"C\" investigation language"
+                },
+                {
+                    "value": "An ASCE Level \"C\" investigation will not be performed as part of this survey.",
+                    "label": "Do not include ASCE Level \"C\" investigation language"
+                }
+            ]
+        },
+        {
+          "key": "additional_language",
+          "label": "Additional Language",
+          "type": "text",
+          "textarea": true,
+          "allowBlank": true
+        }
+      ],
+      "notes": []
+    },
+    {
+      "id": "treeLocationSurvey",
+      "name": "Tree Location Survey",
+      "description": "Language for a general tree location survey for both residential and commercial properties.",
+      "language": [
+        {
+          "type": "paragraph",
+          "content": "White Point Survey will prepare a tree location survey in conformance with Chapter 5J-17, Florida Administrative Codes, pursuant to Chapter 472, Florida Statutes. The survey will be tied to the Florida State Plane Coordinate System based on {coordinate_system}. The survey will show the location of trees with a diameter at breast height (DBH) of {dbh} inches or greater. Only the common name of each tree will be referenced on the survey, unless additional information is provided to the surveyor prior to the survey being signed. The results of the survey will be represented by a survey map being either digitally signed or physically signed by a license surveyor. {additional_language}"
+        }
+      ],
+      "params": [
+        {
+          "key": "coordinate_system",
+          "label": "Coordinate System",
+          "type": "list",
+          "options": [
+            {
+              "value": "the North American Datum of 1983 (NAD 83), 2011 Adjustment, Florida East zone",
+              "label": "NAD 83 (2011) Florida East"
+            },
+            {
+              "value": "the North American Datum of 1983 (NAD 83), 2011 Adjustment, Florida West zone",
+              "label": "NAD 83 (2011) Florida West"
+            },
+            {
+              "value": "the North American Datum of 1983 (NAD 83), 2011 Adjustment, Florida North zone",
+              "label": "NAD 83 (2011) Florida North"
+            },
+            {
+              "value": "the State Plane Coordinate System of 2022 (SPCS22), Florida East zone",
+              "label": "NSRS 2022 Florida East"
+            },
+            {
+              "value": "the State Plane Coordinate System of 2022 (SPCS22), Florida Central zone",
+              "label": "NSRS 2022 Florida Central"
+            },
+            {
+              "value": "the State Plane Coordinate System of 2022 (SPCS22), Florida West zone",
+              "label": "NSRS 2022 Florida West"
+            },
+            {
+              "value": "an arbitrary horizontal coordinate system",
+              "label": "Arbitrary"
+            }
+          ]
+        },
+        {
+          "key": "dbh",
+          "label": "Diameter at Breast Height (DBH) Threshold in Inches",
+          "type": "text"
+        },
+        {
+          "key": "additional_language",
+          "label": "Additional Language",
+          "type": "text",
+          "textarea": true,
+          "allowBlank": true
+        }
+      ]
+    },
+    {
+      "id": "wetlandSurvey",
+      "name": "Wetland Survey",
+      "description": "Language for a general wetland survey for both residential and commercial properties.",
+      "language": [
+        {
+          "type": "paragraph",
+          "content": "White Point Survey will prepare a wetland survey in conformance with Chapter 5J-17, Florida Administrative Codes, pursuant to Chapter 472, Florida Statutes. The survey will be tied to the Florida State Plane Coordinate System based on {coordinate_system}. The survey will show the location of any wetlands flags (installed by others) on the property and their relation to the FEMA floodplain. The results of the survey will be represented by a survey map being either digitally signed or physically signed by a license surveyor. {additional_language}"
+        }
+      ],
+      "params": [
+        {
+          "key": "coordinate_system",
+          "label": "Coordinate System",
+          "type": "list",
+          "options": [
+            {
+              "value": "the North American Datum of 1983 (NAD 83), 2011 Adjustment, Florida East zone",
+              "label": "NAD 83 (2011) Florida East"
+            },
+            {
+              "value": "the North American Datum of 1983 (NAD 83), 2011 Adjustment, Florida West zone",
+              "label": "NAD 83 (2011) Florida West"
+            },
+            {
+              "value": "the North American Datum of 1983 (NAD 83), 2011 Adjustment, Florida North zone",
+              "label": "NAD 83 (2011) Florida North"
+            },
+            {
+              "value": "the State Plane Coordinate System of 2022 (SPCS22), Florida East zone",
+              "label": "NSRS 2022 Florida East"
+            },
+            {
+              "value": "the State Plane Coordinate System of 2022 (SPCS22), Florida Central zone",
+              "label": "NSRS 2022 Florida Central"
+            },
+            {
+              "value": "the State Plane Coordinate System of 2022 (SPCS22), Florida West zone",
+              "label": "NSRS 2022 Florida West"
+            },
+            {
+              "value": "an arbitrary horizontal coordinate system",
+              "label": "Arbitrary"
+            }
+          ]
+        },
+        {
+          "key": "additional_language",
+          "label": "Additional Language",
+          "type": "text",
+          "textarea": true,
+          "allowBlank": true
+        }
+      ],
+      "notes": []
+    },
+    {
+      "id": "elevationCertificate",
+      "name": "Elevation Certificate",
+      "description": "Language for a general elevation certificate for both residential and commercial properties.",
+      "language": [
+        {
+          "type": "paragraph",
+          "content": "White Point Survey will prepare an elevation certificate for the subject property. The elevation certificate will be a for {stage_list} phases. The elevation certificates will be digitally or physically signed per jurisdictional requirements. {additional_language}"
+        }
+      ],
+      "params": [
+        {
+          "key": "stage_list",
+          "label": "Elevation Certificate Stages",
+          "type": "multipleChoice",
+          "columns": 3,
+          "options": [
+            {
+              "value": "pre-construction",
+              "label": "Pre-Construction"
+            },
+            {
+              "value": "mid-construction (foundation)",
+              "label": "Mid-Construction (Foundation)"
+            },
+            {
+              "value": "final",
+              "label": "Final"
+            }
+          ]
+        },
+        {
+          "key": "additional_language",
+          "label": "Additional Language",
+          "type": "text",
+          "textarea": true,
+          "allowBlank": true
+        }
+      ]
+    }
+  ]
+}

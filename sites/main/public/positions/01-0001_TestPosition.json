@@ -1,0 +1,63 @@
+{
+    "$schema": "https://www.whitepointsurvey.com/schemas/jobPosition.json",
+    "id": "01-0001",
+    "displayName": "Test CAD Technician",
+    "isActive": false,
+    "basicInfo": {
+        "positionOpenDate": "2026-01-02",
+        "positionEndDate": "0",
+        "positionSalaryType": "Part-Time Hourly",
+        "startingSalary": 15,
+        "endingSalary": 45,
+        "positionType": "Office",
+        "positionCity": "Orlando",
+        "positionState": "FL",
+        "department": "Survey - Operations"
+    },
+    "description": [
+        {
+            "type": "paragraph",
+            "content": "NOT A REAL JOB POSTING - THIS IS A TEST POSITION FOR DEMO PURPOSES ONLY."
+        },
+        {
+            "type": "paragraph",
+            "content": "We are seeking a skilled CAD Technician to join our team. The ideal candidate will have experience in creating detailed technical drawings and plans using computer-aided design (CAD) software. The CAD Technician will work closely with engineers and architects to produce accurate and high-quality designs for various projects."
+        },
+        {
+            "type": "paragraph",
+            "content": "Responsibilities include interpreting technical drawings, creating 3D models, and collaborating with project teams to ensure designs meet specifications. The successful candidate will have strong attention to detail, excellent communication skills, and the ability to work in a fast-paced environment."
+        },
+        {
+            "type": "list-bulleted",
+            "content": "Item 1, Item 2, Item 3"
+        },
+        {
+            "type": "list-numbered",
+            "content": "Item 1, Item 2, Item 3"
+        }
+    ],
+    "benefits": [
+        "Health insurance",
+        "Paid time off",
+        "Retirement plan"
+    ],
+    "requirements": [
+        "Proficiency in CAD software (e.g., AutoCAD, SolidWorks)",
+        "Strong understanding of engineering principles",
+        "Excellent communication and teamwork skills",
+        "Ability to work under tight deadlines"
+    ],
+    "meta": {
+        "tags": [
+            "CAD",
+            "Engineering",
+            "Office"
+        ],
+        "submissionType": "Email",
+        "submissionSettings": {
+            "recipientEmail": ["humanresources@whitepointsurvey.com"]
+        },
+        "requireResumeUpload": true,
+        "requireCoverLetter": false
+    }
+}

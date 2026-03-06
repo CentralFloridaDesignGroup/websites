@@ -1,15 +1,29 @@
+import {Routes, Route} from 'react-router-dom'
+import {CommonLayout} from '@wps/layout'
+import { Navbar } from './components/layout/mainNavbar'
+
+import * as Pages from './pages'
+import { Footer } from './components/layout/footer'
+
 function App() {
   return (
-    <div className="min-h-screen bg-white">
-      <header className="bg-primary text-white">
-        <div className="container mx-auto px-4 py-6">
-          <h1 className="text-4xl font-bold">SWP Main Website</h1>
-        </div>
-      </header>
-      <main className="container mx-auto px-4 py-12">
-        <p className="text-lg text-gray-700">Welcome to the main SWP website.</p>
-      </main>
-    </div>
+    <Routes>
+      <Route element={<CommonLayout navbar={<Navbar />} footer={<Footer />} />}>
+        <Route path="/" element={<Pages.Home />} />
+        <Route path="/services" element={<Pages.Services />} />
+        <Route path="/contact" element={<Pages.Contact />} />
+        <Route path="/company" element={<Pages.Company />} />
+        <Route path="/services/discounts" element={<Pages.Discount />} />
+        <Route path="/terms-of-service" element={<Pages.TermsOfService />} />
+        <Route path="/privacy-policy" element={<Pages.Privacy />} />
+        <Route path="/positions" element={<Pages.Positions />} />
+        <Route path="/positions/:id" element={<Pages.JobDetail />} />
+
+        <Route path="*" element={<Pages.ErrorPage />} />
+        <Route path="/404" element={<Pages.ErrorPage />} />
+      </Route>
+      <Route path="/sitemap.xml" />
+    </Routes>
   )
 }
 

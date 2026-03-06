@@ -1,10 +1,55 @@
 account_id = "2e430cced1ef956fb9115ac09acfc503"
 name = "wps-api"
 main = "src/index.ts"
-compatibility_date = "2024-01-01"
+compatibility_date = "2026-06-10"
+workers_dev = true
+preview_urls = true
+
+routes = [
+  { pattern = "api.whitepointsurvey.com", zone_name = "whitepointsurvey.com", custom_domain = true }
+]
+
+kv_namespaces = [
+  { binding = "WPS_KV_BINDING", id = "e7afc9b6d6b3496dafeba8292d326693" }
+]
+
+d1_databases = [
+  { binding = "DB", database_name = "compass", database_id = "17020e11-0fde-44b7-8c60-0989b6641c29" }
+]
+
+[vars]
+MICROSOFT_TENANT_ID="1398eec4-9845-4a21-8b11-4a0245047b16"
+MICROSOFT_CLIENT_ID="394b1593-0cd8-4306-8472-6b99995c944b"
+MICROSOFT_ALLOWED_AUDIENCES="394b1593-0cd8-4306-8472-6b99995c944b,api://394b1593-0cd8-4306-8472-6b99995c944b"
 
 [env.production]
-name = "wps-api-prod"
+name = "wps-api"
+kv_namespaces = [
+  { binding = "WPS_KV_BINDING", id = "e7afc9b6d6b3496dafeba8292d326693" }
+]
+d1_databases = [
+  { binding = "DB", database_name = "compass", database_id = "17020e11-0fde-44b7-8c60-0989b6641c29" }
+]
+[env.production.vars]
+SENDER_EMAIL="noreply@whitepointsurvey.com"
+BREVO_SANDBOX="false"
+MICROSOFT_TENANT_ID="1398eec4-9845-4a21-8b11-4a0245047b16"
+MICROSOFT_CLIENT_ID="394b1593-0cd8-4306-8472-6b99995c944b"
+MICROSOFT_ALLOWED_AUDIENCES="394b1593-0cd8-4306-8472-6b99995c944b,api://394b1593-0cd8-4306-8472-6b99995c944b"
+
 
 [env.preview]
 name = "wps-api-preview"
+
+kv_namespaces = [
+  { binding = "WPS_KV_BINDING", id = "e7afc9b6d6b3496dafeba8292d326693" }
+]
+d1_databases = [
+  { binding = "DB", database_name = "compass", database_id = "17020e11-0fde-44b7-8c60-0989b6641c29" }
+]
+[env.preview.vars]
+SENDER_EMAIL="noreply@whitepointsurvey.com"
+BREVO_SANDBOX="true"
+MICROSOFT_TENANT_ID="1398eec4-9845-4a21-8b11-4a0245047b16"
+MICROSOFT_CLIENT_ID="394b1593-0cd8-4306-8472-6b99995c944b"
+MICROSOFT_ALLOWED_AUDIENCES="394b1593-0cd8-4306-8472-6b99995c944b,api://394b1593-0cd8-4306-8472-6b99995c944b"

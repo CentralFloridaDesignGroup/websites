@@ -1,2 +1,5 @@
-account_id = "2e430cced1ef956fb9115ac09acfc503"
-project_name = "wps-main"
+name = "wps-main"
+pages_build_output_dir = "dist"
+
+[vars]
+VITE_API_BASE_URL="https://api.whitepointsurvey.com"

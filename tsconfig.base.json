@@ -17,7 +17,6 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "moduleResolution": "bundler",
-    "baseUrl": ".",
     "paths": {
       "@styles/*": ["./styles/*"],
       "@wps/input": ["./packages/@wps/input/src"],
@@ -29,6 +28,7 @@
     }
   },
   "include": ["packages", "sites"],
+  "exclude": ["**/dist", "**/node_modules"],
   "references": [
     { "path": "./packages/@wps/input" },
     { "path": "./packages/@wps/layout" },

@@ -1,19 +1,24 @@
 {
   "name": "@wps/input",
   "version": "1.0.0",
-  "description": "Shared form input components for SWP",
+  "description": "Shared form input components for White Point Survey",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc"
   },
   "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "@headlessui/react": "latest",
+    "@tailwindcss/vite": "latest",
+    "lucide-react": "latest",
+    "react": "latest",
+    "react-dom": "latest"
   },
   "devDependencies": {
-    "@types/react": "^18.3.28",
-    "@types/react-dom": "^18.3.7",
-    "typescript": "^5.9.3"
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "@vitejs/plugin-react": "latest",
+    "typescript": "latest",
+    "vite": "latest"
   }
 }

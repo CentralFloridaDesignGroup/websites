@@ -15,3 +15,7 @@
   --color-primary-950: #13293e;
   --color-primary: var(--color-primary-900);
 }
+
+@source "../packages/@wps/input/src";
+@source "../packages/@wps/layout/src";
+@source "../packages/@wps/scripts/src";

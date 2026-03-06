@@ -1,0 +1,1 @@
+export { ProposalTemplateEntry } from "./Template";
