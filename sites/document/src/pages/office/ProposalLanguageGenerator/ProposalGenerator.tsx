@@ -1,82 +1,107 @@
-// #region Imports
+import { useEffect, useState } from 'react';
+import type { ClientInfo, TemplateEntry } from './types/noteEntry';
+import { ClientInfoStep, LanguageStep, PreviewStep } from './pages';
 
-import { useEffect, useState } from "react";
-import type { TemplateEntry } from "./types/noteEntry";
-import { ListView } from "./pages";
-import { showNotification } from "@wps/layout";
+type Stage = 'client' | 'language' | 'preview';
 
-// #endregion
-
-// #region interfaces
-
-// #endregion
+const STAGES: { key: Stage; label: string }[] = [
+    { key: 'client', label: 'Client Information' },
+    { key: 'language', label: 'Select Services' },
+    { key: 'preview', label: 'Preview & Download' },
+];
 
 export function ProposalGenerator() {
-    const [isLoading, setIsLoading] = useState(false);
+    const [stage, setStage] = useState<Stage>('client');
     const [templates, setTemplates] = useState<TemplateEntry[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [clientInfo, setClientInfo] = useState<ClientInfo | undefined>();
+    const [selectedPhases, setSelectedPhases] = useState<TemplateEntry[]>([]);
 
     useEffect(() => {
-        setIsLoading(true);
-        import("./components/proposalLanguage.json")
-            .then((data) => {
+        import('./components/proposalLanguage.json')
+            .then(data => {
                 setTemplates(data.templates as TemplateEntry[]);
                 setIsLoading(false);
             })
-            .catch((error) => {
-                console.error("Error loading proposal language templates:", error);
+            .catch(err => {
+                console.error('Error loading proposal templates:', err);
                 setIsLoading(false);
             });
     }, []);
 
-    function handleAccept(selectedTemplates: TemplateEntry[]) {
-        // for now, just format and copy to clipboard. In a real app, you'd likely want to show a preview and allow further edits.
-        const formatted = selectedTemplates.map((template, index) => {
-            let content = "";
-            template.formattedLanguage?.forEach(lang => {
-                content += `PHASE ${(index + 1).toString().padStart(2, "0")}: ${template.name}\n`;
-                if (lang.type === "paragraph") {
-                    content += lang.content + "\n\n";
-                } else if (lang.type === "list-numbered") {
-                    (lang.content as string[]).forEach((item, index) => {
-                        content += `${index + 1}. ${item}\n`;
-                    });
-                    content += "\n";
-                } else if (lang.type === "list-bulleted") {
-                    (lang.content as string[]).forEach(item => {
-                        content += `- ${item}\n`;
-                    });
-                    content += "\n";
-                }
-            });
-            return content.trim();
-        }).join("\n\n");
-        navigator.clipboard.writeText(formatted)
-            .then(() => {
-                showNotification({
-                    title: "Proposal Language Copied",
-                    body: "The generated proposal language has been copied to your clipboard.",
-                    style: "success",
-                });
-            })
-            .catch((error) => {
-                console.error("Error copying proposal language to clipboard:", error);
-                showNotification({
-                    title: "Copy Failed",
-                    body: "There was an error copying the proposal language to your clipboard.",
-                    style: "danger",
-                });
-            });
-
-    }
-
-    if (isLoading) {
-        return <div className="px-4 py-2 text-sm text-slate-700">Loading...</div>;
-    }
+    const stageIndex = STAGES.findIndex(s => s.key === stage);
 
     return (
-        <ListView templates={templates} onAccept={(selected) => {
-            // For now, just log the selected templates. In a real app, you'd generate the proposal language here.
-            handleAccept(selected);
-        }} />
+        <div className="flex flex-col h-full">
+            {/* Stage indicator */}
+            <div className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-6 py-3">
+                <div className="flex items-center gap-6">
+                    {STAGES.map((s, i) => {
+                        const isDone = i < stageIndex;
+                        const isActive = i === stageIndex;
+                        return (
+                            <button
+                                key={s.key}
+                                onClick={() => isDone && setStage(s.key)}
+                                disabled={!isDone}
+                                className={[
+                                    'flex items-center gap-2 text-sm font-medium transition-colors',
+                                    isActive ? 'text-blue-600 dark:text-blue-400' : '',
+                                    isDone ? 'text-gray-500 hover:text-blue-600 dark:text-gray-400 cursor-pointer' : '',
+                                    !isDone && !isActive ? 'text-gray-300 dark:text-gray-600 cursor-default' : '',
+                                ].join(' ')}
+                            >
+                                <span className={[
+                                    'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold',
+                                    isActive ? 'bg-blue-600 text-white' : '',
+                                    isDone ? 'bg-green-500 text-white' : '',
+                                    !isDone && !isActive ? 'bg-gray-200 dark:bg-gray-700 text-gray-400' : '',
+                                ].join(' ')}>
+                                    {isDone ? '✓' : i + 1}
+                                </span>
+                                {s.label}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* Stage content */}
+            {isLoading ? (
+                <div className="px-4 py-6 text-sm text-gray-500">Loading templates...</div>
+            ) : (
+                <>
+                    {stage === 'client' && (
+                        <ClientInfoStep
+                            initialValues={clientInfo}
+                            onNext={info => {
+                                setClientInfo(info);
+                                setStage('language');
+                            }}
+                        />
+                    )}
+
+                    {stage === 'language' && (
+                        <LanguageStep
+                            templates={templates}
+                            initialSelected={selectedPhases}
+                            onBack={() => setStage('client')}
+                            onNext={phases => {
+                                setSelectedPhases(phases);
+                                setStage('preview');
+                            }}
+                        />
+                    )}
+
+                    {stage === 'preview' && clientInfo && (
+                        <PreviewStep
+                            clientInfo={clientInfo}
+                            phases={selectedPhases}
+                            onBack={() => setStage('language')}
+                        />
+                    )}
+                </>
+            )}
+        </div>
     );
 }

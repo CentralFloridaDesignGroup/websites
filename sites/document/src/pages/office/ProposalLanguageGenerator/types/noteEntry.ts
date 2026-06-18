@@ -26,3 +26,22 @@ export interface TemplateEntry {
     params?: ParamEntry[];
     notes?: string[];
 }
+
+export interface ClientInfo {
+    clientName: string;
+    contactName: string;
+    clientAddressLine1: string;
+    clientAddressCityStZip: string;
+    phone: string;
+    email: string;
+    projectNumber: string;
+    projectName: string;
+    proposalDate: string;
+    projectAddress: string;
+    projectJurisStZip: string;
+    parcelIdList: string;
+    whitePointSigner: string;
+    whitePointTitle: string;
+    projectCost: string;
+    projectRetainer: string;
+}

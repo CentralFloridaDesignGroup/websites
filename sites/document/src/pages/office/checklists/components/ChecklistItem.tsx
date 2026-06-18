@@ -35,12 +35,12 @@ export default function ChecklistItem({ item, checklistItem, onStatusChange, onN
         <div className="flex items-start justify-between p-4 border-l-4 border-mercury-700">
             <div className="w-full">
                 <div className='flex items-center justify-between gap-4'>
-                    <h3 className="text-lg font-medium text-gray-900 flex-grow text-center md:text-left">Item {checklistItem+1}. {item.title}</h3>
+                    <h3 className="text-lg font-medium text-gray-900 flex-grow text-center md:text-left dark:text-white">Item {checklistItem+1}. {item.title}</h3>
                     {item.options === 'YesNo' && <YesNoOption group_id={item.title} onOptionChange={setSelectedOption} />}
                     {item.options === 'YesNoN/A' && <YesNoNAOption group_id={item.title} onOptionChange={setSelectedOption} />}
                 </div>
-                <p className="text-sm mt-1 w-full text-center md:text-left">Reference: {item.code}</p>
-                <p className="mt-1 w-full text-center md:text-left">{item.statement}</p>
+                <p className="text-sm mt-1 w-full text-center md:text-left dark:text-gray-300">Reference: {item.code}</p>
+                <p className="mt-1 w-full text-center md:text-left dark:text-gray-300">{item.statement}</p>
                 {((item.options === 'YesNoN/A' && selectedOption === 'no') || (item.options === 'YesNo' && selectedOption === 'no')) && (
                     <div className="mt-2 flex items-center">
                         <p className="text-sm text-red-600 font-semibold w-[20%] me-5">Denial Reason:</p>

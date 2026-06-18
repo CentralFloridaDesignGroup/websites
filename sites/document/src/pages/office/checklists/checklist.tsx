@@ -152,8 +152,8 @@ export default function BoundarySurveyChecklist() {
             <div className="screen-only">
                 <div className="mx-auto w-full max-w-7xl space-y-6">
                     {meta.WIP && <WorkInProgressComponent />}
-                    <h2 className="text-3xl font-semibold text-gray-900 text-center mb-0 pb-2">{meta.Title}</h2>
-                    <p className="text-xl font-semibold text-gray-900 text-center">{meta.Category}</p>
+                    <h2 className="text-3xl font-semibold text-gray-900 text-center mb-0 pb-2 dark:text-white">{meta.Title}</h2>
+                    <p className="text-xl font-semibold text-gray-900 text-center dark:text-white">{meta.Category}</p>
                     <div className={`p-4 border flex items-center justify-between gap-4 rounded-md ${noEntries.length > 0 ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}>
                         <div className="flex items-center gap-2">
                             {noEntries.length > 0 ? (
@@ -162,9 +162,9 @@ export default function BoundarySurveyChecklist() {
                                 <CircleCheck className="w-8 h-8 text-green-500" />
                             )}
                             {noEntries.length > 0 ? (
-                                <p className="text-red-500 text-lg">There are <b>{noEntries.length}</b> items not marked as not meeting requirements.</p>
+                                <p className="text-red-500 text-lg dark:text-red-400">There are <b>{noEntries.length}</b> items not marked as not meeting requirements.</p>
                             ) : (
-                                <p className="text-green-500 text-lg">All requirements are met.</p>
+                                <p className="text-green-500 text-lg dark:text-green-400">All requirements are met.</p>
                             )}
                         </div>
                         <div className="gap-4 flex flex-col md:flex-row">
@@ -178,8 +178,8 @@ export default function BoundarySurveyChecklist() {
                     </div>
                     {sections.map((section, index) => (
                         <div key={index} className="space-y-4 border p-4 rounded-md">
-                            <h3 className="text-3xl font-semibold text-gray-800 text-center">Section {index + 1}. {section.title}</h3>
-                            {section.subtitle && <h4 className="text-xl font-semibold text-gray-600 text-center">{section.subtitle}</h4>}
+                            <h3 className="text-3xl font-semibold text-gray-800 text-center dark:text-white">Section {index + 1}. {section.title}</h3>
+                            {section.subtitle && <h4 className="text-xl font-semibold text-gray-600 text-center dark:text-gray-400">{section.subtitle}</h4>}
                             <div className="grid grid-cols-1 gap-4">
                                 {section.items.map((item: any, itemIndex: number) => (
                                     <ChecklistItem key={itemIndex} item={item} checklistItem={itemIndex} onStatusChange={onStatusChange} onNoteChange={onNoteChange} />
@@ -207,21 +207,21 @@ const PrintView = ({ sections, noEntries, naEntries, meta, reviewData }: { secti
             return (
                 <div className="flex items-center gap-1">
                     <span className={`w-3 h-3 rounded-full border-2 border-red-500 bg-red-50`}></span>
-                    <span className={`text-sm font-medium text-red-600`}>Not Met</span>
+                    <span className={`text-sm font-medium text-red-600 dark:text-red-400`}>Not Met</span>
                 </div>
             );
         } else if (naEntries.includes(item.title)) {
             return (
                 <div className="flex items-center gap-1">
                     <span className={`w-3 h-3 rounded-full border-2 border-gray-500 bg-gray-50`}></span>
-                    <span className={`text-sm font-medium text-gray-600`}>Not Applicable</span>
+                    <span className={`text-sm font-medium text-gray-600 dark:text-gray-400`}>Not Applicable</span>
                 </div>
             );
         } else {
             return (
                 <div className="flex items-center gap-2">
                     <span className={`w-3 h-3 rounded-full border-2 border-green-500 bg-green-500`}></span>
-                    <span className={`text-sm font-medium text-green-600`}>Met</span>
+                    <span className={`text-sm font-medium text-green-600 dark:text-green-400`}>Met</span>
                 </div>
             );
         }
@@ -231,8 +231,8 @@ const PrintView = ({ sections, noEntries, naEntries, meta, reviewData }: { secti
         if (noEntries.includes(item.title)) {
             return (
                 <div className="flex items-center gap-2">
-                    <span className="text-sm text-red-600 font-semibold">Denial Reason: </span>
-                    <span className="text-sm text-gray-800">{item.reason || 'No reason provided.'}</span>
+                    <span className="text-sm text-red-600 font-semibold dark:text-red-400">Denial Reason: </span>
+                    <span className="text-sm text-gray-800 dark:text-gray-400">{item.reason || 'No reason provided.'}</span>
                 </div>
             )
         };
