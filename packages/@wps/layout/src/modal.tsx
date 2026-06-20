@@ -9,6 +9,7 @@ export function Modal({
     size = 'md',
     acceptText = 'Accept',
     closeText = 'Close',
+    acceptDisabled = false,
     showHeaderClose = true,
     showCloseButton = true,
     children
@@ -20,6 +21,7 @@ export function Modal({
     size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | 'full';
     acceptText?: string;
     closeText?: string;
+    acceptDisabled?: boolean;
     showHeaderClose?: boolean;
     showCloseButton?: boolean;
     children: React.ReactNode;
@@ -40,7 +42,7 @@ export function Modal({
         <div>
             <dialog open={isOpen} onClose={() => { onClose?.(); }} className="">
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center overflow-y-auto px-4 py-6 sm:items-center sm:px-6 z-50">
-                    <div className={`bg-white rounded-lg shadow-lg p-6 w-full max-h-[calc(100vh-3rem)] overflow-y-auto sm:max-h-[calc(100vh-4rem)] ${sizeClasses[size]}`}>
+                    <div className={`bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg shadow-lg p-6 w-full max-h-[calc(100vh-3rem)] overflow-y-auto sm:max-h-[calc(100vh-4rem)] ${sizeClasses[size]}`}>
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-semibold">{title}</h2>
                             {showHeaderClose && (
@@ -69,6 +71,7 @@ export function Modal({
                                 onClick={() => { onAccept(); }}
                                 style="primary"
                                 size="medium"
+                                properties={{ disabled: acceptDisabled }}
                             />
                         </div>
                     </div>
