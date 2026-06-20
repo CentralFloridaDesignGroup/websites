@@ -1,1 +1,1 @@
-export { ProposalTemplateEntry } from "./Template";
+export { ServiceEntryTemplate } from './serviceItemTemplate';

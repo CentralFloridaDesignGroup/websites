@@ -1,128 +1,214 @@
 import { useState } from 'react';
 import { Textbox } from '@wps/input';
 import { Button } from '@wps/input';
-import type { ClientInfo } from '../types/noteEntry';
+import type { ClientInfo } from '../types/proposalTypes';
+import { EMPTY_CLIENT } from '../types/emptyClientInfo';
+import { Building, User } from 'lucide-react';
 
 interface ClientInfoStepProps {
     initialValues?: Partial<ClientInfo>;
     onNext: (info: ClientInfo) => void;
 }
 
-const EMPTY: ClientInfo = {
-    clientName: '',
-    contactName: '',
-    clientAddressLine1: '',
-    clientAddressCityStZip: '',
-    phone: '',
-    email: '',
-    projectNumber: '',
-    projectName: '',
-    proposalDate: new Date().toISOString().split('T')[0],
-    projectAddress: '',
-    projectJurisStZip: '',
-    parcelIdList: '',
-    whitePointSigner: '',
-    whitePointTitle: '',
-    projectCost: '',
-    projectRetainer: '',
-};
-
 export function ClientInfoStep({ initialValues, onNext }: ClientInfoStepProps) {
-    const [form, setForm] = useState<ClientInfo>({ ...EMPTY, ...initialValues });
-    const [errors, setErrors] = useState<Partial<Record<keyof ClientInfo, string>>>({});
+    const [form, setForm] = useState<ClientInfo>({ ...EMPTY_CLIENT, ...initialValues });
+    const [clientType, setClientType] = useState<"individual" | "company">("company");
+    const [copyProjectAddress, setCopyProjectAddress] = useState(false);
+    const [errors, setErrors] = useState<{
+        hasError: boolean;
+        errors: Partial<Record<keyof ClientInfo, string>>
+    }>({
+        hasError: false,
+        errors: {}
+    });
 
-    const set = (key: keyof ClientInfo) => (_: string, value: string) => {
-        setForm(prev => ({ ...prev, [key]: value }));
-        if (errors[key]) setErrors(prev => ({ ...prev, [key]: undefined }));
-    };
-
-    const validate = (): boolean => {
-        const required: (keyof ClientInfo)[] = [
-            'clientName', 'contactName', 'clientAddressLine1', 'clientAddressCityStZip',
-            'projectNumber', 'projectName', 'proposalDate',
+    /** Validates the form fields and updates the error state. */
+    function validate(): boolean {
+        var requiredFields: (keyof ClientInfo)[] = [
+            "clientName",
+            "phone",
+            "email",
+            "clientAddressLine1",
+            "clientCity",
+            "clientState",
+            "clientZip",
+            ...(clientType === "company" ? ["contactName" as keyof ClientInfo] : [])
         ];
-        const next: Partial<Record<keyof ClientInfo, string>> = {};
-        for (const key of required) {
-            if (!form[key].trim()) next[key] = 'Required';
-        }
-        setErrors(next);
-        return Object.keys(next).length === 0;
-    };
 
-    const handleNext = () => {
-        if (validate()) onNext(form);
-    };
+        const newErrors: Partial<Record<keyof ClientInfo, string>> = {};
+        let hasError = false;
+        for (const field of requiredFields) {
+            if (!form[field] || form[field]?.toString().trim() === '') {
+                newErrors[field] = 'This field is required';
+                hasError = true;
+            }
+        }
+        setErrors({ hasError, errors: newErrors });
+        return !hasError;
+    }
+
+    function toggleCopyProjectAddress() {
+        if (!copyProjectAddress) {
+            setForm(prev => ({
+                ...prev,
+                clientAddressLine1: prev.address,
+                clientCity: prev.jurisdiction,
+                clientState: prev.state,
+                clientZip: prev.zipCode
+            }));
+        }
+        else {
+            setForm(prev => ({
+                ...prev,
+                clientAddressLine1: '',
+                clientCity: '',
+                clientState: '',
+                clientZip: ''
+            }));
+        }
+        setCopyProjectAddress(prev => !prev);
+    }
 
     return (
-        <div className="max-w-3xl mx-auto px-4 py-6">
-            <h2 className="text-xl font-semibold mb-1 text-gray-900 dark:text-white">Client Information</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Enter the client and project details that will appear on the proposal.</p>
-
-            <section className="mb-6">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">Client</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <Textbox field="clientName" label="Client Name" required value={form.clientName} onValidChange={set('clientName')} />
-                        {errors.clientName && <p className="text-red-500 text-xs mt-1">{errors.clientName}</p>}
+        <div className="p-6">
+            <h2 className="text-2xl font-bold">Client Information Setup</h2>
+            <p className="mb-6 text-gray-600">This is where you set up the client information.</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="flex flex-row gap-2 lg:col-span-2 justify-between">
+                    <div className={`flex flex-col flex-1 ${clientType === "company" ? "bg-blue-600 dark:bg-blue-800 text-white" : "bg-gray-200 dark:bg-gray-800"} px-4 py-2 rounded items-center cursor-pointer`} onClick={() => setClientType("company")}>
+                        <Building size={24} className="mb-1" />
+                        <h2 className="text-lg font-bold">Company Client</h2>
+                        <p className="text-sm">Must specify who in the company is requesting services.</p>
                     </div>
-                    <div>
-                        <Textbox field="contactName" label="Contact Person" required value={form.contactName} onValidChange={set('contactName')} />
-                        {errors.contactName && <p className="text-red-500 text-xs mt-1">{errors.contactName}</p>}
-                    </div>
-                    <div>
-                        <Textbox field="clientAddressLine1" label="Street Address" required value={form.clientAddressLine1} onValidChange={set('clientAddressLine1')} />
-                        {errors.clientAddressLine1 && <p className="text-red-500 text-xs mt-1">{errors.clientAddressLine1}</p>}
-                    </div>
-                    <div>
-                        <Textbox field="clientAddressCityStZip" label="City, State ZIP" required value={form.clientAddressCityStZip} onValidChange={set('clientAddressCityStZip')} />
-                        {errors.clientAddressCityStZip && <p className="text-red-500 text-xs mt-1">{errors.clientAddressCityStZip}</p>}
-                    </div>
-                    <div>
-                        <Textbox field="phone" label="Phone" value={form.phone} onValidChange={set('phone')} />
-                    </div>
-                    <div>
-                        <Textbox field="email" label="Email" value={form.email} onValidChange={set('email')} />
+                    <div className={`flex flex-col flex-1 ${clientType === "individual" ? "bg-blue-600 dark:bg-blue-800 text-white" : "bg-gray-200 dark:bg-gray-800"} px-4 py-2 rounded items-center cursor-pointer`} onClick={() => setClientType("individual")}>
+                        <User size={24} className="mb-1" />
+                        <h2 className="text-lg font-bold">Individual Client</h2>
+                        <p className="text-sm">We assume the individual is the primary contact.</p>
                     </div>
                 </div>
-            </section>
-
-            <section className="mb-6">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">Project</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <Textbox field="projectNumber" label="Project Number *" value={form.projectNumber} onValidChange={set('projectNumber')} />
-                        {errors.projectNumber && <p className="text-red-500 text-xs mt-1">{errors.projectNumber}</p>}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:col-span-2">
+                    <div className="flex flex-col gap-2">
+                        <Textbox
+                            field="clientName"
+                            label="Client Name"
+                            required
+                            value={form.clientName || ''}
+                            onChange={(e) => setForm(prev => ({ ...prev, clientName: e.target.value }))}
+                            showRequiredError={false}
+                        />
+                        {errors.errors.clientName && <p className="text-red-500 text-sm">{errors.errors.clientName}</p>}
                     </div>
-                    <div>
-                        <Textbox field="proposalDate" label="Proposal Date *" value={form.proposalDate} onValidChange={set('proposalDate')} />
-                        {errors.proposalDate && <p className="text-red-500 text-xs mt-1">{errors.proposalDate}</p>}
+                    <div className={`flex flex-col gap-2 ${clientType === "company" ? "" : "invisible"}`}>
+                        <Textbox
+                            field="contactName"
+                            label="Contact Name"
+                            required
+                            value={form.contactName || ''}
+                            onChange={(e) => setForm(prev => ({ ...prev, contactName: e.target.value }))}
+                            showRequiredError={false}
+                        />
+                        {errors.errors.contactName && <p className="text-red-500 text-sm">{errors.errors.contactName}</p>}
                     </div>
-                    <div className="md:col-span-2">
-                        <Textbox field="projectName" label="Project Name / Description *" value={form.projectName} onValidChange={set('projectName')} />
-                        {errors.projectName && <p className="text-red-500 text-xs mt-1">{errors.projectName}</p>}
+                    <div className="flex flex-col gap-2">
+                        <Textbox
+                            field="emailAddress"
+                            label="Email Address"
+                            required
+                            value={form.email || ''}
+                            onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))}
+                            showRequiredError={false}
+                        />
+                        {errors.errors.email && <p className="text-red-500 text-sm">{errors.errors.email}</p>}
                     </div>
-                    <div>
-                        <Textbox field="projectAddress" label="Project Street Address" value={form.projectAddress} onValidChange={set('projectAddress')} />
-                    </div>
-                    <div>
-                        <Textbox field="projectJurisStZip" label="Project City / Jurisdiction, State ZIP" value={form.projectJurisStZip} onValidChange={set('projectJurisStZip')} />
-                    </div>
-                    <div className="md:col-span-2">
-                        <Textbox field="parcelIdList" label="Parcel ID(s)" placeholder="e.g. 01-23-45-678-910" value={form.parcelIdList} onValidChange={set('parcelIdList')} />
+                    <div className="flex flex-col gap-2">
+                        <Textbox
+                            field="phone"
+                            label="Phone Number"
+                            required
+                            value={form.phone || ''}
+                            onChange={(e) => setForm(prev => ({ ...prev, phone: e.target.value }))}
+                            showRequiredError={false}
+                        />
+                        {errors.errors.phone && <p className="text-red-500 text-sm">{errors.errors.phone}</p>}
                     </div>
                 </div>
-            </section>
-
-            <section className="mb-8">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">White Point Signer</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Textbox field="whitePointSigner" label="Signer Name" value={form.whitePointSigner} onValidChange={set('whitePointSigner')} />
-                    <Textbox field="whitePointTitle" label="Signer Title" value={form.whitePointTitle} onValidChange={set('whitePointTitle')} />
+                <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 lg:col-span-4">
+                    <Button
+                        label={copyProjectAddress ? "Clear Project Address" : "Copy Project Address"}
+                        style={copyProjectAddress ? "success" : "secondary"}
+                        onClick={toggleCopyProjectAddress}
+                    />
+                    <div className="flex flex-col gap-2">
+                        <Textbox
+                            field="clientAddressLine1"
+                            label="Client Mailing Address"
+                            required
+                            value={form.clientAddressLine1 || ''}
+                            onChange={(e) => setForm(prev => ({ ...prev, clientAddressLine1: e.target.value }))}
+                            showRequiredError={false}
+                            readOnly={copyProjectAddress}
+                        />
+                        {errors.errors.clientAddressLine1 && <p className="text-red-500 text-sm">{errors.errors.clientAddressLine1}</p>}
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        <Textbox
+                            field="clientAddressLine2"
+                            label="Unit / Apt / Ste"
+                            value={form.clientAddressLine2 || ''}
+                            onChange={(e) => setForm(prev => ({ ...prev, clientAddressLine2: e.target.value }))}
+                            showRequiredError={false}
+                        />
+                        {errors.errors.clientAddressLine2 && <p className="text-red-500 text-sm">{errors.errors.clientAddressLine2}</p>}
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        <Textbox
+                            field="clientCity"
+                            label="City"
+                            required
+                            value={form.clientCity || ''}
+                            onChange={(e) => setForm(prev => ({ ...prev, clientCity: e.target.value }))}
+                            showRequiredError={false}
+                            readOnly={copyProjectAddress}
+                        />
+                        {errors.errors.clientCity && <p className="text-red-500 text-sm">{errors.errors.clientCity}</p>}
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        <Textbox
+                            field="clientState"
+                            label="State"
+                            required
+                            value={form.clientState || ''}
+                            onChange={(e) => setForm(prev => ({ ...prev, clientState: e.target.value }))}
+                            showRequiredError={false}
+                            readOnly={copyProjectAddress}
+                        />
+                        {errors.errors.clientState && <p className="text-red-500 text-sm">{errors.errors.clientState}</p>}
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        <Textbox
+                            field="clientZip"
+                            label="Zip Code"
+                            required
+                            value={form.clientZip || ''}
+                            onChange={(e) => setForm(prev => ({ ...prev, clientZip: e.target.value }))}
+                            showRequiredError={false}
+                            readOnly={copyProjectAddress}
+                        />
+                        {errors.errors.clientZip && <p className="text-red-500 text-sm">{errors.errors.clientZip}</p>}
+                    </div>
                 </div>
-            </section>
-
-            <div className="flex justify-end">
-                <Button label="Next: Select Services" style="primary" onClick={handleNext} />
+                <div className="flex justify-end md:col-span-2 lg:col-span-4">
+                    <Button
+                        label="Next: Select Services"
+                        style="primary"
+                        onClick={() => {
+                            const isFormValid = validate();
+                            if (isFormValid) {
+                                onNext(form as ClientInfo);
+                            }
+                        }}
+                    />
+                </div>
             </div>
         </div>
     );
