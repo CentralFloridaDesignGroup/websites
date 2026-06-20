@@ -184,11 +184,11 @@ export function SlopeCalculator(): React.JSX.Element {
 
             <div className="pt-2">
               <Checkbox
-                field="absoluteCalc"
+                id="absoluteCalc"
                 type="switch"
                 label="Absolute Slope Calculation"
                 checked={absoluteCalc}
-                onChange={(_, value) => setAbsoluteCalc(value)}
+                onChange={(e) => setAbsoluteCalc(e.target.checked)}
               />
               <p className="text-sm text-gray-600 mt-1">
                 Toggle off for relative slope, on for absolute slope

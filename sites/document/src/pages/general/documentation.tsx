@@ -56,12 +56,14 @@ export function Documentation({
 
         function GetHeaderEntry(header: HeaderItem): SidebarHeaderItem {
             return {
+                type: "header",
                 label: header.text,
             };
         }
 
         function GetLinkEntry(header: HeaderItem): SidebarLinkItem {
             return {
+                type: "link",
                 label: header.text.padStart(header.level - 2, "\t"),
                 href: `#${header.id}`,
             };

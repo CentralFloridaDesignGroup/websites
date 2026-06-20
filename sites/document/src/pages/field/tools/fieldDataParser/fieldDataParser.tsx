@@ -21,6 +21,7 @@ export function FieldDataParser() {
     removeAttributeCommas: false,
     processMagnetCodeErrors: false,
   });
+  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     document.title = "Field Data Parser - The Compass";
@@ -157,6 +158,48 @@ export function FieldDataParser() {
     URL.revokeObjectURL(element.href);
   };
 
+  const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+
+    const droppedFile = e.dataTransfer.files?.[0];
+    if (!droppedFile) return;
+
+    const filename = droppedFile.name.toLowerCase();
+    const format: FileFormat = filename.endsWith(".txt")
+      ? "txt"
+      : filename.endsWith(".csv")
+        ? "csv"
+        : null;
+
+    if (!format) {
+      alert("Please drop a .txt or .csv file");
+      return;
+    }
+
+    setFile(droppedFile);
+    setFileFormat(format);
+    setIsProcessed(false);
+    setProcessedContent("");
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      setFileContent(content);
+    };
+    reader.readAsText(droppedFile);
+  };
+
   // Clear all selections
   const clearAll = () => {
     setFile(null);
@@ -169,32 +212,36 @@ export function FieldDataParser() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">File Data Parser</h1>
-        <p className="text-gray-600">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2 dark:text-white">File Data Parser</h1>
+        <p className="text-gray-600 dark:text-gray-400">
           Upload a .txt or .csv file, apply text modifications, and download the processed file.
         </p>
       </div>
 
       {/* File Upload Section */}
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">1. Upload File</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">1. Upload File</h2>
         <div className="relative">
           <input
             type="file"
             accept=".txt,.csv"
             onChange={handleFileChange}
+            
             className="hidden"
             id="file-input"
           />
           <label
             htmlFor="file-input"
-            className="flex flex-col items-center justify-center w-full border-2 border-dashed border-gray-300 rounded-lg p-8 cursor-pointer hover:border-nile-blue hover:bg-blue-50 transition"
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`flex flex-col items-center justify-center w-full border-2 border-dashed rounded-lg p-8 cursor-pointer transition ${isDragging ? "border-nile-blue bg-blue-50 dark:bg-gray-700" : "border-gray-300 hover:border-nile-blue hover:bg-blue-50 dark:hover:bg-gray-700"}`}
           >
-            <Upload className="w-12 h-12 text-gray-400 mb-2" />
-            <span className="text-lg font-medium text-gray-700">
+            <Upload className="w-12 h-12 text-gray-400 mb-2 dark:text-gray-400" />
+            <span className="text-lg font-medium text-gray-700 dark:text-white">
               Click to upload or drag and drop
             </span>
-            <span className="text-sm text-gray-500 mt-1">
+            <span className="text-sm text-gray-500 mt-1 dark:text-gray-400">
               Supported formats: .txt, .csv
             </span>
           </label>
@@ -220,14 +267,14 @@ export function FieldDataParser() {
 
       {/* Processing Options Section */}
       {file && (
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">2. Select Modifications</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4 dark:text-white">2. Select Modifications</h2>
 
           <div className="space-y-4">
 
 
             {/* Sort Lines */}
-            <label className="flex items-center p-4 border border-gray-200 rounded-md hover:bg-gray-50 cursor-pointer">
+            <label className="flex items-center p-4 border border-gray-200 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
               <input
                 type="checkbox"
                 checked={options.sortLines}
@@ -237,13 +284,13 @@ export function FieldDataParser() {
                 className="w-4 h-4 text-nile-blue rounded"
               />
               <div className="ml-3">
-                <span className="font-medium text-gray-700">Sort Lines</span>
-                <p className="text-sm text-gray-500">Sort lines alphabetically</p>
+                <span className="font-medium text-gray-700 dark:text-white">Sort Lines</span>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Sort lines alphabetically</p>
               </div>
             </label>
 
             {/* Remove Attribute Commas */}
-            <label className="flex items-center p-4 border border-gray-200 rounded-md hover:bg-gray-50 cursor-pointer">
+            <label className="flex items-center p-4 border border-gray-200 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
               <input
                 type="checkbox"
                 checked={options.removeAttributeCommas}
@@ -253,13 +300,13 @@ export function FieldDataParser() {
                 className="w-4 h-4 text-nile-blue rounded"
               />
               <div className="ml-3">
-                <span className="font-medium text-gray-700">[Trimble] Remove Attribute Commas</span>
-                <p className="text-sm text-gray-500">Remove commas from attributes added from the field software.</p>
+                <span className="font-medium text-gray-700 dark:text-white">[Trimble] Remove Attribute Commas</span>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Remove commas from attributes added from the field software.</p>
               </div>
             </label>
 
             {/* Fix Magnet Field Errors */}
-            <label className="flex items-center p-4 border border-gray-200 rounded-md hover:bg-gray-50 cursor-pointer">
+            <label className="flex items-center p-4 border border-gray-200 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
               <input
                 type="checkbox"
                 checked={options.processMagnetCodeErrors}
@@ -269,8 +316,8 @@ export function FieldDataParser() {
                 className="w-4 h-4 text-nile-blue rounded"
               />
               <div className="ml-3">
-                <span className="font-medium text-gray-700">[Topcon] Fix Magnet Field Errors</span>
-                <p className="text-sm text-gray-500">Automatically fix common magnet field errors in the file.</p>
+                <span className="font-medium text-gray-700 dark:text-white">[Topcon] Fix Magnet Field Errors</span>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Automatically fix common magnet field errors in the file.</p>
               </div>
             </label>
 
@@ -296,20 +343,20 @@ export function FieldDataParser() {
 
       {/* Preview Section */}
       {fileContent && (
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">3. Preview</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">3. Preview</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <h3 className="font-medium text-gray-700 mb-2">Original</h3>
-              <div className="bg-gray-50 border border-gray-200 rounded p-3 font-mono text-sm max-h-64 overflow-y-auto whitespace-pre-wrap break-words">
+              <h3 className="font-medium text-gray-700 dark:text-white mb-2">Original</h3>
+              <div className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded p-3 font-mono text-sm max-h-64 overflow-y-auto whitespace-pre-wrap break-words">
                 {fileContent.substring(0, 1000)}
                 {fileContent.length > 1000 && "..."}
               </div>
             </div>
             {isProcessed && (
               <div>
-                <h3 className="font-medium text-gray-700 mb-2">Processed</h3>
-                <div className="bg-gray-50 border border-gray-200 rounded p-3 font-mono text-sm max-h-64 overflow-y-auto whitespace-pre-wrap break-words">
+                <h3 className="font-medium text-gray-700 dark:text-white mb-2">Processed</h3>
+                <div className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded p-3 font-mono text-sm max-h-64 overflow-y-auto whitespace-pre-wrap break-words">
                   {processedContent.substring(0, 1000)}
                   {processedContent.length > 1000 && "..."}
                 </div>
@@ -321,9 +368,9 @@ export function FieldDataParser() {
 
       {/* Download Section */}
       {isProcessed && processedContent && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">4. Download</h2>
-          <p className="text-gray-600 mb-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">4. Download</h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-4">
             Your file has been processed successfully. Download it now.
           </p>
           <Button
@@ -333,14 +380,6 @@ export function FieldDataParser() {
             size="medium"
             icon={Download}
           />
-        </div>
-      )}
-
-      {/* Empty State */}
-      {!file && (
-        <div className="text-center py-12 bg-gray-50 rounded-lg">
-          <Upload className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500 text-lg">Upload a file to get started</p>
         </div>
       )}
     </div>

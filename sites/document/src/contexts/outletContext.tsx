@@ -5,9 +5,11 @@ export type OutletContext = {
 
 export interface SidebarItem {
     label: string | React.ReactNode;
+    type: "link" | "header" | "divider" | "progress";
 }
 
 export interface SidebarLinkItem extends SidebarItem {
+    type: "link";
     href: string;
     icon?: React.ReactNode;
     onClick?: () => void;
@@ -15,5 +17,23 @@ export interface SidebarLinkItem extends SidebarItem {
 }
 
 export interface SidebarHeaderItem extends SidebarItem {
+    type: "header";
     icon?: React.ReactNode;
+}
+
+export interface SidebarDividerItem extends SidebarItem {
+    type: "divider";
+}
+
+export interface SidebarProgressGroup extends SidebarItem {
+    type: "progress";
+    currentId: string | number;
+    sectionDisplay: string;
+    items: {
+        id: string;
+        label: string | React.ReactNode;
+        disabled?: boolean;
+        onClick: () => void;
+        icon?: React.ReactNode;
+    }[];
 }

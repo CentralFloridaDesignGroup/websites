@@ -1,6 +1,6 @@
 import { createContext, useContext, type ReactNode } from "react";
 import { useIsAuthenticated } from "@azure/msal-react";
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { Navigate, Outlet, useLocation, useOutletContext } from "react-router-dom";
 
 type AuthContextType = {
   isAuthenticated: boolean;
@@ -34,11 +34,12 @@ export function useAuth() {
 export function ProtectedRoutes() {
   const isAuthenticated = useIsAuthenticated();
   const location = useLocation();
+  const outletContext = useOutletContext();
 
   if (!isAuthenticated) {
     const returnTo = `${location.pathname}${location.search}`;
     return <Navigate to="/login" replace state={{ from: returnTo }} />;
   }
 
-  return <Outlet />;
+  return <Outlet context={outletContext} />;
 }

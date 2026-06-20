@@ -66,12 +66,10 @@ export function TableEntry({ item, parentId }: { item: TableAEntry; parentId?: n
     <div key={item.id} className="p-4 flex flex-col gap-2">
       <div className="flex flex-row items-center gap-2">
         <Checkbox
-          field={`${parentId ? `${parentId}-` : ""}${item.id}-checkbox`}
+          id={`${parentId ? `${parentId}-` : ""}${item.id}-checkbox`}
           checked={item.alwaysRequired || (item.default ?? false)}
           type="checkbox"
-          properties={{
-            disabled: item.alwaysRequired,
-          }}
+          disabled={item.alwaysRequired}
         />
         <h2 className="font-semibold text-lg">
           Item {parentId ? `${parentId}(${item.id})` : item.id}: {item.title}

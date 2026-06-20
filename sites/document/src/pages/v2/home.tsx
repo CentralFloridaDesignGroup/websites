@@ -136,26 +136,28 @@ export function HomeV2() {
             const favoriteSidebarItems = favoritesLinks.map(
                 (favorite) =>
                 ({
+                    type: "link",
                     label: favorite.name,
                     href: favorite.path,
                     display: "card",
                 } as SidebarLinkItem)
             );
 
-            sidebarItems.push({ label: "Favorites", icon: <LucideIcons.Star width={20} height={20} /> } as SidebarHeaderItem, ...favoriteSidebarItems);
+            sidebarItems.push({ type: "header", label: "Favorites", icon: <LucideIcons.Star width={20} height={20} /> } as SidebarHeaderItem, ...favoriteSidebarItems);
         }
 
         if (recentLinks.length > 0) {
             const recentSidebarItems = recentLinks.map(
                 (recent) =>
                 ({
+                    type: "link",
                     label: (<div className="flex flex-row items-center justify-between gap-2"><p>{recent.name}</p>{favoritePaths.includes(recent.path) && <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />}</div>),
                     href: recent.path,
                     display: "card",
                 } as SidebarLinkItem)
             );
 
-            sidebarItems.push({ label: "Recent", icon: <LucideIcons.Clock width={20} height={20} /> } as SidebarHeaderItem, ...recentSidebarItems);
+            sidebarItems.push({ type: "header", label: "Recent", icon: <LucideIcons.Clock width={20} height={20} /> } as SidebarHeaderItem, ...recentSidebarItems);
         }
 
         setSidebarItems(sidebarItems);

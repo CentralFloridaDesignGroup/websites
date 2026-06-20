@@ -191,11 +191,11 @@ export function SettingsWindow({
                                     return (
                                         <Checkbox
                                             key={toggleParam.key}
-                                            field={toggleParam.key}
                                             label={toggleParam.displayName}
                                             type="switch"
                                             checked={intParameters.find(p => p.key === toggleParam.key)?.value === toggleParam.options.trueValue || toggleParam.options.defaultValue}
-                                            onChange={(_, value) => {
+                                            onChange={(e) => {
+                                                const value = e.target.checked;
                                                 const stringValue = value ? toggleParam.options.trueValue : toggleParam.options.falseValue;
                                                 console.log(`Toggle ${toggleParam.key} changed to ${value}, setting parameter value to "${stringValue}"`);
                                                 setIntParameters(prev => prev.map(p => p.key === toggleParam.key ? { ...p, value: stringValue } : p));

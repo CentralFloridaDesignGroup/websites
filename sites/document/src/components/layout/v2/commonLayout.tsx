@@ -1,6 +1,9 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { SidebarItem, SidebarLinkItem, SidebarHeaderItem } from "../../../contexts/outletContext";
+import {
+    SidebarItem, SidebarLinkItem, SidebarHeaderItem,
+    SidebarDividerItem, SidebarProgressGroup
+} from "../../../contexts/outletContext";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
 import { loginRequest } from '../../../auth/msalConfig'
 import { ChevronDown } from "lucide-react";
@@ -123,6 +126,62 @@ export function CommonLayout() {
         );
     }
 
+    function addSidebarDividerItem(_: SidebarDividerItem, index: number): React.ReactNode {
+        return (
+            <hr key={index} className="my-4 border-gray-300 dark:border-gray-600" />
+        );
+    }
+
+    /** Creates a sidebar progress group. The title turns into a HeaderItem, and each item is a link. If the index of the item is less than the currentItem, it is considered complete and shown as green. If the index is equal to the currentItem, it is considered active and shown as blue. */
+    function addSidebarProgressGroup(item: SidebarProgressGroup, index: number): React.ReactNode {
+        
+        return (
+            <Fragment key={index}>
+                {/* Header entry */}
+                <div className={`flex items-center p-2 mb-2 ${index !== 0 ? "mt-6" : ""} font-bold uppercase`}>
+                    {item.sectionDisplay}
+                </div>
+                {/* Link entries */}
+                {item.items.map((linkItem, linkIndex) => {
+                    var status: "complete" | "active" | "upcoming" = "upcoming";
+                    // The currentId can be either string or number, depending on how the consumer wants to identify the current item. We support both for flexibility, but it does add some complexity in determining the status of each item.
+                    if (typeof item.currentId === "string") {
+                        const currentIndex = item.items.findIndex(i => i.id === item.currentId);
+                        if (linkIndex < currentIndex) {
+                            status = "complete";
+                        } else if (linkIndex === currentIndex) {
+                            status = "active";
+                        }
+                    }
+                    else {
+                        if (linkIndex < (item.currentId as number)) {
+                            status = "complete";
+                        } else if (linkIndex === (item.currentId as number)) {
+                            status = "active";
+                        }
+                    }
+                    const baseClasses = "flex items-center mb-2 rounded-md cursor-pointer py-2 pl-3 mr-2";
+                    const statusClasses = status === "complete" ? "bg-green-500 hover:bg-green-200 dark:bg-green-700 dark:hover:bg-green-600 text-white font-semibold" :
+                        status === "active" ? "bg-blue-200 hover:bg-blue-200 dark:bg-blue-700 dark:hover:bg-blue-600 text-blue-800 dark:text-blue-200 font-semibold" :
+                            "bg-transparent hover:bg-gray-200 dark:hover:bg-gray-600 p-1";
+                    const iconStatusClasses = status === "complete" ? "fill-white" :
+                        status === "active" ? "stroke-[4px]" :
+                            "";
+                    return (
+                        <div
+                            key={linkItem.id}
+                            onClick={linkItem.disabled ? undefined : linkItem.onClick}
+                            className={`${baseClasses} ${statusClasses}`}
+                        >
+                            {linkItem.icon && <span className={`mr-2 ${iconStatusClasses}`}>{linkItem.icon}</span>}
+                            {linkItem.label}
+                        </div>
+                    );
+                })}
+            </Fragment>
+        )
+    }
+
     function stringToColor(str: string): string {
         let hash = 0;
         for (let i = 0; i < str.length; i++) {
@@ -167,7 +226,10 @@ export function CommonLayout() {
                     </Link>
                     <nav className="flex flex-col h-[calc(100vh-9rem)] overflow-y-auto">
                         {sidebarItems.map((item, index) => (
-                            "href" in item ? addSidebarLinkItem(item as SidebarLinkItem, index) : addSidebarHeaderItem(item as SidebarHeaderItem, index)
+                            (item.type === "link" && addSidebarLinkItem(item as SidebarLinkItem, index)) ||
+                            (item.type === "header" && addSidebarHeaderItem(item as SidebarHeaderItem, index)) ||
+                            (item.type === "divider" && addSidebarDividerItem(item as SidebarDividerItem, index)) ||
+                            (item.type === "progress" && addSidebarProgressGroup(item as SidebarProgressGroup, index))
                         ))}
                     </nav>
                 </aside>
