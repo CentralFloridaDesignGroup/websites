@@ -25,10 +25,6 @@ interface TextareaProperties extends React.TextareaHTMLAttributes<HTMLTextAreaEl
      */
     required?: boolean & {
         /**
-         * Indicates whether the textarea is required. If true, the user must provide a value before form submission.
-         */
-        isRequired: boolean;
-        /**
          * An optional custom error message to display when the required validation fails. If not provided, a default error message will be shown.
          */
         errorMessage?: string;
@@ -87,7 +83,7 @@ export function Textarea(textareaProperties: TextareaProperties): React.JSX.Elem
 
     const HandleChange = (value: string) => {
         setIntValue(value);
-        if (textareaProperties.required && textareaProperties.required.isRequired && !value) {
+        if (textareaProperties.required && !value) {
             setError(textareaProperties.required.errorMessage || "This field is required.");
         } else {
             if (textareaProperties.regexFormat && !textareaProperties.regexFormat.format.test(value)) {
@@ -131,7 +127,7 @@ export function Textarea(textareaProperties: TextareaProperties): React.JSX.Elem
     return (
         <div>
             <div>
-                <label htmlFor={textareaProperties.field} className={`${textareaProperties.label ? '' : 'hidden'} block text-sm/6 font-medium text-gray-900 dark:text-white text-start ${textareaProperties.required ? 'after:content-["*"] after:ml-0.5 after:text-red-500' : ''}`}>
+                <label htmlFor={textareaProperties.field} className={`${textareaProperties.label ? '' : 'hidden'} block text-sm/6 font-medium text-gray-900 dark:text-white text-start mb-2 ${textareaProperties.required ? 'after:content-["*"] after:ml-0.5 after:text-red-500' : ''}`}>
                     {textareaProperties.label}
                 </label>
                 <textarea

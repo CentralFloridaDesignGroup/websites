@@ -39,6 +39,7 @@ interface TextboxProperties extends React.InputHTMLAttributes<HTMLInputElement> 
     required?: boolean & {
         errorMessage?: string;
     };
+    showRequiredError?: boolean;
     /**
      * If true, the textbox will be disabled and cannot be interacted with.
      */
@@ -68,6 +69,8 @@ export function Textbox(TextboxProperties: TextboxProperties): React.JSX.Element
     const [error, setError] = useState<string | null>(null); // State to hold validation error messages.
     const isInitialMount = useRef(true); // Ref to track if the component is mounting for the first time.
 
+    const showErrorText = TextboxProperties.showRequiredError ?? true; // Determine whether to show error messages based on the provided property.
+
     /**
      * A function to check the validity of the input value based on the provided validation rules (regex and required). It updates the error state accordingly and returns a boolean indicating whether the input is valid.
      * @param value - The input value to be validated.
@@ -94,17 +97,17 @@ export function Textbox(TextboxProperties: TextboxProperties): React.JSX.Element
      */
     const handleChange = (newValue: string) => {
         setIntValue(newValue);
-        if (validateInput(newValue)) {
+        const isValid = validateInput(newValue);
+
+        // Always propagate changes so controlled inputs can be edited to empty values.
+        TextboxProperties.onChange?.({ target: { value: newValue } } as React.ChangeEvent<HTMLInputElement>);
+
+        if (isValid) {
             TextboxProperties.onValidChange?.(TextboxProperties.field, newValue);
-            TextboxProperties.onChange?.({ target: { value: newValue } } as React.ChangeEvent<HTMLInputElement>);
-            if (TextboxProperties.onValidReport) {
-                TextboxProperties.onValidReport(TextboxProperties.field, true);
-            }
         }
-        else {
-            if (TextboxProperties.onValidReport) {
-                TextboxProperties.onValidReport(TextboxProperties.field, false);
-            }
+
+        if (TextboxProperties.onValidReport) {
+            TextboxProperties.onValidReport(TextboxProperties.field, isValid);
         }
     };
 
@@ -138,7 +141,7 @@ export function Textbox(TextboxProperties: TextboxProperties): React.JSX.Element
     return (
         <div>
             <div className={`flex ${labelPosition === "side" ? "items-center gap-2" : "flex-col"}`}>
-                <label htmlFor={TextboxProperties.field} className={`${TextboxProperties.label ? '' : 'hidden'} block text-sm/6 font-medium text-gray-900 dark:text-white text-start ${TextboxProperties.required ? 'after:content-["*"] after:ml-0.5 after:text-red-500' : ''} ${labelPosition === "side" ? 'shrink-0 whitespace-nowrap' : ''}`}>
+                <label htmlFor={TextboxProperties.field} className={`${TextboxProperties.label ? '' : 'hidden'} mb-2 block text-sm/6 font-medium text-gray-900 dark:text-white text-start ${TextboxProperties.required ? 'after:content-["*"] after:ml-0.5 after:text-red-500' : ''} ${labelPosition === "side" ? 'shrink-0 whitespace-nowrap' : ''}`}>
                     {TextboxProperties.label}
                 </label>
                 <input
@@ -157,7 +160,7 @@ export function Textbox(TextboxProperties: TextboxProperties): React.JSX.Element
                 />
             </div>
 
-            {error ? (
+            {error && showErrorText ? (
                 <p className="mt-0.5 text-sm text-red-600 text-start" id={`${TextboxProperties.field}-error`}>
                     <span className="font-medium">Error: </span>{error}
                 </p>
