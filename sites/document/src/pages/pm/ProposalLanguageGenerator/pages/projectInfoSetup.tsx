@@ -203,7 +203,7 @@ export function ProjectInfoSetup({ initialValues, onNext }: ProjectInfoSetupProp
                 </div>
                 <div className="flex justify-end md:col-span-2 lg:col-span-3">
                     <Button
-                        label="Next: Select Services"
+                        label="Next: Enter Client Information"
                         style="primary"
                         onClick={() => {
                             const isFormValid = validate();

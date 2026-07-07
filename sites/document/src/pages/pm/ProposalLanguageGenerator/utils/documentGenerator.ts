@@ -23,6 +23,7 @@ export async function generateWordDocument(
     const content = await loadTemplate(templateUrl.toString());
 
     const zip = new PizZip(content);
+
     const doc = new Docxtemplater(zip, {
         paragraphLoop: true,
         linebreaks: true,

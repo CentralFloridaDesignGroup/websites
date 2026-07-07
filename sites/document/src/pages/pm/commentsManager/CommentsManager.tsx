@@ -56,7 +56,7 @@ const emptyReviewPackageForm: ReviewPackageForm = {
   comment: '',
 };
 
-export default function CommentsManager() {
+export function CommentsManager() {
   const navigate = useNavigate();
   const { packageId } = useParams<{ packageId?: string }>();
   const { accounts } = useMsal();

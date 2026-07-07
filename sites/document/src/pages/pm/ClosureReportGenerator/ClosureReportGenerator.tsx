@@ -18,7 +18,7 @@ export interface ProjectInformation {
     report: string
 }
 
-export default function ClosureReportProcessor() {
+export function ClosureReportGenerator() {
     const [stage, setStage] = useState<'instructions' | 'settings' | 'preview'>('instructions')
 
 

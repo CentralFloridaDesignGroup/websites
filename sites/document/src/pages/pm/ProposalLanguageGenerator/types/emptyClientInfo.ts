@@ -1,10 +1,4 @@
-import { ClientInfo } from "./proposalTypes";
-
-const currentDateWithoffset = {
-    toISOString: () => {
-        return new Date().toISOString().split('T')[0];
-    },
-}
+import { ClientInfo, getCurrentLocalDateInputValue } from "./proposalTypes";
 
 export const EMPTY_CLIENT: ClientInfo = {
     clientName: "",
@@ -17,7 +11,7 @@ export const EMPTY_CLIENT: ClientInfo = {
     email: "",
     projectNumber: "",
     projectName: "",
-    proposalDate: currentDateWithoffset.toISOString(),
+    proposalDate: getCurrentLocalDateInputValue(),
     address: "",
     approxAddress: false,
     jurisdiction: "",

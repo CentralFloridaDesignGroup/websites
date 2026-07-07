@@ -25,34 +25,24 @@ export interface ServiceItemTemplateProps {
 export function ServiceEntryTemplate(props: ServiceItemTemplateProps) {
     const { index, totalItems, serviceEntry, onChange, onReorder, onDelete, onImport } = props;
     const [item, setItem] = useState<ServiceEntry>({ ...EMPTY_SERVICE, ...serviceEntry });
-    const [intCost, setIntCost] = useState<{ cost: number | null, retainer: number | null, percentage: number | null }>({
-        cost: parseFloat(item.serviceCost) || null,
-        retainer: parseFloat(item.serviceRetainer) || null,
-        percentage: parseFloat(item.retainerPercentage) || null
-    });
+    const phaseCost = parseNumericValue(item.serviceCost);
+    const phaseRetainerPercentage = parseNumericValue(item.retainerPercentage);
+
+    function updateItem(updated: ServiceEntry) {
+        setItem(updated);
+        onChange(index, updated);
+    }
 
     function updateRetainerInformation(key: keyof { cost: number | null, retainer: number | null, percentage: number | null }, value: string) {
         const numericValue = parseFloat(value) || 0;
         if (key === "cost") {
-            const retainer = numericValue * (intCost.percentage || 0);
-            const updated = { ...item, serviceCost: numericValue.toString(), serviceRetainer: retainer.toString() };
-            setIntCost({ ...intCost, cost: numericValue, retainer });
-            setItem(updated);
-            onChange(index, updated);
+            updateItem(applyCostBreakdown(item, { cost: numericValue, percentage: phaseRetainerPercentage }));
         }
         else if (key === "percentage") {
-            const retainer = (intCost.cost || 0) * (numericValue / 100);
-            const updated = { ...item, retainerPercentage: numericValue.toString(), serviceRetainer: retainer.toString() };
-            setIntCost({ ...intCost, percentage: numericValue, retainer });
-            setItem(updated);
-            onChange(index, updated);
+            updateItem(applyCostBreakdown(item, { cost: phaseCost, percentage: numericValue }));
         }
         else if (key === "retainer") {
-            const percentage = (intCost.cost || 0) > 0 ? (numericValue / (intCost.cost || 0)) * 100 : 0;
-            const updated = { ...item, retainerPercentage: percentage.toString(), serviceRetainer: numericValue.toString() };
-            setIntCost({ ...intCost, retainer: numericValue, percentage });
-            setItem(updated);
-            onChange(index, updated);
+            updateItem(applyCostBreakdown(item, { cost: phaseCost, retainer: numericValue }));
         }
     }
 
@@ -110,8 +100,7 @@ export function ServiceEntryTemplate(props: ServiceItemTemplateProps) {
                         required
                         onChange={(e) => {
                             const updated = { ...item, serviceName: e.target.value };
-                            setItem(updated);
-                            onChange(index, updated);
+                            updateItem(updated);
                         }}
                     />
                 </div>
@@ -119,7 +108,7 @@ export function ServiceEntryTemplate(props: ServiceItemTemplateProps) {
                     field={`cost-${index}`}
                     label="Cost"
                     required
-                    value={intCost.cost || ""}
+                    value={item.serviceCost || ""}
                     onChange={(e) => { updateRetainerInformation("cost", e.target.value) }}
                 />
                 <Textbox
@@ -127,15 +116,15 @@ export function ServiceEntryTemplate(props: ServiceItemTemplateProps) {
                     label="Retainer Percentage (%)"
                     type="number"
                     min={0}
-                    max={1}
+                    max={100}
                     step={0.01}
-                    value={intCost.percentage || ""}
+                    value={item.retainerPercentage || ""}
                     onChange={(e) => { updateRetainerInformation("percentage", e.target.value) }}
                 />
                 <Textbox
                     field={`retainerCost-${index}`}
                     label="Retainer Cost"
-                    value={intCost.retainer || ""}
+                    value={item.serviceRetainer || ""}
                     onChange={(e) => { updateRetainerInformation("retainer", e.target.value) }}
                 />
                 <Combobox
@@ -145,8 +134,7 @@ export function ServiceEntryTemplate(props: ServiceItemTemplateProps) {
                     defaultIndex={PRICE_TYPES.findIndex(p => p.value === item.serviceType)}
                     onValidChange={(_field, value) => {
                         const updated = { ...item, serviceType: value as ServicePriceType };
-                        setItem(updated);
-                        onChange(index, updated);
+                        updateItem(updated);
                     }}
                 />
             </div>
@@ -154,13 +142,34 @@ export function ServiceEntryTemplate(props: ServiceItemTemplateProps) {
                 field={`scopeOfWork-${index}`}
                 label="Scope of Work"
                 required
-                defaultValue={item.scopeOfWork}                
-                onValidChange={(_, v) => {
-                    const updated = { ...item, scopeOfWork: v };
-                    setItem(updated);
-                    onChange(index, updated);
+                defaultValue={item.scopeOfWork}
+                allowNewlines
+                onValidChange={(_, value) => {
+                    const updated = { ...item, scopeOfWork: value };
+                    updateItem(updated);
                 }}
             />
         </div>
     )
+}
+
+function parseNumericValue(value: string): number {
+    return parseFloat(value) || 0;
+}
+
+function formatNumericValue(value: number): string {
+    return value === 0 ? "0" : value.toString();
+}
+
+function applyCostBreakdown(entry: ServiceEntry, values: { cost: number; percentage?: number; retainer?: number }): ServiceEntry {
+    const cost = values.cost;
+    const retainer = values.retainer ?? (cost * ((values.percentage ?? 0) / 100));
+    const percentage = cost > 0 ? ((values.percentage ?? ((retainer / cost) * 100))) : 0;
+
+    return {
+        ...entry,
+        serviceCost: formatNumericValue(cost),
+        serviceRetainer: formatNumericValue(retainer),
+        retainerPercentage: formatNumericValue(percentage),
+    };
 }

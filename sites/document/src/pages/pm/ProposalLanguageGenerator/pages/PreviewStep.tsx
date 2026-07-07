@@ -4,7 +4,7 @@ import { Download } from 'lucide-react';
 import { showNotification } from '@wps/layout';
 import { generateWordDocument } from '../utils/documentGenerator';
 import type { ClientInfo, ServiceEntry } from '../types/proposalTypes';
-import { Proposal } from '../types/proposalTypes';
+import { formatProposalDate, Proposal } from '../types/proposalTypes';
 
 interface PreviewStepProps {
     clientInfo: ClientInfo;
@@ -34,13 +34,6 @@ export function PreviewStep({ clientInfo, services, onBack }: PreviewStepProps) 
         if (isNaN(num)) return cost;
         return num.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
     };
-
-    const formattedDate = (dateStr: string) => {
-        const date = new Date(dateStr);
-        if (isNaN(date.getTime())) return dateStr;
-        return date.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
-    };
-
 
     return (
         <div className="px-4 py-6">
@@ -74,7 +67,7 @@ export function PreviewStep({ clientInfo, services, onBack }: PreviewStepProps) 
                         <InfoRow label="Client" value={submittalPackage.clientInfo.clientName} />
                         <InfoRow label="Project #" value={submittalPackage.clientInfo.projectNumber} />
                         <InfoRow label="Contact" value={submittalPackage.clientInfo.contactName} />
-                        <InfoRow label="Proposal Date" value={formattedDate(submittalPackage.clientInfo.proposalDate)} />
+                        <InfoRow label="Proposal Date" value={formatProposalDate(submittalPackage.clientInfo.proposalDate)} />
                         <InfoRow label="Address" value={submittalPackage.getClientAddressLine()} />
                         <InfoRow label="Email" value={submittalPackage.clientInfo.email} />
                         <InfoRow label="" value={submittalPackage.getClientCityStZip()} />
@@ -113,14 +106,13 @@ export function PreviewStep({ clientInfo, services, onBack }: PreviewStepProps) 
                             <div className="space-y-4">
                                 {services.map((service, index) => {
                                     const phaseNum = (index + 1).toString().padStart(2, '0');
-                                    const language = service.scopeOfWork;
                                     return (
-                                        <div key={service.serviceName}>
+                                        <div key={`${service.serviceName}-${index}`}>
                                             <h3 className="font-bold text-black underline uppercase mb-2">
                                                 Phase {phaseNum}: {service.serviceName}
                                             </h3>
                                             <div className="text-black space-y-2">
-                                                {language}
+                                                {service.scopeOfWork}
                                             </div>
                                         </div>
                                     );

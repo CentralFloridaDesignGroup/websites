@@ -1,4 +1,6 @@
 
+import { normalizeScopeOfWorkForWord } from "../utils/scopeOfWorkFormatting";
+
 export interface LanguageEntry {
   type: "paragraph" | "list-numbered" | "list-bulleted";
   content: string | string[];
@@ -67,6 +69,37 @@ export interface ServiceEntry {
   retainerPercentage: string;
   serviceType: ServicePriceType;
   scopeOfWork: string;
+}
+
+export function getCurrentLocalDateInputValue(): string {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = `${today.getMonth() + 1}`.padStart(2, "0");
+  const day = `${today.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+export function formatProposalDate(dateStr: string): string {
+  const trimmedDate = dateStr.trim();
+  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(trimmedDate);
+
+  if (dateOnlyMatch) {
+    const [, year, month, day] = dateOnlyMatch;
+    const date = new Date(Number(year), Number(month) - 1, Number(day));
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+  }
+
+  const date = new Date(trimmedDate);
+  if (isNaN(date.getTime())) return dateStr;
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
 }
 
 export class Proposal {
@@ -145,23 +178,30 @@ export class Proposal {
   }
 
   public generateDocXJson(): any {
+    const formattedServices = this.services.map((service, index) => ({
+      ...service,
+      hasSubtasks: false,
+      scopeOfWork: normalizeScopeOfWorkForWord(service.scopeOfWork),
+      scopeOfWorkRichXml: normalizeScopeOfWorkForWord(service.scopeOfWork),
+      type: this.convertPriceTypeToAbbreviation(service.serviceType),
+      index: (index + 1).toString().padStart(2, '0'),
+      serviceCost: this.formattedCost(service.serviceCost),
+      serviceRetainer: this.formattedCost(service.serviceRetainer),
+    }));
+
     return {
       ...this.clientInfo,
       projectCost: this.formattedCost(this.clientInfo.projectCost),
       projectRetainer: this.formattedCost(this.clientInfo.projectRetainer),
-      proposalDate: this.formattedDate(this.clientInfo.proposalDate),
+      proposalDate: formatProposalDate(this.clientInfo.proposalDate),
       clientAddress: this.getClientAddressLine(),
       clientAddressCityStZip: this.getClientCityStZip(),
       projectAddress: this.getProjectAddress(),
       projectJurisStZip: this.getProjectJurisStZip(),
       parcelIdList: this.getFormattedParcelIdList(),
-      services: this.services.map((service, index) => ({
-        ...service,
-        type: this.convertPriceTypeToAbbreviation(service.serviceType),
-        index: (index + 1).toString().padStart(2, '0'),
-        serviceCost: this.formattedCost(service.serviceCost),
-        serviceRetainer: this.formattedCost(service.serviceRetainer),
-      }))
+      services: formattedServices,
+      servicesWithSubtasks: [],
+      servicesWithoutSubtasks: formattedServices,
     };
   }
 
@@ -169,11 +209,5 @@ export class Proposal {
         const num = parseFloat(cost);
         if (isNaN(num)) return cost;
         return num.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-    };
-
-    private formattedDate(dateStr: string): string {
-        const date = new Date(dateStr);
-        if (isNaN(date.getTime())) return dateStr;
-        return date.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
     };
 }

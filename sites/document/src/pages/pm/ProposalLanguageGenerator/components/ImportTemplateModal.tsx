@@ -3,31 +3,12 @@ import { Modal } from '@wps/layout';
 import { Combobox, Multiselect, Textarea, Textbox } from '@wps/input';
 import type { ParamEntry, TemplateEntry } from '../types/proposalTypes';
 import templatesData from './proposalLanguage.json';
+import { formatTemplateScopeAsMarkdown } from '../utils/scopeOfWorkFormatting';
 
 interface ImportTemplateModalProps {
     isOpen: boolean;
     onClose: () => void;
     onImport: (formattedText: string, templateName: string, serviceCost?: number, serviceRetainer?: number) => void;
-}
-
-function substituteParams(text: string, params: Record<string, string>): string {
-    return text.replace(/\{(\w+)\}/g, (_, key) => params[key] ?? '');
-}
-
-function formatTemplate(template: TemplateEntry, params: Record<string, string>): string {
-    const blocks: string[] = [];
-    for (const block of template.language) {
-        if (block.type === 'paragraph') {
-            blocks.push(substituteParams(block.content as string, params));
-        } else {
-            const items = block.content as string[];
-            const formatted = items.map((item, i) =>
-                (block.type === 'list-numbered' ? `${i + 1}. ` : '• ') + substituteParams(item, params)
-            );
-            blocks.push(formatted.join('\n'));
-        }
-    }
-    return blocks.join('\n\n');
 }
 
 function initParamValues(template: TemplateEntry): Record<string, string> {
@@ -75,6 +56,7 @@ function ParamField({ param, value, onChange }: {
             <Textarea
                 field={param.key}
                 label={param.label}
+                allowNewlines
                 onValidChange={(_, v) => onChange(param.key, v)}
             />
         );
@@ -115,7 +97,7 @@ export function ImportTemplateModal({ isOpen, onClose, onImport }: ImportTemplat
             setSearchTerm(''); // Clear search when moving to params step
         } else {
             if (!selectedTemplate) return;
-            onImport(formatTemplate(selectedTemplate, paramValues), selectedTemplate.name, selectedTemplate.defaultCost, selectedTemplate.defaultRetainer);
+            onImport(formatTemplateScopeAsMarkdown(selectedTemplate.language, paramValues), selectedTemplate.name, selectedTemplate.defaultCost, selectedTemplate.defaultRetainer);
             handleClose();
         }
     }

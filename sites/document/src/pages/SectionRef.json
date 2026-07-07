@@ -116,6 +116,13 @@
                     "path": "/reference/alta-tablea",
                     "tags": ["ALTA Table A", "Reference", "Land Title"],
                     "requiresAuth": false
+                },
+                {
+                    "name": "C.S.T. Handbook",
+                    "description": "A comprehensive handbook for certified survey technicians, covering best practices and industry standards.",
+                    "path": "/cst-handbook",
+                    "tags": ["CST Handbook", "Reference", "Surveying"],
+                    "requiresAuth": false
                 }
             ]
         }

@@ -31,6 +31,7 @@ const router = createBrowserRouter([
         path: 'documents/employee-handbook',
         element: <Pages.Documentation markdownFile="/documents/handbooks/employeeHandbook.md" title="Employee Handbook" />,
       },
+      { path: '/cst-handbook', element: <Pages.CSTHandbook /> },
       { path: '*', element: <Pages.ErrorPage /> },
       { path: '/404', element: <Pages.ErrorPage /> },
       {
