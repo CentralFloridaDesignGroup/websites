@@ -6,6 +6,7 @@ type FileFormat = "txt" | "csv" | null;
 
 interface ProcessingOptions {
   sortLines: boolean,
+  capitalizeAll: boolean,
   removeAttributeCommas: boolean,
   processMagnetCodeErrors: boolean
 }
@@ -18,6 +19,7 @@ export function FieldDataParser() {
   const [isProcessed, setIsProcessed] = useState(false);
   const [options, setOptions] = useState<ProcessingOptions>({
     sortLines: true,
+    capitalizeAll: true,
     removeAttributeCommas: false,
     processMagnetCodeErrors: false,
   });
@@ -64,8 +66,24 @@ export function FieldDataParser() {
 
 
     // Sort lines if option is enabled
+    // First, compare lines by the first value before the first comma, then by the entire line if the first values are equal
+    // Can be either numbers or text. Sort text last. If both are numbers, sort numerically. If both are text, sort alphabetically.
     if (options.sortLines) {
-      lines.sort();
+      lines.sort((a, b) => {
+        const aFirst = a.split(",")[0].trim();
+        const bFirst = b.split(",")[0].trim();
+        if (!isNaN(Number(aFirst)) && !isNaN(Number(bFirst))) {
+          return Number(aFirst) - Number(bFirst);
+        }
+        if (!isNaN(Number(aFirst))) return -1;
+        if (!isNaN(Number(bFirst))) return 1;
+        return aFirst.localeCompare(bFirst);
+      });
+    }
+
+    // Capitalize all text if option is enabled
+    if (options.capitalizeAll) {
+      lines = lines.map((line) => line.toUpperCase());
     }
 
     // Remove attribute commas if option is enabled
@@ -286,6 +304,22 @@ export function FieldDataParser() {
               <div className="ml-3">
                 <span className="font-medium text-gray-700 dark:text-white">Sort Lines</span>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Sort lines alphabetically</p>
+              </div>
+            </label>
+
+            {/* Capitalize All */}
+            <label className="flex items-center p-4 border border-gray-200 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={options.capitalizeAll}
+                onChange={(e) =>
+                  setOptions({ ...options, capitalizeAll: e.target.checked })
+                }
+                className="w-4 h-4 text-nile-blue rounded"
+              />
+              <div className="ml-3">
+                <span className="font-medium text-gray-700 dark:text-white">Capitalize All</span>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Capitalize all text in the file</p>
               </div>
             </label>
 
