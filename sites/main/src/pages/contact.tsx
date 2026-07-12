@@ -214,7 +214,7 @@ function ContactForm() {
           field="firstName"
           label="First Name"
           placeholder="John"
-          required={{ isRequired: true }}
+          required
           autocompleteField="given-name"
           onValidChange={(_, value) => setFirstName(value)}
           onValidReport={onValidReport}
@@ -223,7 +223,7 @@ function ContactForm() {
           field="lastName"
           label="Last Name"
           placeholder="Doe"
-          required={{ isRequired: true }}
+          required
           autocompleteField="family-name"
           onValidChange={(_, value) => setLastName(value)}
           onValidReport={onValidReport}
@@ -233,7 +233,7 @@ function ContactForm() {
             field="email"
             label="Email Address"
             placeholder="john.doe@example.com"
-            required={{ isRequired: true }}
+            required
             autocompleteField="email"
             type="email"
             regexFormat={{ format: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, errorMessage: "Invalid email format." }}
@@ -246,7 +246,7 @@ function ContactForm() {
             field="phone"
             label="Phone Number"
             placeholder="123-456-7890"
-            required={{ isRequired: true }}
+            required
             autocompleteField="tel"
             type="tel"
             regexFormat={{ format: /^\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}$/, errorMessage: "Invalid phone number format." }}
@@ -271,7 +271,7 @@ function ContactForm() {
             field="subject"
             label="Subject"
             placeholder="Subject of your message"
-            required={{ isRequired: true }}
+            required
             type="text"
             onValidChange={(_, value) => setSubject(value)}
             onValidReport={onValidReport}
@@ -282,7 +282,7 @@ function ContactForm() {
             field="message"
             label="Message"
             placeholder="Type your message here..."
-            required={{ isRequired: true }}
+            required
             regexFormat={{ format: /^.{10,}$/, errorMessage: "Message must be at least 10 characters long." }}
             allowNewlines={false}
             onValidChange={(_, value) => setMessage(value)}
