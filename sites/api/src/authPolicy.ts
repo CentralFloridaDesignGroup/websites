@@ -21,27 +21,30 @@ type ApiKeyName = 'comments' | 'gis' | 'transactionEmail'
 
 type RoutePolicy = {
   method: '*' | 'GET' | 'POST' | 'PUT' | 'DELETE'
-  pattern: RegExp
+  path: string
   mode: RouteAuthMode
   apiKeys?: ApiKeyName[]
 }
 
 const routePolicies: RoutePolicy[] = [
-  { method: 'GET', pattern: /^\/api\/health$/, mode: 'public' },
+  { method: 'GET', path: '/api/health', mode: 'public' },
 
-  { method: 'POST', pattern: /^\/api\/email\/transactionEmail$/, mode: 'key', apiKeys: ['transactionEmail'] },
+  { method: 'POST', path: '/api/email/transactionEmail', mode: 'key', apiKeys: ['transactionEmail'] },
 
-  { method: '*', pattern: /^\/api\/reviews(?:\/[^/]+(?:\/comments)?)?$/, mode: 'microsoft' },
-  { method: '*', pattern: /^\/api\/comments(?:\/[^/]+)?$/, mode: 'microsoft' },
+  { method: '*', path: '/api/reviews', mode: 'microsoft' },
+  { method: '*', path: '/api/reviews/:id', mode: 'microsoft' },
+  { method: '*', path: '/api/reviews/:id/comments', mode: 'microsoft' },
+  { method: '*', path: '/api/comments', mode: 'microsoft' },
+  { method: '*', path: '/api/comments/:id', mode: 'microsoft' },
 
-  { method: 'GET', pattern: /^\/api\/gis\/points$/, mode: 'key', apiKeys: ['gis'] },
-  { method: 'GET', pattern: /^\/api\/gis\/points\/[^/]+$/, mode: 'key', apiKeys: ['gis'] },
-  { method: 'POST', pattern: /^\/api\/gis\/points$/, mode: 'microsoft' },
-  { method: 'POST', pattern: /^\/api\/gis\/points\/import$/, mode: 'microsoft' },
-  { method: 'DELETE', pattern: /^\/api\/gis\/points\/[^/]+$/, mode: 'microsoft' },
+  { method: 'GET', path: '/api/gis/points', mode: 'key', apiKeys: ['gis'] },
+  { method: 'POST', path: '/api/gis/points/import', mode: 'microsoft' },
+  { method: 'GET', path: '/api/gis/points/:id', mode: 'key', apiKeys: ['gis'] },
+  { method: 'POST', path: '/api/gis/points', mode: 'microsoft' },
+  { method: 'DELETE', path: '/api/gis/points/:id', mode: 'microsoft' },
 
-  { method: 'GET', pattern: /^\/api\/users\/[^/]+\/favorites$/, mode: 'microsoft' },
-  { method: 'PUT', pattern: /^\/api\/users\/[^/]+\/favorites$/, mode: 'microsoft' },
+  { method: 'GET', path: '/api/users/:userId/favorites', mode: 'microsoft' },
+  { method: 'PUT', path: '/api/users/:userId/favorites', mode: 'microsoft' },
 ]
 
 const jwksByTenant = new Map<string, ReturnType<typeof createRemoteJWKSet>>()
@@ -57,6 +60,23 @@ function splitCsv(value: unknown): string[] {
     .filter(Boolean)
 }
 
+function getPathSegments(pathname: string): string[] {
+  return pathname.split('/').filter(Boolean)
+}
+
+function routeMatches(policyPath: string, pathname: string): boolean {
+  const policySegments = getPathSegments(policyPath)
+  const pathSegments = getPathSegments(pathname)
+
+  if (policySegments.length !== pathSegments.length) {
+    return false
+  }
+
+  return policySegments.every((segment, index) => {
+    return segment.startsWith(':') || segment === pathSegments[index]
+  })
+}
+
 function findRoutePolicy(method: string, pathname: string): RoutePolicy | null {
   const normalizedMethod = method.toUpperCase()
 
@@ -65,7 +85,7 @@ function findRoutePolicy(method: string, pathname: string): RoutePolicy | null {
       continue
     }
 
-    if (policy.pattern.test(pathname)) {
+    if (routeMatches(policy.path, pathname)) {
       return policy
     }
   }
@@ -212,9 +232,6 @@ export async function authorizeApiRequest(
   const policy = findRoutePolicy(request.method, pathname)
 
   if (!policy) {
-    if (pathname.startsWith('/api/')) {
-      return unauthorizedResponse(jsonHeaders)
-    }
     return unauthorizedResponse(jsonHeaders)
   }
 
