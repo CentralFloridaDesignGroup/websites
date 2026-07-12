@@ -1,5 +1,7 @@
+import type { MiddlewareHandler } from 'hono'
 import { createRemoteJWKSet, jwtVerify, type JWTPayload } from 'jose'
-import { setRequestAuthContext, type RequestAuthContext, unauthorizedResponse } from './authContext'
+import { getRequestAuthContext, setRequestAuthContext, type RequestAuthContext, unauthorizedResponse } from './authContext'
+import { jsonHeaders, type ApiHonoEnv } from './apiTypes'
 
 export interface ApiAuthEnv {
   COMMENTS_API_KEY?: string
@@ -266,5 +268,21 @@ export async function authorizeApiRequest(
   } catch (error) {
     console.warn(`${buildRequestLogContext(request)} invalid bearer token`, error)
     return unauthorizedResponse(jsonHeaders)
+  }
+}
+
+export function createAuthMiddleware(): MiddlewareHandler<ApiHonoEnv> {
+  return async (context, next) => {
+    const authError = await authorizeApiRequest(context.req.raw, context.env, jsonHeaders)
+    if (authError) {
+      return authError
+    }
+
+    const authContext = getRequestAuthContext(context.req.raw)
+    if (authContext) {
+      context.set('auth', authContext)
+    }
+
+    return next()
   }
 }

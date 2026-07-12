@@ -1,4 +1,5 @@
-import { assertRequestAuthMode } from './authContext'
+import { Hono } from 'hono'
+import { jsonHeaders, requireAuthMode, type ApiHonoEnv } from './apiTypes'
 const GIS_DATUMS = ['wgs84', 'nad83-2011-fl-east', 'nad83-2011-fl-north', 'nad83-2011-fl-west'] as const
 const POINT_MATERIALS = [
   '5/8" Iron Rod',
@@ -123,14 +124,14 @@ function ensureGisSchemaReady(db: D1Database): Promise<void> {
   return schemaPromise
 }
 
-function badRequest(message: string, jsonHeaders: Record<string, string>) {
+function badRequest(message: string) {
   return new Response(JSON.stringify({ error: message }), {
     status: 400,
     headers: jsonHeaders,
   })
 }
 
-function serverError(message: string, jsonHeaders: Record<string, string>) {
+function serverError(message: string) {
   return new Response(JSON.stringify({ error: message }), {
     status: 500,
     headers: jsonHeaders,
@@ -258,11 +259,12 @@ function mapGisPointRow(row: GisPointRow) {
   }
 }
 
-export function registerGisPointsApiRoutes(router: any, jsonHeaders: Record<string, string>) {
-  router.get('/api/gis/points', async (request: Request) => {
+export function createGisPointsApi() {
+  const app = new Hono<ApiHonoEnv>()
+  app.get('/api/gis/points', async (context) => {
     try {
-      const env = (request as any).env as GisPointsApiEnv
-      const authError = assertRequestAuthMode(request, 'key', jsonHeaders)
+      const env = context.env
+      const authError = requireAuthMode(context, 'key')
       if (authError) return authError
 
       await ensureGisSchemaReady(env.DB)
@@ -277,20 +279,20 @@ export function registerGisPointsApiRoutes(router: any, jsonHeaders: Record<stri
       })
     } catch (error: any) {
       console.error('Error listing gis points:', error)
-      return serverError(String(error?.message || error), jsonHeaders)
+      return serverError(String(error?.message || error))
     }
   })
 
-  router.get('/api/gis/points/:id', async (request: Request) => {
+  app.get('/api/gis/points/:id', async (context) => {
     try {
-      const env = (request as any).env as GisPointsApiEnv
-      const authError = assertRequestAuthMode(request, 'key', jsonHeaders)
+      const env = context.env
+      const authError = requireAuthMode(context, 'key')
       if (authError) return authError
 
       await ensureGisSchemaReady(env.DB)
 
-      const id = normalizeString((request as any).params?.id)
-      if (!id) return badRequest('id is required', jsonHeaders)
+      const id = normalizeString(context.req.param('id'))
+      if (!id) return badRequest('id is required')
 
       const row = await env.DB.prepare(
         `${GIS_POINT_SELECT_BASE_QUERY}
@@ -309,18 +311,18 @@ export function registerGisPointsApiRoutes(router: any, jsonHeaders: Record<stri
       })
     } catch (error: any) {
       console.error('Error fetching gis point:', error)
-      return serverError(String(error?.message || error), jsonHeaders)
+      return serverError(String(error?.message || error))
     }
   })
 
-  router.post('/api/gis/points', async (request: Request) => {
+  app.post('/api/gis/points', async (context) => {
     try {
-      const env = (request as any).env as GisPointsApiEnv
-      const authError = assertRequestAuthMode(request, 'microsoft', jsonHeaders)
+      const env = context.env
+      const authError = requireAuthMode(context, 'microsoft')
       if (authError) return authError
 
       await ensureGisSchemaReady(env.DB)
-      const body = (await parseJsonBody(request)) as Record<string, unknown>
+      const body = (await parseJsonBody(context.req.raw)) as Record<string, unknown>
 
       const id = normalizeString(body.id) || null
       const pointNumber = normalizeString(body.pointNumber)
@@ -342,10 +344,10 @@ export function registerGisPointsApiRoutes(router: any, jsonHeaders: Record<stri
       const createdBy = normalizeString(body.createdBy || body.user)
       const updatedBy = normalizeString(body.updatedBy || body.user)
 
-      if (!pointNumber) return badRequest('pointNumber is required', jsonHeaders)
-      if (!createdBy && !id) return badRequest('createdBy or user is required when creating a point', jsonHeaders)
-      if (!isValidLatitude(latitude)) return badRequest('latitude must be between -90 and 90', jsonHeaders)
-      if (!isValidLongitude(longitude)) return badRequest('longitude must be between -180 and 180', jsonHeaders)
+      if (!pointNumber) return badRequest('pointNumber is required')
+      if (!createdBy && !id) return badRequest('createdBy or user is required when creating a point')
+      if (!isValidLatitude(latitude)) return badRequest('latitude must be between -90 and 90')
+      if (!isValidLongitude(longitude)) return badRequest('longitude must be between -180 and 180')
 
       const now = new Date().toISOString()
 
@@ -441,18 +443,18 @@ export function registerGisPointsApiRoutes(router: any, jsonHeaders: Record<stri
       })
     } catch (error: any) {
       console.error('Error saving gis point:', error)
-      return serverError(String(error?.message || error), jsonHeaders)
+      return serverError(String(error?.message || error))
     }
   })
 
-  router.post('/api/gis/points/import', async (request: Request) => {
+  app.post('/api/gis/points/import', async (context) => {
     try {
-      const env = (request as any).env as GisPointsApiEnv
-      const authError = assertRequestAuthMode(request, 'microsoft', jsonHeaders)
+      const env = context.env
+      const authError = requireAuthMode(context, 'microsoft')
       if (authError) return authError
 
       await ensureGisSchemaReady(env.DB)
-      const body = (await parseJsonBody(request)) as Record<string, unknown>
+      const body = (await parseJsonBody(context.req.raw)) as Record<string, unknown>
       const points = Array.isArray(body.points) ? body.points : []
       const user = normalizeString(body.user)
 
@@ -532,19 +534,19 @@ export function registerGisPointsApiRoutes(router: any, jsonHeaders: Record<stri
       })
     } catch (error: any) {
       console.error('Error importing gis points:', error)
-      return serverError(String(error?.message || error), jsonHeaders)
+      return serverError(String(error?.message || error))
     }
   })
 
-  router.delete('/api/gis/points/:id', async (request: Request) => {
+  app.delete('/api/gis/points/:id', async (context) => {
     try {
-      const env = (request as any).env as GisPointsApiEnv
-      const authError = assertRequestAuthMode(request, 'microsoft', jsonHeaders)
+      const env = context.env
+      const authError = requireAuthMode(context, 'microsoft')
       if (authError) return authError
 
       await ensureGisSchemaReady(env.DB)
-      const id = normalizeString((request as any).params?.id)
-      if (!id) return badRequest('id is required', jsonHeaders)
+      const id = normalizeString(context.req.param('id'))
+      if (!id) return badRequest('id is required')
 
       const result = await env.DB.prepare(`DELETE FROM gis_points WHERE id = ?`).bind(id).run()
       if (!result.success || (result.meta?.changes ?? 0) === 0) {
@@ -557,7 +559,9 @@ export function registerGisPointsApiRoutes(router: any, jsonHeaders: Record<stri
       return new Response(null, { status: 204, headers: jsonHeaders })
     } catch (error: any) {
       console.error('Error deleting gis point:', error)
-      return serverError(String(error?.message || error), jsonHeaders)
+      return serverError(String(error?.message || error))
     }
   })
+
+  return app
 }

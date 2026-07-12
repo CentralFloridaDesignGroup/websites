@@ -1,4 +1,4 @@
-ï»¿import {
+import {
   COMMENT_STATUSES,
   REVIEW_PACKAGE_STATUSES,
   mapCommentRecordRow,
@@ -8,7 +8,8 @@
   type CommentStatus,
   type ReviewPackageStatus,
 } from "@wps/scripts"
-import { assertRequestAuthMode } from './authContext'
+import { Hono } from 'hono'
+import { jsonHeaders, requireAuthMode, type ApiHonoEnv } from './apiTypes'
 
 /**
  * Environment variables expected by the Comments API. The `DB` variable is a D1Database instance provided by Cloudflare Workers, and `COMMENTS_API_KEY` is a string used to authenticate incoming requests.
@@ -112,7 +113,7 @@ async function ensureCommentsSchema(db: D1Database): Promise<void> {
  * @param {Record<string, string>} jsonHeaders - The headers to include in the response.
  * @returns {Response} A Response object representing the 400 Bad Request.
  */
-function badRequest(message: string, jsonHeaders: Record<string, string>) {
+function badRequest(message: string) {
   return new Response(JSON.stringify({ error: message }), {
     status: 400,
     headers: jsonHeaders,
@@ -125,7 +126,7 @@ function badRequest(message: string, jsonHeaders: Record<string, string>) {
  * @param {Record<string, string>} jsonHeaders - The headers to include in the response.
  * @returns {Response} A Response object representing the 500 Internal Server Error.
  */
-function serverError(message: string, jsonHeaders: Record<string, string>) {
+function serverError(message: string) {
   return new Response(JSON.stringify({ error: message }), {
     status: 500,
     headers: jsonHeaders,
@@ -177,12 +178,13 @@ async function parseJsonBody(request: Request): Promise<any> {
  * @param {any} router - The router object to register the routes on.
  * @param {Record<string, string>} jsonHeaders - The headers to include in the responses.
  */
-export function registerCommentsApiRoutes(router: any, jsonHeaders: Record<string, string>) {
+export function createCommentsApi() {
+  const app = new Hono<ApiHonoEnv>()
   // 1. Get all review packages
-  router.get('/api/reviews', async (request: Request) => {
+  app.get('/api/reviews', async (context) => {
     try {
-      const env = (request as any).env as CommentsApiEnv
-      const authError = assertRequestAuthMode(request, 'microsoft', jsonHeaders)
+      const env = context.env
+      const authError = requireAuthMode(context, 'microsoft')
       if (authError) return authError
       await ensureCommentsSchema(env.DB)
 
@@ -199,20 +201,20 @@ export function registerCommentsApiRoutes(router: any, jsonHeaders: Record<strin
       )
     } catch (error: any) {
       console.error('Error listing review packages:', error)
-      return serverError(String(error?.message || error), jsonHeaders)
+      return serverError(String(error?.message || error))
     }
   })
 
   // 2. Get all comments for a review package
-  router.get('/api/reviews/:id/comments', async (request: Request) => {
+  app.get('/api/reviews/:id/comments', async (context) => {
     try {
-      const env = (request as any).env as CommentsApiEnv
-      const authError = assertRequestAuthMode(request, 'microsoft', jsonHeaders)
+      const env = context.env
+      const authError = requireAuthMode(context, 'microsoft')
       if (authError) return authError
       await ensureCommentsSchema(env.DB)
 
-      const id = normalizeString((request as any).params?.id)
-      if (!id) return badRequest('id is required', jsonHeaders)
+      const id = normalizeString(context.req.param('id'))
+      if (!id) return badRequest('id is required')
 
       const pkg = await env.DB.prepare(
         `SELECT id, created_date, updated_date, created_by, updated_by,
@@ -244,19 +246,19 @@ export function registerCommentsApiRoutes(router: any, jsonHeaders: Record<strin
       )
     } catch (error: any) {
       console.error('Error fetching comments for package:', error)
-      return serverError(String(error?.message || error), jsonHeaders)
+      return serverError(String(error?.message || error))
     }
   })
 
-  // 3. Upsert a review package â€” provide `id` in the body to update, omit to create
-  router.post('/api/reviews', async (request: Request) => {
+  // 3. Upsert a review package — provide `id` in the body to update, omit to create
+  app.post('/api/reviews', async (context) => {
     try {
-      const env = (request as any).env as CommentsApiEnv
-      const authError = assertRequestAuthMode(request, 'microsoft', jsonHeaders)
+      const env = context.env
+      const authError = requireAuthMode(context, 'microsoft')
       if (authError) return authError
       await ensureCommentsSchema(env.DB)
 
-      const body = await parseJsonBody(request)
+      const body = await parseJsonBody(context.req.raw)
       const id = normalizeString(body.id) || null
       const projectName = normalizeString(body.projectName)
       const projectNumber = normalizeString(body.projectNumber)
@@ -269,8 +271,8 @@ export function registerCommentsApiRoutes(router: any, jsonHeaders: Record<strin
       const updatedBy = normalizeString(body.updatedBy)
       const status: ReviewPackageStatus = normalizeStatus(body.status, REVIEW_PACKAGE_STATUSES, 'open')
 
-      if (!projectNumber) return badRequest('projectNumber is required', jsonHeaders)
-      if (!reviewNumber) return badRequest('reviewNumber is required', jsonHeaders)
+      if (!projectNumber) return badRequest('projectNumber is required')
+      if (!reviewNumber) return badRequest('reviewNumber is required')
 
       const duplicatePackage = await env.DB.prepare(
         `SELECT id
@@ -322,7 +324,7 @@ export function registerCommentsApiRoutes(router: any, jsonHeaders: Record<strin
         return new Response(JSON.stringify({ package: mapReviewPackageRow(row as ReviewPackageRow) }), { headers: jsonHeaders })
       } else {
         // Create new package
-        if (!createdBy) return badRequest('createdBy is required when creating a new package', jsonHeaders)
+        if (!createdBy) return badRequest('createdBy is required when creating a new package')
 
         const result = await env.DB.prepare(
           `INSERT INTO review_package
@@ -345,19 +347,19 @@ export function registerCommentsApiRoutes(router: any, jsonHeaders: Record<strin
       }
     } catch (error: any) {
       console.error('Error saving review package:', error)
-      return serverError(String(error?.message || error), jsonHeaders)
+      return serverError(String(error?.message || error))
     }
   })
 
-  // 4. Upsert a comment â€” provide `id` in the body to update, omit to create
-  router.post('/api/comments', async (request: Request) => {
+  // 4. Upsert a comment — provide `id` in the body to update, omit to create
+  app.post('/api/comments', async (context) => {
     try {
-      const env = (request as any).env as CommentsApiEnv
-      const authError = assertRequestAuthMode(request, 'microsoft', jsonHeaders)
+      const env = context.env
+      const authError = requireAuthMode(context, 'microsoft')
       if (authError) return authError
       await ensureCommentsSchema(env.DB)
 
-      const body = await parseJsonBody(request)
+      const body = await parseJsonBody(context.req.raw)
       const id = normalizeString(body.id) || null
       const packageId = normalizeString(body.packageId)
       const commentId = normalizeString(body.commentId)
@@ -399,8 +401,8 @@ export function registerCommentsApiRoutes(router: any, jsonHeaders: Record<strin
         return new Response(JSON.stringify({ comment: mapCommentRecordRow(row as CommentRecordRow) }), { headers: jsonHeaders })
       } else {
         // Create new comment
-        if (!packageId) return badRequest('packageId is required when creating a new comment', jsonHeaders)
-        if (!createdBy) return badRequest('createdBy is required when creating a new comment', jsonHeaders)
+        if (!packageId) return badRequest('packageId is required when creating a new comment')
+        if (!createdBy) return badRequest('createdBy is required when creating a new comment')
 
         const pkg = await env.DB.prepare(
           `SELECT id FROM review_package WHERE id = ?`
@@ -434,20 +436,20 @@ export function registerCommentsApiRoutes(router: any, jsonHeaders: Record<strin
       }
     } catch (error: any) {
       console.error('Error saving comment:', error)
-      return serverError(String(error?.message || error), jsonHeaders)
+      return serverError(String(error?.message || error))
     }
   })
 
   // 5. Delete a review package and all associated comments
-  router.delete('/api/reviews/:id', async (request: Request) => {
+  app.delete('/api/reviews/:id', async (context) => {
     try {
-      const env = (request as any).env as CommentsApiEnv
-      const authError = assertRequestAuthMode(request, 'microsoft', jsonHeaders)
+      const env = context.env
+      const authError = requireAuthMode(context, 'microsoft')
       if (authError) return authError
       await ensureCommentsSchema(env.DB)
 
-      const id = normalizeString((request as any).params?.id)
-      if (!id) return badRequest('id is required', jsonHeaders)
+      const id = normalizeString(context.req.param('id'))
+      if (!id) return badRequest('id is required')
 
       const existing = await env.DB.prepare(
         `SELECT id FROM review_package WHERE id = ?`
@@ -467,20 +469,20 @@ export function registerCommentsApiRoutes(router: any, jsonHeaders: Record<strin
       return new Response(null, { status: 204, headers: jsonHeaders })
     } catch (error: any) {
       console.error('Error deleting review package:', error)
-      return serverError(String(error?.message || error), jsonHeaders)
+      return serverError(String(error?.message || error))
     }
   })
 
   // 6. Delete a single comment (does not affect the parent package)
-  router.delete('/api/comments/:id', async (request: Request) => {
+  app.delete('/api/comments/:id', async (context) => {
     try {
-      const env = (request as any).env as CommentsApiEnv
-      const authError = assertRequestAuthMode(request, 'microsoft', jsonHeaders)
+      const env = context.env
+      const authError = requireAuthMode(context, 'microsoft')
       if (authError) return authError
       await ensureCommentsSchema(env.DB)
 
-      const id = normalizeString((request as any).params?.id)
-      if (!id) return badRequest('id is required', jsonHeaders)
+      const id = normalizeString(context.req.param('id'))
+      if (!id) return badRequest('id is required')
 
       const result = await env.DB.prepare(`DELETE FROM comments WHERE id = ?`).bind(id).run()
 
@@ -494,7 +496,9 @@ export function registerCommentsApiRoutes(router: any, jsonHeaders: Record<strin
       return new Response(null, { status: 204, headers: jsonHeaders })
     } catch (error: any) {
       console.error('Error deleting comment:', error)
-      return serverError(String(error?.message || error), jsonHeaders)
+      return serverError(String(error?.message || error))
     }
   })
+
+  return app
 }
