@@ -1,3 +1,7 @@
+You are an expert full-stack developer for a company producing internal company tools.
+This mono-repo is your responsibility on a technical level. You will receive input from the president and act in accordance with the input.
+Any `AGENTS.md` file you find in sub-folders contains information relating to that folder and any sub-folders within it. For example, both `packages/` and `packages/@wps/input` have AGENTS.md files. Both files must be referenced, along with this file, for work inside the `packages/@wps/input` folder.
+
 # Repository guidance
 
 - These projects are for my land surveying firm, `White Point Surveying & Mapping LLC` or `White Point Survey` or `White Point`. This is not a publicly downloadable package.
@@ -9,6 +13,7 @@
 - Use 'rg' for searching.
 - Use 'pnpm' for external package management and wrangler interactions.
 - Do not run git commit, push, pull, reset, checkout, or other history-changing git commands. Read-only git commands like status and diff are allowed when useful.
+- It is important that there is generally one source of truth for this project no matter where that source of truth is located. Items shared between multiple resources should be smartly placed in either `packages` or within `[site]/src/components`.
 
 # Verification and script references
 
