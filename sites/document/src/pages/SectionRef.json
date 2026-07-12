@@ -79,6 +79,13 @@
                     "path": "/tools/field-data-parser",
                     "tags": ["Field Data", "Data Analysis", "Surveying"],
                     "requiresAuth": false
+                },
+                {
+                    "name": "CXL Code List Editor",
+                    "description": "Build a new CHC LandStar (.cxl) point code list from scratch.",
+                    "path": "/tools/cxl-editor",
+                    "tags": ["LandStar", "CXL", "Code List", "Field Data"],
+                    "requiresAuth": false
                 }
             ]
         },
