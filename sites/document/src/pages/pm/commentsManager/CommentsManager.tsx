@@ -549,7 +549,7 @@ export function CommentsManager() {
               <div className='flex flex-col md:flex-row items-start md:items-center gap-2'>
                 <h1 className='text-2xl'><strong>{selectedPackage.projectNumber} - {selectedPackage.projectName}</strong> Review #{selectedPackage.reviewNumber}</h1>
                 {editingPackage ? (
-                <Combobox
+                <Combobox colorMode="auto"
                   key={`package-status-${selectedPackage.id}`}
                   field="packageStatus"
                   label=""
@@ -625,7 +625,7 @@ export function CommentsManager() {
           </div>
 
           <div className='grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-gray-600'>
-            <Textbox
+            <Textbox colorMode="auto"
               field="municipalNumber"
               label="Municipal Project Number"
               labelPosition='side'
@@ -633,7 +633,7 @@ export function CommentsManager() {
               defaultValue={selectedPackage.municipalNumber}
               disabled={!editingPackage}
             />
-            <Textbox
+            <Textbox colorMode="auto"
               field="commentsReceived"
               label="Comments Received"
               labelPosition='side'
@@ -642,7 +642,7 @@ export function CommentsManager() {
               defaultValue={selectedPackage.reviewDate}
               disabled={!editingPackage}
             />
-            <Textbox
+            <Textbox colorMode="auto"
               field="reviewCompletedBy"
               label="Review Completed By"
               labelPosition='side'
@@ -651,7 +651,7 @@ export function CommentsManager() {
               disabled={!editingPackage}
             />
             <div className='md:col-span-3'>
-              <Textarea
+              <Textarea colorMode="auto"
                 field="packageComment"
                 label="Package Comments"
                 defaultValue={selectedPackage.comment}
@@ -665,14 +665,14 @@ export function CommentsManager() {
         <section className="overflow-y-auto">
           <div className='flex flex-row justify-end gap-2 mb-2'>
             {editsMade && (
-              <Button
+              <Button colorMode="auto"
                 label={savingComments ? 'Saving...' : 'Save Changes'}
                 style="primary"
                 onClick={saveAllComments}
                 properties={{ disabled: savingComments }}
               />
             )}
-            <Button
+            <Button colorMode="auto"
               label="Add Comment"
               style="secondary"
               onClick={() => { addQuickComment(); setEditsMade(true); }}

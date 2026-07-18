@@ -147,7 +147,7 @@ export function Settings({
             <section>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <div>
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field="submittalDate"
                             label="Submittal Date"
                             onValidChange={onValueChange}
@@ -157,7 +157,7 @@ export function Settings({
                         />
                     </div>
                     <div>
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field="projectNumber"
                             label="Project Number"
                             onValidChange={onValueChange}
@@ -166,7 +166,7 @@ export function Settings({
                         />
                     </div>
                     <div className="col-span-2">
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field="projectName"
                             label="Project Name"
                             onValidChange={onValueChange}
@@ -175,7 +175,7 @@ export function Settings({
                         />
                     </div>
                     <div>
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field="applicationNumber"
                             label="Application Number"
                             onValidChange={onValueChange}
@@ -184,7 +184,7 @@ export function Settings({
                         />
                     </div>
                     <div>
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field="submittalNumber"
                             label="Submittal Number"
                             onValidChange={onValueChange}
@@ -193,7 +193,7 @@ export function Settings({
                         />
                     </div>
                     <div>
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field="preparerName"
                             label="Preparer Name"
                             onValidChange={onValueChange}
@@ -202,7 +202,7 @@ export function Settings({
                         />
                     </div>
                     <div>
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field="surveyorName"
                             label="Surveyor Name"
                             onValidChange={onValueChange}
@@ -212,7 +212,7 @@ export function Settings({
                     </div>
                     <h2 className="text-lg font-semibold col-span-4 mt-2 mb-2 text-center">Client Information</h2>
                     <div className="col-span-2">
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field="clientName"
                             label="Client Name"
                             defaultValue={projectInfo.clientName || ''}
@@ -221,7 +221,7 @@ export function Settings({
                         />
                     </div>
                     <div className="col-span-2">
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field="clientAddress"
                             label="Client Address"
                             defaultValue={projectInfo.clientAddress || ''}
@@ -232,7 +232,7 @@ export function Settings({
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
                     <div>
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field="clientCity"
                             label="Client City"
                             defaultValue={projectInfo.clientCity || ''}
@@ -241,7 +241,7 @@ export function Settings({
                         />
                     </div>
                     <div>
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field="clientState"
                             label="Client State"
                             defaultValue={projectInfo.clientState || ''}
@@ -250,7 +250,7 @@ export function Settings({
                         />
                     </div>
                     <div>
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field="clientZip"
                             label="Client Zip"
                             defaultValue={projectInfo.clientZip || ''}
@@ -314,12 +314,12 @@ export function Settings({
             </section>
             <section>
                 <div className="flex justify-between">
-                    <Button
+                    <Button colorMode="auto"
                         label="Previous Stage"
                         style="secondary"
                         onClick={onBack}
                     />
-                    <Button
+                    <Button colorMode="auto"
                         label="Next Stage"
                         style="primary"
                         onClick={validateNextStep}

@@ -39,28 +39,28 @@ export function EditPointModal({
             onClose={onClose}
         >
             <div className="space-y-4">
-                <Textbox
+                <Textbox colorMode="auto"
                     field={"pointNumber-" + editedPoint?.id}
                     label="Point Number"
                     defaultValue={editedPoint?.pointNumber}
                     onValidChange={(_, value) => setEditedPoint(prev => prev ? { ...prev, pointNumber: value } : null)}
                     required
                 />
-                <Textbox
+                <Textbox colorMode="auto"
                     field={"pointNorthing-" + editedPoint?.id}
                     label="Point Northing"
                     defaultValue={Math.round(editedPoint?.northing ?? 0).toString()}
                     onValidChange={(_, value) => setEditedPoint(prev => prev ? { ...prev, northing: parseFloat(value) } : null)}
                     type="number"
                 />
-                <Textbox
+                <Textbox colorMode="auto"
                     field={"pointEasting-" + editedPoint?.id}
                     label="Point Easting"
                     defaultValue={Math.round(editedPoint?.easting ?? 0).toString()}
                     onValidChange={(_, value) => setEditedPoint(prev => prev ? { ...prev, easting: parseFloat(value) } : null)}
                     type="number"
                 />
-                <Textbox
+                <Textbox colorMode="auto"
                     field={"pointElevation-" + editedPoint?.id}
                     label="Point Elevation"
                     defaultValue={Math.round(editedPoint?.elevation ?? 0).toString()}
@@ -69,7 +69,7 @@ export function EditPointModal({
                     type="number"
                     disabled={!allowEditingElevation}
                 />
-                <Textbox
+                <Textbox colorMode="auto"
                     field={"pointDescription" + editedPoint?.id}
                     label="Point Description"
                     defaultValue={editedPoint?.description ?? ""}

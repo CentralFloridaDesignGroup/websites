@@ -27,7 +27,7 @@ export default function NewPackage({ form, saving, onFormChange, onSave, onCance
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Textbox
+                <Textbox colorMode="auto"
                     field="projectNumber"
                     label="Project Number"
                     required
@@ -36,7 +36,7 @@ export default function NewPackage({ form, saving, onFormChange, onSave, onCance
                 />
 
 
-                <Textbox
+                <Textbox colorMode="auto"
                     field="reviewNumber"
                     label="Review Number"
                     required
@@ -45,7 +45,7 @@ export default function NewPackage({ form, saving, onFormChange, onSave, onCance
                 />
 
                 <div className='md:col-span-2'>
-                    <Textbox
+                    <Textbox colorMode="auto"
                         field="projectName"
                         label="Project Name"
                         defaultValue={form.projectName}
@@ -54,7 +54,7 @@ export default function NewPackage({ form, saving, onFormChange, onSave, onCance
                 </div>
 
                 <div className='md:col-span-2'>
-                    <Textbox
+                    <Textbox colorMode="auto"
                         field="municipalNumber"
                         label="Municipal Project Number"
                         defaultValue={form.municipalNumber}
@@ -63,7 +63,7 @@ export default function NewPackage({ form, saving, onFormChange, onSave, onCance
                 </div>
 
                 <div className='md:col-span-2'>
-                    <Textbox
+                    <Textbox colorMode="auto"
                         field="completedBy"
                         label="Completed By"
                         defaultValue={form.completedBy}
@@ -73,7 +73,7 @@ export default function NewPackage({ form, saving, onFormChange, onSave, onCance
 
                 <div className='md:col-span-2'>
 
-                    <Textbox
+                    <Textbox colorMode="auto"
                         field="reviewDate"
                         label="Review Date"
                         type="date"
@@ -83,7 +83,7 @@ export default function NewPackage({ form, saving, onFormChange, onSave, onCance
                 </div>
 
                 <div className='md:col-span-4'>
-                    <Textarea
+                    <Textarea colorMode="auto"
                         field="comment"
                         label="Comment"
                         defaultValue={form.comment}
@@ -94,8 +94,8 @@ export default function NewPackage({ form, saving, onFormChange, onSave, onCance
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
-                <Button label="Cancel" style="secondary" onClick={onCancel} />
-                <Button
+                <Button colorMode="auto" label="Cancel" style="secondary" onClick={onCancel} />
+                <Button colorMode="auto"
                     label={saving ? 'Saving...' : 'Save and Open'}
                     style="primary"
                     onClick={onSave}

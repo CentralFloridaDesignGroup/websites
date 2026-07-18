@@ -1,5 +1,5 @@
-import confusedWorker from "../assets/confused_worker.webp";
-import { Button } from "@wps/input";
+﻿import confusedWorker from "../assets/confused_worker.webp";
+import { MarketingButton } from "../components/marketing";
 
 export function ErrorPage() {
     return (
@@ -14,15 +14,15 @@ export function ErrorPage() {
                 <p className="mt-6 text-lg leading-8 text-gray-600">Sorry, we couldn't find the page you're looking for.</p>
                 <p className='text-gray-400'>Error 404</p>
                 <div className="mt-10 flex items-center justify-center gap-x-6">
-                    <Button
+                    <MarketingButton
                         label="Go back home"
-                        style="primary"
+                        variant="primary"
                         size="medium"
                         onClick={() => window.location.href = "/"}
                     />
-                    <Button
+                    <MarketingButton
                         label="Contact support"
-                        style="secondary"
+                        variant="secondary"
                         size="medium"
                         onClick={() => window.location.href = "/contact"}
                     />

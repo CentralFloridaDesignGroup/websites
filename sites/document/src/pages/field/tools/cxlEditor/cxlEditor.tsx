@@ -101,7 +101,7 @@ export function CxlEditor() {
             attribute fields, and symbol styling, then download the finished file.
           </p>
         </div>
-        <Button
+        <Button colorMode="auto"
           label="Report an Issue"
           icon={Mail}
           style="secondary"
@@ -117,14 +117,14 @@ export function CxlEditor() {
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">1. Code List Info</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Textbox
+          <Textbox colorMode="auto"
             field="listName"
             label="List Name"
             value={listName}
             onValidChange={(_field, value) => setListName(value)}
             placeholder="e.g. Standard Boundary Codes"
           />
-          <Textbox
+          <Textbox colorMode="auto"
             field="listDescription"
             label="Description (optional)"
             value={listDescription}
@@ -136,7 +136,7 @@ export function CxlEditor() {
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">2. Point Codes</h2>
-          <Button label="Add Code" icon={Plus} style="primary" size="medium" onClick={openAddModal} />
+          <Button colorMode="auto" label="Add Code" icon={Plus} style="primary" size="medium" onClick={openAddModal} />
         </div>
 
         {codes.length === 0 ? (
@@ -219,7 +219,7 @@ export function CxlEditor() {
           Download the finished .cxl file, then import it into LandStar to test it before using it in
           the field.
         </p>
-        <Button label="Download .cxl File" icon={Download} style="primary" size="medium" onClick={handleGenerate} />
+        <Button colorMode="auto" label="Download .cxl File" icon={Download} style="primary" size="medium" onClick={handleGenerate} />
       </div>
 
       {editingCode && (

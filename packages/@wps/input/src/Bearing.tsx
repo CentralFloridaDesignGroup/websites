@@ -1,9 +1,10 @@
-import { useState } from 'react'
-import { ChevronDown } from 'lucide-react'
+﻿import { useEffect, useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 import { Combobox, ComboboxButton, ComboboxOption, ComboboxOptions } from '@headlessui/react';
+import { cx, errorClass, labelClass, menuClass, optionClass, type InputColorMode } from './styles';
 
-type NorthSouth = 'North' | 'South'
-type EastWest = 'East' | 'West'
+type NorthSouth = 'North' | 'South';
+type EastWest = 'East' | 'West';
 
 interface BearingErrors {
     degrees: boolean;
@@ -11,172 +12,210 @@ interface BearingErrors {
     seconds: boolean;
 }
 
-
+/**
+ * Props for the shared survey bearing input.
+ */
 export interface BearingProperties {
+    /** Field name used for ids and callbacks. */
     field: string;
+    /** Visible label text. When omitted, a screen-reader label is still rendered. */
     label?: string;
+    /** Controlled bearing value formatted as "North 00°00'00\" East". */
     value?: string;
+    /** Called whenever a bearing segment changes. */
     onChange?: (field: string, value: string) => void;
+    /** Target color mode for the control. Defaults to "light". */
+    colorMode?: InputColorMode;
+    /** Optional validation configuration. */
     properties?: {
         required?: boolean;
-    }
+    };
 }
 
-export function Bearing({ field, label, onChange, properties }: BearingProperties): React.JSX.Element {
-    const [northSouth, setNorthSouth] = useState<NorthSouth>('North')
-    const [degrees, setDegrees] = useState<string>('')
-    const [minutes, setMinutes] = useState<string>('')
-    const [seconds, setSeconds] = useState<string>('')
-    const [eastWest, setEastWest] = useState<EastWest>('East')
-    const [errors, setErrors] = useState<BearingErrors>({ degrees: false, minutes: false, seconds: false })
+function convertNumber(val: string): string {
+    const numericValue = Number(val || 0);
+    return new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+        minimumIntegerDigits: 2
+    }).format(Number.isFinite(numericValue) ? numericValue : 0);
+}
 
-    const convertNumber = (val: string): string => {
-        const formatter = new Intl.NumberFormat('en-US', {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-            minimumIntegerDigits: 2
-        })
-        return formatter.format(Number(val || 0))
-    }
+function parseBearing(value: string | undefined): { northSouth: NorthSouth; degrees: string; minutes: string; seconds: string; eastWest: EastWest } {
+    if (!value) return { northSouth: 'North', degrees: '', minutes: '', seconds: '', eastWest: 'East' };
+    const match = value.match(/^(North|South)\s+(\d{1,2})°(\d{1,2})'(\d{1,2})"\s+(East|West)$/);
+    if (!match) return { northSouth: 'North', degrees: '', minutes: '', seconds: '', eastWest: 'East' };
+    return {
+        northSouth: match[1] as NorthSouth,
+        degrees: match[2],
+        minutes: match[3],
+        seconds: match[4],
+        eastWest: match[5] as EastWest
+    };
+}
 
-    const validateDegrees = (value: string): boolean => {
-        if (value === '') return true
-        const num = parseFloat(value)
-        return !isNaN(num) && num >= 0 && num <= 90
-    }
+/**
+ * Dense industrial quadrant bearing input for surveying workflows.
+ */
+export function Bearing({ field, label, value, onChange, colorMode = "light", properties }: BearingProperties): React.JSX.Element {
+    const parsedValue = parseBearing(value);
+    const [northSouth, setNorthSouth] = useState<NorthSouth>(parsedValue.northSouth);
+    const [degrees, setDegrees] = useState<string>(parsedValue.degrees);
+    const [minutes, setMinutes] = useState<string>(parsedValue.minutes);
+    const [seconds, setSeconds] = useState<string>(parsedValue.seconds);
+    const [eastWest, setEastWest] = useState<EastWest>(parsedValue.eastWest);
+    const [errors, setErrors] = useState<BearingErrors>({ degrees: false, minutes: false, seconds: false });
 
-    const validateMinutes = (value: string): boolean => {
-        if (value === '') return true
-        const num = parseFloat(value)
-        return !isNaN(num) && num >= 0 && num <= 59
-    }
+    useEffect(() => {
+        const nextValue = parseBearing(value);
+        setNorthSouth(nextValue.northSouth);
+        setDegrees(nextValue.degrees);
+        setMinutes(nextValue.minutes);
+        setSeconds(nextValue.seconds);
+        setEastWest(nextValue.eastWest);
+    }, [value]);
 
-    const validateSeconds = (value: string): boolean => {
-        if (value === '') return true
-        const num = parseFloat(value)
-        return !isNaN(num) && num >= 0 && num <= 59
-    }
+    const validateDegrees = (nextValue: string): boolean => {
+        if (nextValue === '') return !properties?.required;
+        const num = parseFloat(nextValue);
+        return !Number.isNaN(num) && num >= 0 && num <= 90;
+    };
 
-    const handleChange = (
-        newNorth: NorthSouth,
-        newDegrees: string,
-        newMinutes: string,
-        newSeconds: string,
-        newEast: EastWest
+    const validateMinutesOrSeconds = (nextValue: string): boolean => {
+        if (nextValue === '') return !properties?.required;
+        const num = parseFloat(nextValue);
+        return !Number.isNaN(num) && num >= 0 && num <= 59;
+    };
+
+    const emitChange = (
+        nextNorth: NorthSouth,
+        nextDegrees: string,
+        nextMinutes: string,
+        nextSeconds: string,
+        nextEast: EastWest
     ): void => {
-        const bearingString = `${newNorth} ${convertNumber(newDegrees)}°${convertNumber(newMinutes)}'${convertNumber(newSeconds)}" ${newEast}`
-        onChange?.(field, bearingString.trim())
-    }
+        const bearingString = `${nextNorth} ${convertNumber(nextDegrees)}°${convertNumber(nextMinutes)}'${convertNumber(nextSeconds)}" ${nextEast}`;
+        onChange?.(field, bearingString.trim());
+    };
 
-    const hasError = errors.degrees || errors.minutes || errors.seconds
+    const hasError = errors.degrees || errors.minutes || errors.seconds;
+    const controlTextClass = colorMode === "dark" ? "text-gray-100" : colorMode === "auto" ? "text-gray-900 dark:text-gray-100" : "text-gray-900";
 
     return (
         <div>
-            <label htmlFor={`${field}-northSouth`} className={`${label ? '' : 'hidden'} block text-sm/6 font-medium text-gray-900 dark:text-gray-300 text-start ${properties?.required ? 'after:text-red-500 after:content-["*"]' : ''}`}>
-                {label}
+            <label htmlFor={`${field}-northSouth`} className={labelClass({ colorMode, required: properties?.required, hidden: !label })}>
+                {label ?? field}
             </label>
             <div id={field}>
-                <div className={`flex w-full items-center bg-gray-50/20 py-1 text-gray-900 dark:text-gray-300 dark:bg-gray-700/75 border-b ${hasError ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'} transition focus-within:border-primary focus-within:border-b-2`}>
-                    <Combobox as="div" className="relative px-2" value={northSouth} onChange={(value) => {
-                        const newNorth = value as NorthSouth
-                        setNorthSouth(newNorth)
-                        handleChange(newNorth, degrees, minutes, seconds, eastWest)
-                    }
-                    }>
-                        <div className="relative">
-                            <ComboboxButton className="flex items-center gap-1 text-sm/6 text-gray-900 dark:text-gray-300 focus:outline-none">
-                                {northSouth}
-                                <ChevronDown aria-hidden="true" className="size-4 text-gray-500 dark:text-gray-400" />
-                            </ComboboxButton>
-                            <ComboboxOptions className="absolute mt-1 w-full rounded-md bg-white shadow-lg z-10">
-                                <ComboboxOption value="North" className={({ selected }) => `cursor-pointer select-none px-2 py-1 text-sm/6 ${selected ? 'bg-primary text-white' : 'text-gray-900 dark:text-gray-300 dark:bg-gray-700'}`}>
-                                    North
-                                </ComboboxOption>
-                                <ComboboxOption value="South" className={({ selected }) => `cursor-pointer select-none px-2 py-1 text-sm/6 ${selected ? 'bg-primary text-white' : 'text-gray-900 dark:text-gray-300 dark:bg-gray-700'}`}>
-                                    South
-                                </ComboboxOption>
-                            </ComboboxOptions>
-                        </div>
-                    </Combobox>
-                    <input
+                <div className={cx(
+                    "flex w-full items-center border-b bg-transparent py-1 transition-colors focus-within:border-b-2 focus-within:border-primary",
+                    hasError ? "border-red-500" : colorMode === "dark" ? "border-gray-600" : colorMode === "auto" ? "border-gray-300 dark:border-gray-600" : "border-gray-300",
+                    controlTextClass
+                )}>
+                    <BearingSelect
+                        value={northSouth}
+                        options={["North", "South"]}
+                        colorMode={colorMode}
+                        onChange={(nextNorth) => {
+                            setNorthSouth(nextNorth as NorthSouth);
+                            emitChange(nextNorth as NorthSouth, degrees, minutes, seconds, eastWest);
+                        }}
+                    />
+                    <BearingNumberInput
                         id={`${field}-degrees`}
                         name={`${field}-degrees`}
-                        type="number"
-                        placeholder="00"
                         value={degrees}
-                        onChange={(e) => {
-                            const value = e.target.value
-                            setDegrees(value)
-                            const isValid = validateDegrees(value)
-                            setErrors(prev => ({ ...prev, degrees: !isValid }))
-                            handleChange(northSouth, value, minutes, seconds, eastWest)
+                        placeholder="00"
+                        colorMode={colorMode}
+                        onChange={(nextValue) => {
+                            setDegrees(nextValue);
+                            const isValid = validateDegrees(nextValue);
+                            setErrors((prev) => ({ ...prev, degrees: !isValid }));
+                            emitChange(northSouth, nextValue, minutes, seconds, eastWest);
                         }}
-                        className="block min-w-0 w-12 bg-transparent py-0 pr-1 pl-1 text-sm/6 text-gray-900 placeholder:text-gray-400 focus:outline-none dark:text-gray-300"
                     />
-                    <div className="shrink-0 text-base text-gray-500 select-none sm:text-sm/6">°</div>
-                    <input
+                    <div className="shrink-0 select-none text-sm/6 text-gray-500">°</div>
+                    <BearingNumberInput
                         id={`${field}-minutes`}
                         name={`${field}-minutes`}
-                        type="number"
-                        placeholder="00"
                         value={minutes}
-                        onChange={(e) => {
-                            const value = e.target.value
-                            setMinutes(value)
-                            const isValid = validateMinutes(value)
-                            setErrors(prev => ({ ...prev, minutes: !isValid }))
-                            handleChange(northSouth, degrees, value, seconds, eastWest)
+                        placeholder="00"
+                        colorMode={colorMode}
+                        onChange={(nextValue) => {
+                            setMinutes(nextValue);
+                            const isValid = validateMinutesOrSeconds(nextValue);
+                            setErrors((prev) => ({ ...prev, minutes: !isValid }));
+                            emitChange(northSouth, degrees, nextValue, seconds, eastWest);
                         }}
-                        className="block min-w-0 w-12 bg-transparent py-0 pr-1 pl-1 text-sm/6 text-gray-900 placeholder:text-gray-400 focus:outline-none dark:text-gray-300"
                     />
-                    <div className="shrink-0 text-base text-gray-500 select-none sm:text-sm/6">'</div>
-                    <input
+                    <div className="shrink-0 select-none text-sm/6 text-gray-500">'</div>
+                    <BearingNumberInput
                         id={`${field}-seconds`}
                         name={`${field}-seconds`}
-                        type="number"
-                        placeholder="00"
                         value={seconds}
-                        onChange={(e) => {
-                            const value = e.target.value
-                            setSeconds(value)
-                            const isValid = validateSeconds(value)
-                            setErrors(prev => ({ ...prev, seconds: !isValid }))
-                            handleChange(northSouth, degrees, minutes, value, eastWest)
+                        placeholder="00"
+                        colorMode={colorMode}
+                        onChange={(nextValue) => {
+                            setSeconds(nextValue);
+                            const isValid = validateMinutesOrSeconds(nextValue);
+                            setErrors((prev) => ({ ...prev, seconds: !isValid }));
+                            emitChange(northSouth, degrees, minutes, nextValue, eastWest);
                         }}
-                        className="block min-w-0 w-12 bg-transparent py-0 pr-1 pl-1 text-sm/6 text-gray-900 placeholder:text-gray-400 focus:outline-none dark:text-gray-300"
                     />
-                    <div className="shrink-0 text-base text-gray-500 select-none sm:text-sm/6">"</div>
-
-                    <Combobox as="div" className="relative px-2" value={eastWest} onChange={(value) => {
-                        const newEast = value as EastWest
-                        setEastWest(newEast)
-                        handleChange(northSouth, degrees, minutes, seconds, newEast)
-                    }
-                    }>
-                        <div className="relative">
-                            <ComboboxButton className="flex items-center gap-1 text-sm/6 text-gray-900 dark:text-gray-300 focus:outline-none">
-                                {eastWest}
-                                <ChevronDown aria-hidden="true" className="size-4 text-gray-500 dark:text-gray-400" />
-                            </ComboboxButton>
-                            <ComboboxOptions className="absolute mt-1 w-full rounded-md bg-white shadow-lg z-10">
-                                <ComboboxOption value="East" className={({ focus, selected }) => `cursor-pointer select-none px-2 py-1 text-sm/6 ${selected ? 'bg-primary text-white' : 'text-gray-900 dark:text-gray-300 dark:bg-gray-700'} ${focus ? 'bg-gray-100 dark:bg-gray-600' : ''}`}>
-                                    East
-                                </ComboboxOption>
-                                <ComboboxOption value="West" className={({ focus, selected }) => `cursor-pointer select-none px-2 py-1 text-sm/6 ${selected ? 'bg-primary text-white' : 'text-gray-900 dark:text-gray-300 dark:bg-gray-700'} ${focus ? 'bg-gray-100 dark:bg-gray-600' : ''}`}>
-                                    West
-                                </ComboboxOption>
-                            </ComboboxOptions>
-                        </div>
-                    </Combobox>
+                    <div className="shrink-0 select-none text-sm/6 text-gray-500">"</div>
+                    <BearingSelect
+                        value={eastWest}
+                        options={["East", "West"]}
+                        colorMode={colorMode}
+                        onChange={(nextEast) => {
+                            setEastWest(nextEast as EastWest);
+                            emitChange(northSouth, degrees, minutes, seconds, nextEast as EastWest);
+                        }}
+                    />
                 </div>
-                {hasError && (
-                    <div className="mt-0.5 text-sm text-red-600 text-start" id={`${field}-error`}>
+                {hasError ? (
+                    <div className={errorClass()} id={`${field}-error`}>
                         {errors.degrees && <div><span className="font-medium">Error: </span>Degrees must be between 0 and 90</div>}
                         {errors.minutes && <div><span className="font-medium">Error: </span>Minutes must be between 0 and 59</div>}
                         {errors.seconds && <div><span className="font-medium">Error: </span>Seconds must be between 0 and 59</div>}
                     </div>
-                )}
+                ) : null}
             </div>
         </div>
-    )
+    );
+}
+
+function BearingSelect({ value, options, colorMode, onChange }: { value: string; options: string[]; colorMode: InputColorMode; onChange: (value: string) => void }): React.JSX.Element {
+    return (
+        <Combobox as="div" className="relative px-2" value={value} onChange={(nextValue) => onChange(String(nextValue ?? value))}>
+            <ComboboxButton className="flex items-center gap-1 text-sm/6 focus:outline-none">
+                {value}
+                <ChevronDown aria-hidden="true" className="size-4 text-gray-500" />
+            </ComboboxButton>
+            <ComboboxOptions className={menuClass(colorMode, "min-w-24")}>
+                {options.map((option) => (
+                    <ComboboxOption key={option} value={option} className={({ focus, selected }) => optionClass({ colorMode, focus, selected })}>
+                        {option}
+                    </ComboboxOption>
+                ))}
+            </ComboboxOptions>
+        </Combobox>
+    );
+}
+
+function BearingNumberInput({ id, name, value, placeholder, colorMode, onChange }: { id: string; name: string; value: string; placeholder: string; colorMode: InputColorMode; onChange: (value: string) => void }): React.JSX.Element {
+    return (
+        <input
+            id={id}
+            name={name}
+            type="number"
+            placeholder={placeholder}
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            className={cx(
+                "block w-12 min-w-0 bg-transparent py-0 pl-1 pr-1 text-sm/6 placeholder:text-gray-400 focus:outline-none",
+                colorMode === "dark" ? "text-gray-100" : colorMode === "auto" ? "text-gray-900 dark:text-gray-100" : "text-gray-900"
+            )}
+        />
+    );
 }

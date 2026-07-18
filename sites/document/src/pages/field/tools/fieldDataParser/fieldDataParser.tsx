@@ -359,13 +359,13 @@ export function FieldDataParser() {
 
           {/* Process Button */}
           <div className="mt-6 flex gap-3">
-            <Button
+            <Button colorMode="auto"
               label="Process File"
               onClick={processFile}
               style="primary"
               size="medium"
             />
-            <Button
+            <Button colorMode="auto"
               label="Clear All"
               onClick={clearAll}
               style="secondary"
@@ -407,7 +407,7 @@ export function FieldDataParser() {
           <p className="text-gray-600 dark:text-gray-300 mb-4">
             Your file has been processed successfully. Download it now.
           </p>
-          <Button
+          <Button colorMode="auto"
             label="Download Processed File"
             onClick={downloadFile}
             style="primary"

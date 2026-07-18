@@ -20,7 +20,7 @@ export function NoteBlock({
             <div className="flex flex-col md:flex-row gap-2 mb-2 items-center justify-between">
                 <h2 className="text-xl font-semibold grow text-center md:text-left">{title}</h2>
                 <div className="grid grid-cols-2 gap-2">
-                    <Button
+                    <Button colorMode="auto"
                         style="secondary"
                         label="Copy Note"
                         onClick={() => {
@@ -32,7 +32,7 @@ export function NoteBlock({
                             });
                         }}
                     />
-                    <Button
+                    <Button colorMode="auto"
                         style={includeExport ? 'success' : 'primary'}
                         label={includeExport ? 'Remove from Export' : 'Include Export'}
                         onClick={() => {

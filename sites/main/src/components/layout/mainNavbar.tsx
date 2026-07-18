@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useLocation } from "react-router-dom";
-import * as Input from "@wps/input";
+import { ChevronDown } from "lucide-react";
+import { MarketingButton } from "../marketing";
 import White_Point_Logo_Name from "../../assets/white_point_logo_name_1625_500.webp";
 
 const navItems = [
@@ -38,7 +39,7 @@ export function Navbar() {
 									<a
 										key={item.label}
 										href={item.href}
-										className={`transition-colors hover:text-gray-900 ${isActive ? "text-gray-900 border-b-2 border-primary" : "text-gray-700"}`}
+										className={`transition-colors hover:text-gray-900 ${isActive ? "border-b-2 border-primary text-gray-900" : "text-gray-700"}`}
 									>
 										{item.label}
 									</a>
@@ -49,19 +50,19 @@ export function Navbar() {
 								<div key={item.label} className="group relative">
 									<a
 										href={item.href}
-										className={`inline-flex items-center gap-1 transition-colors hover:text-gray-900 ${isActive ? "text-gray-900 border-b-2 border-primary" : "text-gray-700"}`}
+										className={`inline-flex items-center gap-1 transition-colors hover:text-gray-900 ${isActive ? "border-b-2 border-primary text-gray-900" : "text-gray-700"}`}
 									>
 										{item.label}
-										<span className="text-xs">▾</span>
+										<ChevronDown className="h-4 w-4" aria-hidden="true" />
 									</a>
-									<div className="invisible absolute left-0 top-full z-10 w-64 translate-y-1 rounded-md border border-gray-200 bg-white py-2 text-sm text-gray-700 opacity-0 shadow-lg transition group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+									<div className="invisible absolute left-0 top-full z-10 w-64 translate-y-1 border border-gray-200 bg-white py-2 text-sm text-gray-700 opacity-0 shadow-lg transition group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
 										{item.subItems?.map((subItem) => {
 											const isSubActive = activePath.startsWith(subItem.href);
 											return (
 												<a
 													key={subItem.label}
 													href={subItem.href}
-													className={`block px-4 py-2 transition-colors hover:bg-gray-50 hover:text-gray-900 ${isSubActive ? "text-white bg-primary p-2 rounded" : "text-gray-700"}`}
+													className={`block px-4 py-2 transition-colors hover:bg-gray-50 hover:text-gray-900 ${isSubActive ? "bg-primary text-white" : "text-gray-700"}`}
 												>
 													{subItem.label}
 												</a>
@@ -72,9 +73,9 @@ export function Navbar() {
 							);
 						})}
 					</div>
-					<Input.Button
+					<MarketingButton
 						label="Contact Us"
-						style="primary"
+						variant="primary"
 						size="small"
 						onClick={() => {
 							setMenuOpen(false);
@@ -92,15 +93,9 @@ export function Navbar() {
 				>
 					<span className="sr-only">Toggle menu</span>
 					<span className="relative h-4 w-5">
-						<span
-							className={`absolute left-0 top-0 h-0.5 w-full bg-current transition ${menuOpen ? "translate-y-1.5 rotate-45" : ""}`}
-						/>
-						<span
-							className={`absolute left-0 top-1.5 h-0.5 w-full bg-current transition ${menuOpen ? "opacity-0" : ""}`}
-						/>
-						<span
-							className={`absolute left-0 top-3 h-0.5 w-full bg-current transition ${menuOpen ? "-translate-y-1.5 -rotate-45" : ""}`}
-						/>
+						<span className={`absolute left-0 top-0 h-0.5 w-full bg-current transition ${menuOpen ? "translate-y-1.5 rotate-45" : ""}`} />
+						<span className={`absolute left-0 top-1.5 h-0.5 w-full bg-current transition ${menuOpen ? "opacity-0" : ""}`} />
+						<span className={`absolute left-0 top-3 h-0.5 w-full bg-current transition ${menuOpen ? "-translate-y-1.5 -rotate-45" : ""}`} />
 					</span>
 				</button>
 			</div>
@@ -115,10 +110,7 @@ export function Navbar() {
 									item.subItems?.some((subItem) => activePath.startsWith(subItem.href));
 								return (
 									<div key={item.label} className="flex flex-col gap-2">
-										<a
-											href={item.href}
-											className={`transition-colors hover:text-gray-900 ${isActive ? "text-gray-900 border-b-2 border-primary" : "text-gray-700"}`}
-										>
+										<a href={item.href} className={`transition-colors hover:text-gray-900 ${isActive ? "border-b-2 border-primary text-gray-900" : "text-gray-700"}`}>
 											{item.label}
 										</a>
 										{item.subItems?.length ? (
@@ -126,11 +118,7 @@ export function Navbar() {
 												{item.subItems.map((subItem) => {
 													const isSubActive = activePath.startsWith(subItem.href);
 													return (
-														<a
-															key={subItem.label}
-															href={subItem.href}
-															className={`transition-colors hover:text-gray-900 ${isSubActive ? "text-white bg-primary p-2 rounded" : "text-gray-700"}`}
-														>
+														<a key={subItem.label} href={subItem.href} className={`transition-colors hover:text-gray-900 ${isSubActive ? "bg-primary p-2 text-white" : "text-gray-700"}`}>
 															{subItem.label}
 														</a>
 													);
@@ -141,9 +129,9 @@ export function Navbar() {
 								);
 							})}
 						</div>
-						<Input.Button
+						<MarketingButton
 							label="Contact Us"
-							style="primary"
+							variant="primary"
 							size="medium"
 							onClick={() => {
 								setMenuOpen(false);

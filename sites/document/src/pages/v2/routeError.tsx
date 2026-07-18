@@ -36,7 +36,7 @@ export function RouteError() {
                 </h1>
                 <p className="mt-6 text-lg leading-8 text-gray-600">{message}</p>
                 <div className="mt-10 flex items-center justify-center gap-x-6">
-                    <Button
+                    <Button colorMode="auto"
                         label="Go back home"
                         style="primary"
                         size="medium"

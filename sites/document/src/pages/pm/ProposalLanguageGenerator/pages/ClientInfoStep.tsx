@@ -88,7 +88,7 @@ export function ClientInfoStep({ initialValues, onNext }: ClientInfoStepProps) {
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:col-span-2">
                     <div className="flex flex-col gap-2">
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field="clientName"
                             label="Client Name"
                             required
@@ -99,7 +99,7 @@ export function ClientInfoStep({ initialValues, onNext }: ClientInfoStepProps) {
                         {errors.errors.clientName && <p className="text-red-500 text-sm">{errors.errors.clientName}</p>}
                     </div>
                     <div className={`flex flex-col gap-2 ${clientType === "company" ? "" : "invisible"}`}>
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field="contactName"
                             label="Contact Name"
                             required
@@ -110,7 +110,7 @@ export function ClientInfoStep({ initialValues, onNext }: ClientInfoStepProps) {
                         {errors.errors.contactName && <p className="text-red-500 text-sm">{errors.errors.contactName}</p>}
                     </div>
                     <div className="flex flex-col gap-2">
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field="emailAddress"
                             label="Email Address"
                             required
@@ -121,7 +121,7 @@ export function ClientInfoStep({ initialValues, onNext }: ClientInfoStepProps) {
                         {errors.errors.email && <p className="text-red-500 text-sm">{errors.errors.email}</p>}
                     </div>
                     <div className="flex flex-col gap-2">
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field="phone"
                             label="Phone Number"
                             required
@@ -133,13 +133,13 @@ export function ClientInfoStep({ initialValues, onNext }: ClientInfoStepProps) {
                     </div>
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 lg:col-span-4">
-                    <Button
+                    <Button colorMode="auto"
                         label={copyProjectAddress ? "Clear Project Address" : "Copy Project Address"}
                         style={copyProjectAddress ? "success" : "secondary"}
                         onClick={toggleCopyProjectAddress}
                     />
                     <div className="flex flex-col gap-2">
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field="clientAddressLine1"
                             label="Client Mailing Address"
                             required
@@ -151,7 +151,7 @@ export function ClientInfoStep({ initialValues, onNext }: ClientInfoStepProps) {
                         {errors.errors.clientAddressLine1 && <p className="text-red-500 text-sm">{errors.errors.clientAddressLine1}</p>}
                     </div>
                     <div className="flex flex-col gap-2">
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field="clientAddressLine2"
                             label="Unit / Apt / Ste"
                             value={form.clientAddressLine2 || ''}
@@ -161,7 +161,7 @@ export function ClientInfoStep({ initialValues, onNext }: ClientInfoStepProps) {
                         {errors.errors.clientAddressLine2 && <p className="text-red-500 text-sm">{errors.errors.clientAddressLine2}</p>}
                     </div>
                     <div className="flex flex-col gap-2">
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field="clientCity"
                             label="City"
                             required
@@ -173,7 +173,7 @@ export function ClientInfoStep({ initialValues, onNext }: ClientInfoStepProps) {
                         {errors.errors.clientCity && <p className="text-red-500 text-sm">{errors.errors.clientCity}</p>}
                     </div>
                     <div className="flex flex-col gap-2">
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field="clientState"
                             label="State"
                             required
@@ -185,7 +185,7 @@ export function ClientInfoStep({ initialValues, onNext }: ClientInfoStepProps) {
                         {errors.errors.clientState && <p className="text-red-500 text-sm">{errors.errors.clientState}</p>}
                     </div>
                     <div className="flex flex-col gap-2">
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field="clientZip"
                             label="Zip Code"
                             required
@@ -198,7 +198,7 @@ export function ClientInfoStep({ initialValues, onNext }: ClientInfoStepProps) {
                     </div>
                 </div>
                 <div className="flex justify-end md:col-span-2 lg:col-span-4">
-                    <Button
+                    <Button colorMode="auto"
                         label="Next: Select Services"
                         style="primary"
                         onClick={() => {

@@ -30,7 +30,7 @@ export function Instructions({ onNext, markdownFile }: { onNext: () => void, mar
             <section>
                 <div className="flex justify-between items-center mb-4">
                     <h1 className="text-2xl font-bold mb-4 grow">Instructions</h1>
-                    <Button
+                    <Button colorMode="auto"
                         label="Next Stage"
                         style="primary"
                         onClick={onNext}

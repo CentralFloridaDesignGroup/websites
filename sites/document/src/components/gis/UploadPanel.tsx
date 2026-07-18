@@ -280,7 +280,7 @@ export function UploadPanel({ isOpen, currentUser, onClose, onImport }: UploadPa
     <aside className="absolute left-1/2 top-1/2 z-[600] max-h-[calc(100vh-7rem)] w-[calc(100%-1rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-md border border-slate-300 bg-white p-4 shadow-lg sm:max-h-[calc(100vh-6rem)] dark:bg-slate-800 dark:border-slate-700">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-base font-semibold text-slate-900 dark:text-white">Upload Points</h3>
-        <Button
+        <Button colorMode="auto"
           label="Close"
           style="primary"
           size="small"

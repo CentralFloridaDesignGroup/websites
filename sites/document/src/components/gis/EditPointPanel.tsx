@@ -290,14 +290,14 @@ export function EditPointPanel({
         </p>
 
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <Textbox
+          <Textbox colorMode="auto"
             field="edit-point-number"
             label="Point Number"
             defaultValue={pointNumber}
             required
             onValidChange={(_, value) => setPointNumber(value)}
           />
-          <Textbox
+          <Textbox colorMode="auto"
             field="edit-project-number"
             label="Project Number"
             defaultValue={projectNumber}
@@ -307,7 +307,7 @@ export function EditPointPanel({
         </div>
 
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-          <Textbox
+          <Textbox colorMode="auto"
             field="edit-point-northing"
             label={
               statePlaneProjection === "EPSG:4326" ? "Latitude" : "Northing"
@@ -320,7 +320,7 @@ export function EditPointPanel({
               recomputeCoordinates(value, easting);
             }}
           />
-          <Textbox
+          <Textbox colorMode="auto"
             field="edit-point-easting"
             label={
               statePlaneProjection === "EPSG:4326" ? "Longitude" : "Easting"
@@ -333,7 +333,7 @@ export function EditPointPanel({
               recomputeCoordinates(northing, value);
             }}
           />
-          <Combobox
+          <Combobox colorMode="auto"
             field="edit-point-state-plane-projection"
             label="Projection"
             selections={statePlaneProjectionOptions.map((option) => ({
@@ -349,7 +349,7 @@ export function EditPointPanel({
               recomputeCoordinates(northing, easting, projection);
             }}
           />
-          <Textbox
+          <Textbox colorMode="auto"
             field="edit-point-horizontal-accuracy"
             label="Horizontal Accuracy"
             type="number"
@@ -365,7 +365,7 @@ export function EditPointPanel({
               }))
             }
           />
-          <Combobox
+          <Combobox colorMode="auto"
             field="edit-point-horizontal-establishment-method"
             label="Horizontal Establishment"
             selections={horizontalEstablishmentMethodOptions}
@@ -383,7 +383,7 @@ export function EditPointPanel({
         </div>
 
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <Combobox
+          <Combobox colorMode="auto"
             field="edit-point-material"
             label="Material"
             selections={pointMaterialOptions.map((option) => ({
@@ -395,7 +395,7 @@ export function EditPointPanel({
             )}
             onValidChange={(_, value) => setMaterial(value as PointMaterial)}
           />
-          <Textbox
+          <Textbox colorMode="auto"
             field="edit-point-witness"
             label="Witness"
             defaultValue={witness}
@@ -404,7 +404,7 @@ export function EditPointPanel({
         </div>
 
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-          <Textbox
+          <Textbox colorMode="auto"
             field="edit-point-elevation"
             label="Elevation (NAVD88)"
             type="number"
@@ -412,7 +412,7 @@ export function EditPointPanel({
             required
             onValidChange={(_, value) => setElevation(value)}
           />
-          <Textbox
+          <Textbox colorMode="auto"
             field="edit-point-vertical-accuracy"
             label="Vertical Accuracy"
             type="number"
@@ -428,7 +428,7 @@ export function EditPointPanel({
               }))
             }
           />
-          <Combobox
+          <Combobox colorMode="auto"
             field="edit-point-vertical-establishment-method"
             label="Vertical Establishment"
             selections={verticalEstablishmentMethodOptions}
@@ -443,21 +443,21 @@ export function EditPointPanel({
               }))
             }
           />
-          <Textbox
+          <Textbox colorMode="auto"
             field="edit-point-elevation-ngvd29"
             label="Elevation (NGVD29)"
             type="number"
             defaultValue={elevationNgvd29}
             onValidChange={(_, value) => setElevationNgvd29(value)}
           />
-          <Textbox
+          <Textbox colorMode="auto"
             field="edit-conversion-factor"
             label="Conversion Factor"
             type="number"
             defaultValue={conversionFactor}
             onValidChange={(_, value) => setConversionFactor(value)}
           />
-          <Textbox
+          <Textbox colorMode="auto"
             field="edit-conversion-sigma"
             label="Conversion Sigma"
             type="number"
@@ -466,7 +466,7 @@ export function EditPointPanel({
           />
         </div>
 
-        <Textarea
+        <Textarea colorMode="auto"
           field="edit-notes"
           label="Notes"
           defaultValue={notes}
@@ -475,7 +475,7 @@ export function EditPointPanel({
         />
 
         <div className="grid grid-cols-2 gap-2">
-          <Textbox
+          <Textbox colorMode="auto"
             field="edit-latitude"
             value={latitude}
             readOnly
@@ -484,7 +484,7 @@ export function EditPointPanel({
             }
             className="w-full rounded border border-slate-300 bg-slate-50 px-2 py-1 text-slate-700"
           />
-          <Textbox
+          <Textbox colorMode="auto"
             field="edit-longitude"
             value={longitude}
             readOnly
@@ -500,14 +500,14 @@ export function EditPointPanel({
         ) : null}
 
         <div className="flex justify-between gap-2">
-          <Button
+          <Button colorMode="auto"
             label={deleting ? "Deleting..." : "Delete Point"}
             style="danger"
             properties={{ disabled: saving || deleting }}
             onClick={onDeletePoint}
           />
 
-          <Button
+          <Button colorMode="auto"
             label={saving ? "Saving..." : "Save Changes"}
             style="primary"
             size="small"

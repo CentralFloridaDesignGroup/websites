@@ -168,7 +168,7 @@ export default function BoundarySurveyChecklist() {
                             )}
                         </div>
                         <div className="gap-4 flex flex-col md:flex-row">
-                            <Button
+                            <Button colorMode="auto"
                                 onClick={handlePrint}
                                 label="Print Checklist"
                                 icon={Printer}
@@ -382,8 +382,8 @@ const ReviewerModal = ({ isOpen, includeComments, onClose, onSave }: { isOpen: b
                 </div>
 
                 <div className="flex justify-between gap-4">
-                    <Button style="secondary" onClick={() => { onClose(); }} label="Cancel" />
-                    <Button style="primary" onClick={() => { onSave({ reviewer, jobNumber, date, notes, includeComments: includeComments }); onClose(); }} label="Save Notes" />
+                    <Button colorMode="auto" style="secondary" onClick={() => { onClose(); }} label="Cancel" />
+                    <Button colorMode="auto" style="primary" onClick={() => { onSave({ reviewer, jobNumber, date, notes, includeComments: includeComments }); onClose(); }} label="Save Notes" />
                 </div>
             </div>
         </div>

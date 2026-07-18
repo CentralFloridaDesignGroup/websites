@@ -40,7 +40,7 @@ export function PreviewStep({ clientInfo, services, onBack }: PreviewStepProps) 
 
             {/* top nav */}
             <div className="flex justify-between mb-6">
-                <Button label="Back" style="secondary" onClick={onBack} />
+                <Button colorMode="auto" label="Back" style="secondary" onClick={onBack} />
                 <div className="flex gap-2">
                     <button
                         onClick={handleDownloadWord}

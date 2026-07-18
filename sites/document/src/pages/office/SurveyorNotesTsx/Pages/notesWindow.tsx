@@ -48,13 +48,13 @@ export function NotesWindow({
             <div className='flex flex-col md:flex-row md:justify-between mb-6 gap-2'>
                 <h2 className="text-2xl font-bold mb-4 text-center md:text-left flex-1">Surveyor Notes</h2>
                 {exportNotes.length > 0 && (
-                    <Button
+                    <Button colorMode="auto"
                         style='success'
                         onClick={() => onExport(exportNotes)}
                         label={`Export ${exportNotes.length} Note${exportNotes.length > 1 ? 's' : ''}`}
                     />
                 )}
-                <Button
+                <Button colorMode="auto"
                     style='primary'
                     onClick={onHide}
                     label='Open Parameters'

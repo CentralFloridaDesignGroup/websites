@@ -1,13 +1,22 @@
-// Input components
+﻿// Input components
 // Add shared form input components here
 
 export { Textbox } from './Textbox'
+export type { TextboxProperties } from './Textbox'
 export { Bearing } from './Bearing'
+export type { BearingProperties } from './Bearing'
 export { Checkbox } from './Checkbox'
+export type { CheckboxProperties } from './Checkbox'
 export { Button } from './Button'
+export type { ButtonProperties } from './Button'
 export { Combobox } from './Combobox'
+export type { ComboboxProperties } from './Combobox'
 export { Multiselect } from './Multiselect'
+export type { MultiselectComponentProps } from './Multiselect'
 export { Textarea } from './Textarea'
+export type { TextareaProperties } from './Textarea'
 export { TextboxSuggestion } from './TextboxSuggestion'
+export type { TextboxSuggestionProperties } from './TextboxSuggestion'
 export { CardButton } from './CardButton'
-
+export type { CardButtonProperties } from './CardButton'
+export type { InputColorMode, LabelPosition } from './styles'

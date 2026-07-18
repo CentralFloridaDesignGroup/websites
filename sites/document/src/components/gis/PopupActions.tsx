@@ -202,7 +202,7 @@ export function PopupActions({
         </div>
       </div>
       {currentUser !== "unknown-user" && (
-        <Button
+        <Button colorMode="auto"
           style="primary"
           size="small"
           label="Edit"

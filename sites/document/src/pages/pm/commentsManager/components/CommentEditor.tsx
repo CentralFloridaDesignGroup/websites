@@ -48,7 +48,7 @@ export default function CommentEditor({ form, onChange, onEdited, onAdd, onDelet
 
                 <div className='flex flex-col gap-1'>
                     <div>
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field="commentId"
                             label="Comment #"
                             labelPosition='side'
@@ -61,7 +61,7 @@ export default function CommentEditor({ form, onChange, onEdited, onAdd, onDelet
                     </div>
 
                     <div>
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field="department"
                             label="Department"
                             labelPosition='side'
@@ -73,7 +73,7 @@ export default function CommentEditor({ form, onChange, onEdited, onAdd, onDelet
                         />
                     </div>
                     <div>
-                        <Combobox
+                        <Combobox colorMode="auto"
                             field="status"
                             label="Status"
                             labelPosition='side'
@@ -89,7 +89,7 @@ export default function CommentEditor({ form, onChange, onEdited, onAdd, onDelet
                 </div>
 
                 <div>
-                    <Textarea
+                    <Textarea colorMode="auto"
                         field="comment"
                         label="Comment"
                         defaultValue={form.comment}
@@ -101,7 +101,7 @@ export default function CommentEditor({ form, onChange, onEdited, onAdd, onDelet
                 </div>
 
                 <div>
-                    <Textarea
+                    <Textarea colorMode="auto"
                         field="response"
                         label="Response"
                         defaultValue={form.response}

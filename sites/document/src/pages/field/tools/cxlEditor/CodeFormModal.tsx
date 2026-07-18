@@ -90,14 +90,14 @@ export function CodeFormModal({ title, isOpen, initialCode, onSave, onClose }: C
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Textbox
+          <Textbox colorMode="auto"
             field="shortCode"
             label="Short Code"
             required
             value={code.shortCode}
             onValidChange={(_field, value) => setCode((c) => ({ ...c, shortCode: value.toUpperCase() }))}
           />
-          <Textbox
+          <Textbox colorMode="auto"
             field="category"
             label="Category (optional)"
             value={code.category}
@@ -105,7 +105,7 @@ export function CodeFormModal({ title, isOpen, initialCode, onSave, onClose }: C
           />
         </div>
 
-        <Textbox
+        <Textbox colorMode="auto"
           field="description"
           label="Description"
           required
@@ -160,7 +160,7 @@ export function CodeFormModal({ title, isOpen, initialCode, onSave, onClose }: C
               className="h-9 w-full cursor-pointer border-b border-gray-300 bg-transparent dark:border-gray-600"
             />
           </div>
-          <Textbox
+          <Textbox colorMode="auto"
             field="symbolSize"
             label="Symbol Size"
             type="number"
@@ -176,7 +176,7 @@ export function CodeFormModal({ title, isOpen, initialCode, onSave, onClose }: C
             <label className="block text-sm/6 font-medium text-gray-900 dark:text-white">
               Attribute Fields
             </label>
-            <Button label="Add Field" icon={Plus} style="secondary" size="small" onClick={addField} />
+            <Button colorMode="auto" label="Add Field" icon={Plus} style="secondary" size="small" onClick={addField} />
           </div>
 
           <div className="space-y-4">
@@ -186,7 +186,7 @@ export function CodeFormModal({ title, isOpen, initialCode, onSave, onClose }: C
                 className="border border-gray-200 dark:border-gray-600 rounded-md p-4 space-y-3"
               >
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-start">
-                  <Textbox
+                  <Textbox colorMode="auto"
                     field={`fieldName-${field.id}`}
                     label="Field Name"
                     required
@@ -229,7 +229,7 @@ export function CodeFormModal({ title, isOpen, initialCode, onSave, onClose }: C
                       ))}
                     </select>
                   </div>
-                  <Textbox
+                  <Textbox colorMode="auto"
                     field={`fieldDefault-${field.id}`}
                     label="Default Value"
                     value={field.fieldDefaultValue}
@@ -238,7 +238,7 @@ export function CodeFormModal({ title, isOpen, initialCode, onSave, onClose }: C
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <Checkbox
+                  <Checkbox colorMode="auto"
                     label="Required"
                     checked={field.isRequired}
                     onChange={(e) => updateField(field.id, { isRequired: e.target.checked })}
@@ -326,7 +326,7 @@ function FieldValueEditor({
           placeholder="Add option and press Enter"
           className="block w-full bg-gray-50/20 py-1 pl-2 text-gray-900 border-b border-gray-300 focus:border-primary focus:outline-none focus:border-b-2 dark:bg-gray-700/75 dark:text-white dark:border-gray-600"
         />
-        <Button label="Add" style="secondary" size="small" onClick={commit} />
+        <Button colorMode="auto" label="Add" style="secondary" size="small" onClick={commit} />
       </div>
     </div>
   );

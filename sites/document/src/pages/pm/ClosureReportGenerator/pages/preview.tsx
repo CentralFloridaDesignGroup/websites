@@ -98,12 +98,12 @@ export function Preview({
             </section>
             <section>
                 <div className="flex justify-between">
-                    <Button
+                    <Button colorMode="auto"
                         label="Previous Stage"
                         style="secondary"
                         onClick={onBack}
                     />
-                    <Button
+                    <Button colorMode="auto"
                         label="Export Closure Report"
                         style="primary"
                         onClick={() => generateClosureReport(projectData)}

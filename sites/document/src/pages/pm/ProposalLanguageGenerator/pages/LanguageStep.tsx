@@ -121,13 +121,13 @@ export function LanguageStep({ clientInfo, services, onNext, onBack }: LanguageS
                 }}
             />
             <div className="p-4 border-t flex justify-between">
-                <Button
+                <Button colorMode="auto"
                     label="Back"
                     style="secondary"
                     onClick={onBack}
                 >
                 </Button>
-                <Button
+                <Button colorMode="auto"
                     label="Next"
                     style="success"
                     onClick={() => {
