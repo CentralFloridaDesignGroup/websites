@@ -21,9 +21,9 @@ export default function PackageSelection(ReviewPackageProperties: ReviewPackageP
 			<div className='pb-4 border-b border-primary space-y-4'>
 				<div className='flex flex-col md:flex-row gap-4 items-center justify-between'>
 					<h2 className='text-xl font-semibold'>Review Packages</h2>
-					<Button label="Create Review Package" style="primary" onClick={ReviewPackageProperties.onCreatePackage} />
+					<Button colorMode="auto" label="Create Review Package" style="primary" onClick={ReviewPackageProperties.onCreatePackage} />
 				</div>
-				<Textbox
+				<Textbox colorMode="auto"
 					field="search"
 					label="Filter Packages"
 					labelPosition='side'

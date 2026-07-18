@@ -1,7 +1,7 @@
-import { Combobox, Textbox } from '@wps/input';
-import { JobPostingCard } from './components/jobPostingCard';
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Dates, type JobPosition } from "@wps/scripts";
+import { MarketingSelect, MarketingTextField } from '../../components/marketing';
+import { JobPostingCard } from './components/jobPostingCard';
 
 type PositionFileResponse = {
     jobData: JobPosition;
@@ -42,24 +42,12 @@ export function Positions() {
             const isOpen = openDate <= today && Dates.getDaysRemaining(position.basicInfo.positionEndDate) >= 0;
             const exclusionReasons: string[] = [];
 
-            if (!position.isActive) {
-                exclusionReasons.push("inactive position");
-            }
-            if (!isOpen) {
-                exclusionReasons.push("outside open date window");
-            }
-            if (!matchesName) {
-                exclusionReasons.push(`name filter mismatch (query: "${userFilters.name}")`);
-            }
-            if (!matchesLocation) {
-                exclusionReasons.push(`location mismatch (expected: "${userFilters.location}", actual: "${position.basicInfo.positionCity}")`);
-            }
-            if (!matchesState) {
-                exclusionReasons.push(`state mismatch (expected: "${userFilters.state}", actual: "${position.basicInfo.positionState}")`);
-            }
-            if (!matchesTags) {
-                exclusionReasons.push(`tag mismatch (expected: "${userFilters.tags}", actual: "${Array.isArray(positionTags) ? positionTags.join(", ") : "no tags"}")`);
-            }
+            if (!position.isActive) exclusionReasons.push("inactive position");
+            if (!isOpen) exclusionReasons.push("outside open date window");
+            if (!matchesName) exclusionReasons.push(`name filter mismatch (query: "${userFilters.name}")`);
+            if (!matchesLocation) exclusionReasons.push(`location mismatch (expected: "${userFilters.location}", actual: "${position.basicInfo.positionCity}")`);
+            if (!matchesState) exclusionReasons.push(`state mismatch (expected: "${userFilters.state}", actual: "${position.basicInfo.positionState}")`);
+            if (!matchesTags) exclusionReasons.push(`tag mismatch (expected: "${userFilters.tags}", actual: "${Array.isArray(positionTags) ? positionTags.join(", ") : "no tags"}")`);
 
             if (exclusionReasons.length > 0) {
                 console.debug("[Positions] Filtered out", {
@@ -75,14 +63,10 @@ export function Positions() {
 
         const sortedFiltered = [...filtered].sort((a, b) => {
             const stateComparison = collator.compare(a.basicInfo.positionState.trim(), b.basicInfo.positionState.trim());
-            if (stateComparison !== 0) {
-                return stateComparison;
-            }
+            if (stateComparison !== 0) return stateComparison;
 
             const locationComparison = collator.compare(a.basicInfo.positionCity.trim(), b.basicInfo.positionCity.trim());
-            if (locationComparison !== 0) {
-                return locationComparison;
-            }
+            if (locationComparison !== 0) return locationComparison;
 
             return collator.compare(a.displayName.trim(), b.displayName.trim());
         });
@@ -91,7 +75,6 @@ export function Positions() {
     }, [userFilters, positions]);
 
     useEffect(() => {
-
         async function fetchPositions() {
             try {
                 const response = await fetch("/positions/index.json");
@@ -129,9 +112,7 @@ export function Positions() {
                     const rawTags = (position.meta as { tags?: unknown }).tags;
                     if (Array.isArray(rawTags)) {
                         rawTags.forEach((tag) => {
-                            if (typeof tag === "string") {
-                                uniqueTags.add(tag);
-                            }
+                            if (typeof tag === "string") uniqueTags.add(tag);
                         });
                     }
                 });
@@ -150,56 +131,53 @@ export function Positions() {
         fetchPositions();
     }, []);
 
-
     return (
-        <div className="max-w-7xl mx-auto px-4 py-12">
-            <h1 className="text-4xl font-bold text-primary text-center">Positions</h1>
-            <p className="text-center mt-2">Explore our current job openings and find the right fit for you.</p>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-8">
-                <Textbox
+        <div className="mx-auto max-w-7xl px-4 py-12">
+            <h1 className="text-center text-4xl font-bold text-primary">Positions</h1>
+            <p className="mt-2 text-center">Explore our current job openings and find the right fit for you.</p>
+            <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-4">
+                <MarketingTextField
                     field="positionName"
                     label="Position Name"
-                    defaultValue={userFilters.name}
-                    onValidChange={(_, value) => setUserFilters(prev => ({ ...prev, name: value }))}
+                    value={userFilters.name}
+                    onChange={(event) => setUserFilters(prev => ({ ...prev, name: event.target.value }))}
                     placeholder="Search by position name..."
                 />
-                <Combobox
+                <MarketingSelect
                     field="location"
                     label="Location"
-                    onValidChange={(_, value) => setUserFilters(prev => ({ ...prev, location: value }))}
-                    selections={locationOptions}
-                    placeholder="All locations"
+                    value={userFilters.location}
+                    onChange={(event) => setUserFilters(prev => ({ ...prev, location: event.target.value }))}
+                    options={[{ label: "All locations", value: "" }, ...locationOptions.map((option) => ({ label: option.key, value: option.value }))]}
                 />
-                <Combobox
+                <MarketingSelect
                     field="state"
                     label="State"
-                    onValidChange={(_, value) => setUserFilters(prev => ({ ...prev, state: value }))}
-                    selections={stateFilter}
-                    placeholder="All states"
+                    value={userFilters.state}
+                    onChange={(event) => setUserFilters(prev => ({ ...prev, state: event.target.value }))}
+                    options={[{ label: "All states", value: "" }, ...stateFilter.map((option) => ({ label: option.key, value: option.value }))]}
                 />
-                <Combobox
+                <MarketingSelect
                     field="tags"
                     label="Tags"
-                    onValidChange={(_, value) => setUserFilters(prev => ({ ...prev, tags: value }))}
-                    selections={tagsFilter}
-                    placeholder="All tags"
+                    value={userFilters.tags}
+                    onChange={(event) => setUserFilters(prev => ({ ...prev, tags: event.target.value }))}
+                    options={[{ label: "All tags", value: "" }, ...tagsFilter.map((option) => ({ label: option.key, value: option.value }))]}
                 />
             </div>
             {loading ? (
-                <p className="text-center mt-4">Loading positions...</p>
+                <p className="mt-4 text-center">Loading positions...</p>
             ) : (
-                (
-                    filteredPositions.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-                            {filteredPositions.map((position) => (
-                                <JobPostingCard key={position.id} position={position} />
-                            ))}
-                        </div>
-                    ) : (
-                        <p className="text-center mt-6 text-lg font-bold text-primary">Unfortunately, we are not hiring at this time. Please check back later for new opportunities.</p>
-                    )
+                filteredPositions.length > 0 ? (
+                    <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
+                        {filteredPositions.map((position) => (
+                            <JobPostingCard key={position.id} position={position} />
+                        ))}
+                    </div>
+                ) : (
+                    <p className="mt-6 text-center text-lg font-bold text-primary">Unfortunately, we are not hiring at this time. Please check back later for new opportunities.</p>
                 )
             )}
         </div>
-    )
+    );
 }

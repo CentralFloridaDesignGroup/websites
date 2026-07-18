@@ -27,7 +27,7 @@ export function PointInformation({
             <p className="col-span-1 text-sm text-gray-500">Easting: {setNumberFormat(pointInfo.easting ?? 0)}</p>
             <p className="col-span-1 text-sm text-gray-500">Elevation: {setNumberFormat(pointInfo.elevation ?? 0)}</p>
             <p className="col-span-1 text-sm text-gray-500">{pointInfo.description}</p>
-            <Button
+            <Button colorMode="auto"
                 label="Edit Point"
                 size="small"
                 style="secondary"

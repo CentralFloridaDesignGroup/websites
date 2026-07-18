@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@wps/scripts": "workspace:*",
-    "itty-router": "latest",
+    "hono": "^4.12.29",
     "jose": "^6.2.3"
   },
   "devDependencies": {

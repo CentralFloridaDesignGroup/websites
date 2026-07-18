@@ -177,7 +177,7 @@ export function AddPointPanel({
         </p>
 
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <Textbox
+          <Textbox colorMode="auto"
             field="add-point-number"
             label="Point Number"
             defaultValue={pointNumber}
@@ -185,7 +185,7 @@ export function AddPointPanel({
             onValidChange={(_, value) => setPointNumber(value)}
           />
 
-          <Textbox
+          <Textbox colorMode="auto"
             field="add-project-number"
             label="Project Number"
             defaultValue={projectNumber}
@@ -195,7 +195,7 @@ export function AddPointPanel({
         </div>
 
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-          <Textbox
+          <Textbox colorMode="auto"
             field="add-point-northing"
             label={
               statePlaneProjection === "EPSG:4326" ? "Latitude" : "Northing"
@@ -204,7 +204,7 @@ export function AddPointPanel({
             required
             onValidChange={(_, value) => setNorthing(value)}
           />
-          <Textbox
+          <Textbox colorMode="auto"
             field="add-point-easting"
             label={
               statePlaneProjection === "EPSG:4326" ? "Longitude" : "Easting"
@@ -213,7 +213,7 @@ export function AddPointPanel({
             required
             onValidChange={(_, value) => setEasting(value)}
           />
-          <Combobox
+          <Combobox colorMode="auto"
             field="add-point-state-plane-projection"
             label="Projection"
             selections={statePlaneProjectionOptions.map((option) => ({
@@ -229,7 +229,7 @@ export function AddPointPanel({
               )
             }
           />
-          <Textbox
+          <Textbox colorMode="auto"
             field="add-point-horizontal-accuracy"
             label="Horizontal Accuracy"
             type="number"
@@ -240,7 +240,7 @@ export function AddPointPanel({
               }))
             }
           />
-          <Combobox
+          <Combobox colorMode="auto"
             field="add-point-horizontal-establishment-method"
             label="Horizontal Establishment"
             selections={horizontalEstablishmentMethodOptions}
@@ -254,7 +254,7 @@ export function AddPointPanel({
           />
         </div>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <Combobox
+          <Combobox colorMode="auto"
             field="add-point-material"
             label="Material"
             selections={pointMaterialOptions.map((option) => ({
@@ -266,7 +266,7 @@ export function AddPointPanel({
             )}
             onValidChange={(_, value) => setMaterial(value as PointMaterial)}
           />
-          <Textbox
+          <Textbox colorMode="auto"
             field="add-point-witness"
             label="Witness"
             defaultValue={witness}
@@ -274,7 +274,7 @@ export function AddPointPanel({
           />
         </div>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-          <Textbox
+          <Textbox colorMode="auto"
             field="add-point-elevation"
             label="Elevation (NAVD88)"
             type="number"
@@ -282,7 +282,7 @@ export function AddPointPanel({
             required
             onValidChange={(_, value) => setElevation(value)}
           />
-          <Textbox
+          <Textbox colorMode="auto"
             field="add-point-elevation-sigma"
             label="Elevation Accuracy"
             type="number"
@@ -293,7 +293,7 @@ export function AddPointPanel({
               }))
             }
           />
-          <Combobox
+          <Combobox colorMode="auto"
             field="add-point-vertical-establishment-method"
             label="Vertical Establishment"
             selections={verticalEstablishmentMethodOptions}
@@ -305,21 +305,21 @@ export function AddPointPanel({
               }))
             }
           />
-          <Textbox
+          <Textbox colorMode="auto"
             field="add-point-elevation-ngvd29"
             label="Elevation (NGVD29)"
             type="number"
             defaultValue={elevationNgvd29}
             onValidChange={(_, value) => setElevationNgvd29(value)}
           />
-          <Textbox
+          <Textbox colorMode="auto"
             field="add-conversion-factor"
             label="Conversion Factor"
             type="number"
             defaultValue={conversionFactor}
             onValidChange={(_, value) => setConversionFactor(value)}
           />
-          <Textbox
+          <Textbox colorMode="auto"
             field="add-conversion-sigma"
             label="Conversion Sigma"
             type="number"
@@ -328,7 +328,7 @@ export function AddPointPanel({
           />
         </div>
 
-        <Textarea
+        <Textarea colorMode="auto"
           field="add-notes"
           label="Notes"
           defaultValue={notes}
@@ -341,7 +341,7 @@ export function AddPointPanel({
         ) : null}
 
         <div className="flex justify-end">
-          <Button
+          <Button colorMode="auto"
             label={saving ? "Saving..." : "Add Point"}
             style="primary"
             size="small"

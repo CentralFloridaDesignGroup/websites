@@ -93,7 +93,7 @@ export function ServiceEntryTemplate(props: ServiceItemTemplateProps) {
                     </div>
                 </div>
                 <div className="md:flex-4">
-                    <Textbox
+                    <Textbox colorMode="auto"
                         field={`serviceName-${index}`}
                         label="Service Name"
                         value={item.serviceName}
@@ -104,14 +104,14 @@ export function ServiceEntryTemplate(props: ServiceItemTemplateProps) {
                         }}
                     />
                 </div>
-                <Textbox
+                <Textbox colorMode="auto"
                     field={`cost-${index}`}
                     label="Cost"
                     required
                     value={item.serviceCost || ""}
                     onChange={(e) => { updateRetainerInformation("cost", e.target.value) }}
                 />
-                <Textbox
+                <Textbox colorMode="auto"
                     field={`retainerPercentage-${index}`}
                     label="Retainer Percentage (%)"
                     type="number"
@@ -121,13 +121,13 @@ export function ServiceEntryTemplate(props: ServiceItemTemplateProps) {
                     value={item.retainerPercentage || ""}
                     onChange={(e) => { updateRetainerInformation("percentage", e.target.value) }}
                 />
-                <Textbox
+                <Textbox colorMode="auto"
                     field={`retainerCost-${index}`}
                     label="Retainer Cost"
                     value={item.serviceRetainer || ""}
                     onChange={(e) => { updateRetainerInformation("retainer", e.target.value) }}
                 />
-                <Combobox
+                <Combobox colorMode="auto"
                     field={`serviceType-${index}`}
                     label="Service Type"
                     selections={PRICE_TYPES}
@@ -138,7 +138,7 @@ export function ServiceEntryTemplate(props: ServiceItemTemplateProps) {
                     }}
                 />
             </div>
-            <Textarea
+            <Textarea colorMode="auto"
                 field={`scopeOfWork-${index}`}
                 label="Scope of Work"
                 required

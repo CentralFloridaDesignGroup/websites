@@ -1,32 +1,44 @@
+﻿import { cx, type InputColorMode } from "./styles";
+
 /**
- * A generic card button component for forms.
- * @param header - The header text of the card.
- * @param body - The body text of the card.
- * @param href - The URL to navigate to when the card is clicked.
- * @param icon - An optional icon to display alongside the header.
- * @returns React JSX Element representing the card button.
+ * Props for a dense internal card-style action link.
+ */
+export interface CardButtonProperties {
+    /** Card heading. */
+    header: string;
+    /** Card body copy. */
+    body: string;
+    /** Link destination. */
+    href: string;
+    /** Optional leading icon. */
+    icon?: React.ReactNode;
+    /** Target color mode for the control. Defaults to "light". */
+    colorMode?: InputColorMode;
+}
+
+/**
+ * Dense industrial card action for form and tool navigation.
  */
 export function CardButton({
     header,
     body,
     href,
-    icon
-}: {
-    header: string;
-    body: string;
-    href: string;
-    icon?: React.ReactNode;
-}): React.JSX.Element {
+    icon,
+    colorMode = "light"
+}: CardButtonProperties): React.JSX.Element {
     return (
         <a
             href={href}
-            className="block border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition p-4 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"
+            className={cx(
+                "block border p-4 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/35",
+                colorMode === "dark" ? "border-gray-700 bg-gray-800 hover:bg-gray-700" : colorMode === "auto" ? "border-gray-200 bg-white hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700" : "border-gray-200 bg-white hover:bg-gray-50"
+            )}
         >
-            <div className="flex items-center mb-2">
-                {icon && <div className="mr-2">{icon}</div>}
-                <h3 className={`text-lg font-medium text-gray-900 dark:text-gray-100`}>{header}</h3>
+            <div className="mb-2 flex items-center">
+                {icon ? <div className="mr-2">{icon}</div> : null}
+                <h3 className={cx("text-lg font-medium", colorMode === "dark" ? "text-gray-100" : colorMode === "auto" ? "text-gray-900 dark:text-gray-100" : "text-gray-900")}>{header}</h3>
             </div>
-            <p className="text-sm text-gray-500 text-left dark:text-gray-300">{body}</p>
+            <p className={cx("text-left text-sm", colorMode === "dark" ? "text-gray-300" : colorMode === "auto" ? "text-gray-500 dark:text-gray-300" : "text-gray-500")}>{body}</p>
         </a>
     );
-};
+}

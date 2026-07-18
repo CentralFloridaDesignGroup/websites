@@ -85,12 +85,12 @@ export function SettingsWindow({
         <div className='max-w-7xl mx-auto p-4'>
             <h2 className='text-xl font-bold mb-4 text-center'>Survey Parameters</h2>
             <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mt-4'>
-                <Button
+                <Button colorMode="auto"
                     label="Accept Parameters"
                     style='primary'
                     onClick={processParameters}
                 />
-                <Button
+                <Button colorMode="auto"
                     label="Hide Settings"
                     style='secondary'
                     onClick={onHide}
@@ -105,7 +105,7 @@ export function SettingsWindow({
                                 if (param.type === 'text') {
                                     const textParam = param as TextProperties;
                                     return (
-                                        <Textbox
+                                        <Textbox colorMode="auto"
                                             key={textParam.key}
                                             field={textParam.key}
                                             label={textParam.displayName}
@@ -123,7 +123,7 @@ export function SettingsWindow({
                                 if (param.type === 'textSuggestion') {
                                     const textSuggestionParam = param as TextSuggestionProperties;
                                     return (
-                                        <TextboxSuggestion
+                                        <TextboxSuggestion colorMode="auto"
                                             key={textSuggestionParam.key}
                                             field={textSuggestionParam.key}
                                             label={textSuggestionParam.displayName}
@@ -141,7 +141,7 @@ export function SettingsWindow({
                                 if (param.type === 'list') {
                                     const comboboxParam = param as ComboboxProperties;
                                     return (
-                                        <Combobox
+                                        <Combobox colorMode="auto"
                                             key={comboboxParam.key}
                                             field={comboboxParam.key}
                                             label={comboboxParam.displayName}
@@ -157,7 +157,7 @@ export function SettingsWindow({
                                 if (param.type === 'multiSelection') {
                                     const multiSelectParam = param as MultSelectProperties;
                                     return (
-                                        <Multiselect
+                                        <Multiselect colorMode="auto"
                                             key={multiSelectParam.key}
                                             field={multiSelectParam.key}
                                             label={multiSelectParam.displayName}
@@ -172,7 +172,7 @@ export function SettingsWindow({
                                 if (param.type === 'bearing') {
                                     const bearingParam = param as BearingProperties;
                                     return (
-                                        <Bearing
+                                        <Bearing colorMode="auto"
                                             key={bearingParam.key}
                                             field={bearingParam.key}
                                             label={bearingParam.displayName}
@@ -188,16 +188,16 @@ export function SettingsWindow({
                                 }
                                 if (param.type === 'toggle') {
                                     const toggleParam = param as CheckboxProperties;
+                                    const currentValue = intParameters.find(p => p.key === toggleParam.key)?.value;
                                     return (
-                                        <Checkbox
+                                        <Checkbox colorMode="auto"
                                             key={toggleParam.key}
                                             label={toggleParam.displayName}
                                             type="switch"
-                                            checked={intParameters.find(p => p.key === toggleParam.key)?.value === toggleParam.options.trueValue || toggleParam.options.defaultValue}
+                                            checked={(currentValue ?? (toggleParam.options.defaultValue ? toggleParam.options.trueValue : toggleParam.options.falseValue)) === toggleParam.options.trueValue}
                                             onChange={(e) => {
                                                 const value = e.target.checked;
                                                 const stringValue = value ? toggleParam.options.trueValue : toggleParam.options.falseValue;
-                                                console.log(`Toggle ${toggleParam.key} changed to ${value}, setting parameter value to "${stringValue}"`);
                                                 setIntParameters(prev => prev.map(p => p.key === toggleParam.key ? { ...p, value: stringValue } : p));
                                             }}
                                         />

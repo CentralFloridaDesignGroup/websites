@@ -123,13 +123,13 @@ export function StationInformation({
                     </div>
                     {stationInfo.error?.isError && <p className="text-sm text-red-500">{stationInfo.error.message ? stationInfo.error.message : 'Please correct the error'}</p>}
                 </div>
-                <Textbox
+                <Textbox colorMode="auto"
                     label="Sta. Name"
                     labelPosition="side"
                     field={`station-name-${stationInfo.id}`}
                     defaultValue={name || ""}
                     onValidChange={(_, value) => setName(value)} />
-                <Combobox
+                <Combobox colorMode="auto"
                     label="Setup Type"
                     labelPosition="side"
                     field={`station-setup-${stationInfo.id}`}
@@ -157,7 +157,7 @@ export function StationInformation({
             <div className="grid grid-cols-3 gap-4 mt-2">
                 <div className="flex flex-col gap-2">
                     <p className="font-medium text-center">Backsight Information</p>
-                    <Combobox
+                    <Combobox colorMode="auto"
                         field={`backsight-type-${stationInfo.id}`}
                         label="Backsight Type"
                         labelPosition="side"
@@ -168,7 +168,7 @@ export function StationInformation({
                         ]}
                         onValidChange={(_, value) => setBacksightType(value as "one-wire" | "three-wire")} />
                     <div className={`${stationInfo.backsight.type === "three-wire" ? "block" : "invisible"}`}>
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field={`backsight-upper-stadia-${stationInfo.id}`}
                             label="Upper Stadia"
                             labelPosition="side"
@@ -176,7 +176,7 @@ export function StationInformation({
                             onValidChange={(_, value) => setBacksightUpperStadia(parseFloat(value) || 0)}
                             type="number" />
                     </div>
-                    <Textbox
+                    <Textbox colorMode="auto"
                         field={`backsight-middle-stadia-${stationInfo.id}`}
                         label="Middle Stadia"
                         labelPosition="side"
@@ -184,7 +184,7 @@ export function StationInformation({
                         onValidChange={(_, value) => setBacksightMiddleStadia(parseFloat(value) || 0)}
                         type="number" />
                     <div className={`${stationInfo.backsight.type === "three-wire" ? "block" : "invisible"}`}>
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field={`backsight-lower-stadia-${stationInfo.id}`}
                             label="Lower Stadia"
                             labelPosition="side"
@@ -216,7 +216,7 @@ export function StationInformation({
                 </div>
                 <div className="flex flex-col gap-2">
                     <p className="font-medium text-center">Foresight Information</p>
-                    <Combobox
+                    <Combobox colorMode="auto"
                         field={`foresight-type-${stationInfo.id}`}
                         label="Foresight Type"
                         labelPosition="side"
@@ -227,7 +227,7 @@ export function StationInformation({
                         ]}
                         onValidChange={(_, value) => setForesightType(value as "one-wire" | "three-wire")} />
                     <div className={`${stationInfo.foresight.type === "three-wire" ? "block" : "invisible"}`}>
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field={`foresight-upper-stadia-${stationInfo.id}`}
                             label="Upper Stadia"
                             labelPosition="side"
@@ -235,7 +235,7 @@ export function StationInformation({
                             onValidChange={(_, value) => setForesightUpperStadia(parseFloat(value) || 0)}
                             type="number" />
                     </div>
-                    <Textbox
+                    <Textbox colorMode="auto"
                         field={`foresight-middle-stadia-${stationInfo.id}`}
                         label="Middle Stadia"
                         labelPosition="side"
@@ -243,7 +243,7 @@ export function StationInformation({
                         onValidChange={(_, value) => setForesightMiddleStadia(parseFloat(value) || 0)}
                         type="number" />
                     <div className={`${stationInfo.foresight.type === "three-wire" ? "block" : "invisible"}`}>
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field={`foresight-lower-stadia-${stationInfo.id}`}
                             label="Lower Stadia"
                             labelPosition="side"

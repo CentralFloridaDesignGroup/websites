@@ -1,4 +1,4 @@
-import { Button } from '@wps/input';
+﻿import { MarketingButton } from '../../components/marketing';
 import { showNotification } from '@wps/layout';
 import { type JobPosition, Dates } from "@wps/scripts";
 import { ChevronLeft } from 'lucide-react';
@@ -162,14 +162,14 @@ export function JobDetail() {
                 </ul>
             </div>
             <div className='mt-6 grid grid-cols-1 gap-2 md:grid-cols-6'>
-                <Button
+                <MarketingButton
                     label="Apply Now"
-                    style='primary'
+                    variant='primary'
                     onClick={() => showNotification({ title: "Placeholder Action", body: "This would take the user to the application page or open an application form.", style: "info" })}
                 />
-                <Button
+                <MarketingButton
                     label="Copy Link"
-                    style='secondary'
+                    variant='secondary'
                     onClick={() => {
                         const url = `${window.location.origin}/positions/${position.id}`;
                         navigator.clipboard.writeText(url)
@@ -177,9 +177,9 @@ export function JobDetail() {
                             .catch(() => showNotification({ title: "Error", body: "Failed to copy link. Please try copying manually: " + url, style: "danger" }));
                     }}
                 />
-                <Button
+                <MarketingButton
                     label="Email Job Posting"
-                    style="secondary"
+                    variant="secondary"
                     onClick={() => {
                         const url = `${window.location.origin}/positions/${position.id}`;
                         window.location.href = `mailto:?subject=Job Posting: ${position.displayName}&body=Check out this job posting: ${url}`;

@@ -377,14 +377,14 @@ export function BulkEditTablePanel({
             onChange={(event) => setFilterText(event.target.value)}
             className="w-72 rounded border border-slate-300 px-3 py-1 text-xs placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-400 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder:text-slate-400 dark:focus:ring-blue-400"
           />
-          <Button
+          <Button colorMode="auto"
             label={savingAll ? "Saving..." : `Save All (${dirtyIds.length})`}
             style="primary"
             size="small"
             onClick={() => void saveAllDirtyRows()}
             properties={{ disabled: savingAll }}
           />
-          <Button
+          <Button colorMode="auto"
             label="Close"
             style="secondary"
             size="small"
@@ -657,7 +657,7 @@ export function BulkEditTablePanel({
                   </td>
                   <td className={`border border-slate-200 p-1 align-top ${stickyCellBackground}`}>
                     <div className="flex min-w-36 flex-col gap-1">
-                      <Button
+                      <Button colorMode="auto"
                         label={isSaving ? "Saving..." : "Save Row"}
                         style="secondary"
                         size="small"

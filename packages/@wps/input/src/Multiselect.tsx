@@ -1,16 +1,39 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from "react";
+import { cx, labelClass, type InputColorMode } from "./styles";
 
-interface MultiselectComponentProps {
-  field: string
-  label: string
-  columns?: number
-  options?: { key: string, value: string }[]
-  onChange?: (field: string, value: string) => void
-  separator?: string
-  helperText?: string
-  exportType?: 'key' | 'value'
+const emptySelectedValues: string[] = [];
+
+/**
+ * Props for the shared dense multiselect card group.
+ */
+export interface MultiselectComponentProps {
+  /** Field name used for callback identification. */
+  field: string;
+  /** Visible fieldset label. */
+  label: string;
+  /** Optional parent grid span from 1 to 6. */
+  columns?: number;
+  /** Options rendered as selectable cards. */
+  options?: { key: string, value: string }[];
+  /** Called after user interaction with the formatted selected values. */
+  onChange?: (field: string, value: string) => void;
+  /** Separator used when formatting three or more selected values. */
+  separator?: string;
+  /** Helper copy shown below the legend. */
+  helperText?: string;
+  /** Whether callback output uses option keys or values. Defaults to "key". */
+  exportType?: 'key' | 'value';
+  /** Controlled selected option values. */
+  value?: string[];
+  /** Uncontrolled initial selected option values. */
+  defaultValue?: string[];
+  /** Target color mode for the control. Defaults to "light". */
+  colorMode?: InputColorMode;
 }
 
+/**
+ * Dense industrial multiselect card grid with formatted value output.
+ */
 export function Multiselect ({
   field,
   label,
@@ -19,39 +42,42 @@ export function Multiselect ({
   onChange,
   separator = ', ',
   helperText = '',
-  exportType = 'key'
-}: MultiselectComponentProps) {
-  const [selectedValues, setSelectedValues] = useState<string[]>([])
-  const hasInteractedRef = useRef(false)
-  const onChangeRef = useRef(onChange)
+  exportType = 'key',
+  value,
+  defaultValue = emptySelectedValues,
+  colorMode = "light"
+}: MultiselectComponentProps): React.JSX.Element {
+  const [internalSelectedValues, setInternalSelectedValues] = useState<string[]>(defaultValue);
+  const selectedValues = value ?? internalSelectedValues;
+  const hasInteractedRef = useRef(false);
+  const onChangeRef = useRef(onChange);
 
   const formatSelectedValues = (values: string[]): string => {
-    if (!values.length) return ''
-    if (values.length === 1) return values[0]
-    if (values.length === 2) return values.join(' and ')
-    const allButLast = values.slice(0, -1).join(separator)
-    const last = values[values.length - 1]
-    return `${allButLast}, and ${last}`
-  }
+    if (!values.length) return '';
+    if (values.length === 1) return values[0];
+    if (values.length === 2) return values.join(' and ');
+    const allButLast = values.slice(0, -1).join(separator);
+    const last = values[values.length - 1];
+    return `${allButLast}, and ${last}`;
+  };
 
   useEffect(() => {
-    onChangeRef.current = onChange
-  }, [onChange])
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  useEffect(() => {
+    if (value === undefined) setInternalSelectedValues(defaultValue);
+  }, [defaultValue, value]);
 
   const handleCheckboxChange = (optionValue: string): void => {
-    setSelectedValues((prev) => {
-      hasInteractedRef.current = true
-      if (prev.includes(optionValue)) {
-        return prev.filter((val) => val !== optionValue)
-      }
-      return [...prev, optionValue]
-    })
-  }
+    hasInteractedRef.current = true;
+    const nextSelectedValues = selectedValues.includes(optionValue)
+      ? selectedValues.filter((val) => val !== optionValue)
+      : [...selectedValues, optionValue];
 
-  useEffect(() => {
-    if (!hasInteractedRef.current) return
-    onChangeRef.current?.(field, formatSelectedValues(selectedValues))
-  }, [field, selectedValues, separator])
+    if (value === undefined) setInternalSelectedValues(nextSelectedValues);
+    onChangeRef.current?.(field, formatSelectedValues(nextSelectedValues));
+  };
 
   const getGridColsClass = (cols: number): string => {
     const colMap: Record<number, string> = {
@@ -61,61 +87,55 @@ export function Multiselect ({
       4: 'md:col-span-4',
       5: 'md:col-span-5',
       6: 'md:col-span-6',
-    }
-    return colMap[cols] || 'md:col-span-1'
-  }
+    };
+    return colMap[cols] || 'md:col-span-1';
+  };
 
   return (
     <fieldset className={`mb-4 ${getGridColsClass(columns)} gap-2`}>
-      <legend className="block text-sm font-medium text-gray-900 mb-2">
+      <legend className={cx("mb-2", labelClass({ colorMode, hidden: false }))}>
         {label}
       </legend>
-      {helperText && (
-        <p className="mt-1 text-sm text-gray-500 mb-2">{helperText}</p>
-      )}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      {helperText ? (
+        <p className={cx("mb-2 mt-1 text-sm", colorMode === "dark" ? "text-gray-400" : colorMode === "auto" ? "text-gray-500 dark:text-gray-400" : "text-gray-500")}>{helperText}</p>
+      ) : null}
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
         {options.map((option, index) => {
-          const optionValue = exportType === 'key' ? option.key : option.value
-          const optionLabel = option.key
-          const displayValue = option.value
-          const optionId = `${field}-${index}`
-          const isSelected = selectedValues.includes(optionValue)
+          const optionValue = exportType === 'key' ? option.key : option.value;
+          const optionLabel = option.key;
+          const displayValue = option.value;
+          const optionId = `${field}-${index}`;
+          const isSelected = selectedValues.includes(optionValue);
 
           return (
             <label
               key={optionId}
               htmlFor={optionId}
-              className={`relative flex items-start p-4 border cursor-pointer transition-all dark:border-gray-700 dark:bg-gray-800 ${
-                isSelected
-                  ? 'border-2 border-primary dark:border-primary-500 bg-primary/10 dark:bg-primary-500/10'
-                  : 'border border-gray-200 dark:border-gray-700 dark:bg-gray-800'
-              }`}
+              className={cx(
+                "relative flex cursor-pointer items-start border p-3 transition-colors focus-within:ring-2 focus-within:ring-primary/35",
+                colorMode === "dark" ? "border-gray-700 bg-gray-800 text-gray-100" : colorMode === "auto" ? "border-gray-200 bg-white text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100" : "border-gray-200 bg-white text-gray-900",
+                isSelected && (colorMode === "dark" ? "border-primary-500 bg-primary-500/15 ring-2 ring-primary-500/40" : colorMode === "auto" ? "border-primary bg-primary/10 ring-2 ring-primary/35 dark:border-primary-500 dark:bg-primary-500/15 dark:ring-primary-500/40" : "border-primary bg-primary/10 ring-2 ring-primary/35")
+              )}
             >
-              <div className="flex h-6 items-center">
-                <input
-                  id={optionId}
-                  name={field}
-                  type="checkbox"
-                  checked={isSelected}
-                  onChange={() => handleCheckboxChange(optionValue)}
-                  className="size-4 rounded border-gray-300 text-nile-blue focus:ring-2 focus:ring-nile-blue focus:ring-offset-0 sr-only dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-nile-blue dark:focus:ring-offset-gray-800"
-                />
-              </div>
-              <div className="ml-3 text-sm/6 flex-1">
-                <span className="font-medium text-gray-900 dark:text-gray-300">
-                  {optionLabel}
-                </span>
-                {displayValue && (
-                  <>
-                    <br />
-                    {displayValue}
-                  </>
-                )}
+              <input
+                id={optionId}
+                name={field}
+                type="checkbox"
+                checked={isSelected}
+                onChange={() => handleCheckboxChange(optionValue)}
+                className="sr-only"
+              />
+              <div className="text-sm/6 flex-1">
+                <span className="font-medium">{optionLabel}</span>
+                {displayValue ? (
+                  <span className={cx("mt-1 block", colorMode === "dark" ? "text-gray-400" : colorMode === "auto" ? "text-gray-600 dark:text-gray-400" : "text-gray-600")}>{displayValue}</span>
+                ) : null}
               </div>
             </label>
-          )
+          );
         })}
       </div>
     </fieldset>
-  )
+  );
 }
+

@@ -1,4 +1,4 @@
-import { Button } from '@wps/input';
+﻿import { MarketingButton } from '../../../components/marketing';
 import { showNotification } from '@wps/layout';
 import { type JobPosition, Numbers, Dates } from "@wps/scripts";
 
@@ -33,14 +33,14 @@ export function JobPostingCard({ position }: { position: JobPosition }) {
             </div>
             <p className="text-gray-800 mb-4">{position.description[0].content.length > 175 ? `${position.description[0].content.slice(0, 175)}...` : position.description[0].content}</p>
             <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-                <Button
+                <MarketingButton
                     label="View Details"
                     onClick={() => window.location.href = `/positions/${position.id}`}
-                    style="primary"
+                    variant="primary"
                 />
-                <Button
+                <MarketingButton
                     label="Copy Link"
-                    style="secondary"
+                    variant="secondary"
                     onClick={() => {
                         const url = `${window.location.origin}/positions/${position.id}`;
                         navigator.clipboard.writeText(url)
@@ -48,9 +48,9 @@ export function JobPostingCard({ position }: { position: JobPosition }) {
                             .catch(() => showNotification({ title: "Error", body: "Failed to copy link. Please try copying manually: " + url, style: "danger" }));
                     }}
                 />
-                <Button
+                <MarketingButton
                     label="Email Job Posting"
-                    style="secondary"
+                    variant="secondary"
                     onClick={() => {
                         const url = `${window.location.origin}/positions/${position.id}`;
                         window.location.href = `mailto:?subject=Job Posting: ${position.displayName}&body=Check out this job posting: ${url}`;

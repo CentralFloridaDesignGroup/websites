@@ -31,7 +31,7 @@ export function ProjectInformation({
             <h1 className="text-2xl font-bold text-center mb-2">Project Information</h1>
             <div className="grid grid-cols-3 gap-4">
                 <div className="flex flex-col gap-2 grow-1">
-                    <Combobox
+                    <Combobox colorMode="auto"
                         field="levelRunType"
                         label="Level Run Type"
                         selections={[
@@ -41,7 +41,7 @@ export function ProjectInformation({
                         onValidChange={(_, value) => { updateProjectSetting('levelRunType', value as 'closed-loop' | 'open-loop') }}
                         defaultIndex={projectSettings.levelRunType === 'closed-loop' ? 0 : 1}
                     />
-                    <Combobox
+                    <Combobox colorMode="auto"
                         field="accuracyLevel"
                         label="Accuracy Level"
                         // TODO: Move accuracy level options and ordering into shared constants.
@@ -56,7 +56,7 @@ export function ProjectInformation({
                         // TODO: Use shared constants for default index calculation to avoid duplicated arrays.
                         defaultIndex={["order3", "order2Class2", "order2Class1", "order1Class2", "order1Class1"].findIndex(key => key === projectSettings.accuracyLevel)}
                     />
-                    <Combobox
+                    <Combobox colorMode="auto"
                         field="defaultWireMeasuurementType"
                         label="Default Wire Measurement Type"
                         // TODO: Fix typo defaultWireMeasuurementType -> defaultWireMeasurementType across settings and UI.
@@ -69,7 +69,7 @@ export function ProjectInformation({
                         // TODO: Use shared constants for default index calculation to avoid duplicated arrays.
                         defaultIndex={["one-wire", "three-wire"].findIndex(key => key === projectSettings.defaultWireMeasurementType)}
                     />
-                    <Textbox
+                    <Textbox colorMode="auto"
                         field="stadiaConstant"
                         label="Stadia Constant"
                         defaultValue={projectSettings.stadiaConstant.toString()}

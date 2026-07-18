@@ -36,7 +36,7 @@ export function LoginPrompt({
     <div className={`bg-white p-6 text-center`}>
       <h2 className="text-xl font-semibold text-slate-900">{title}</h2>
       <p className="my-2 text-sm text-slate-600">{message}</p>
-      <Button
+      <Button colorMode="auto"
         label="Sign in with Microsoft"
         style="primary"
         size="medium"

@@ -28,7 +28,7 @@ function ParamField({ param, value, onChange }: {
         const selections = param.options!.map(o => ({ key: o.label, value: o.value }));
         const defaultIdx = Math.max(0, value ? selections.findIndex(s => s.value === value) : 0);
         return (
-            <Combobox
+            <Combobox colorMode="auto"
                 field={param.key}
                 label={param.label}
                 selections={selections}
@@ -40,7 +40,7 @@ function ParamField({ param, value, onChange }: {
 
     if (param.type === 'multipleChoice') {
         return (
-            <Multiselect
+            <Multiselect colorMode="auto"
                 field={param.key}
                 label={param.label}
                 columns={param.columns}
@@ -53,7 +53,7 @@ function ParamField({ param, value, onChange }: {
 
     if (param.textarea) {
         return (
-            <Textarea
+            <Textarea colorMode="auto"
                 field={param.key}
                 label={param.label}
                 allowNewlines
@@ -63,7 +63,7 @@ function ParamField({ param, value, onChange }: {
     }
 
     return (
-        <Textbox
+        <Textbox colorMode="auto"
             id={param.key}
             field={param.key}
             label={param.label}
@@ -132,7 +132,7 @@ export function ImportTemplateModal({ isOpen, onClose, onImport }: ImportTemplat
         >
             {step === 'select' ? (
                 <>
-                    <Textbox
+                    <Textbox colorMode="auto"
                         field="search"
                         label="Search Templates"
                         value={searchTerm}

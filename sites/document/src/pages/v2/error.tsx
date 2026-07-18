@@ -14,7 +14,7 @@ export function ErrorPage() {
                 <p className="mt-6 text-lg leading-8 text-gray-600">Sorry, we couldn't find the page you're looking for.</p>
                 <p className='text-gray-400'>Error 404</p>
                 <div className="mt-10 flex items-center justify-center gap-x-6">
-                    <Button
+                    <Button colorMode="auto"
                         label="Go back home"
                         style="primary"
                         size="medium"

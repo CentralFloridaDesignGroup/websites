@@ -22,6 +22,8 @@ const router = createBrowserRouter([
       { path: 'tools/invert-calculator', element: <Pages.InvertCalculator /> },
       { path: 'tools/field-data-parser', element: <Pages.FieldDataParser /> },
       { path: 'field/data-parser', element: <Pages.FieldDataParser /> },
+      { path: 'tools/cxl-editor', element: <Pages.CxlEditor /> },
+      { path: 'field/cxl-editor', element: <Pages.CxlEditor /> },
       { path: 'checklists/:checklistType', element: <Pages.Checklist /> },
       { path: 'office/checklists/:checklistType', element: <Pages.Checklist /> },
       { path: 'reference/alta-tablea', element: <Pages.Alta_TableA_2026 /> },

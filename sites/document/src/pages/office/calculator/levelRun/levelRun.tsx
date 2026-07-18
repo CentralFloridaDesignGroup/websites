@@ -305,12 +305,12 @@ export function LevelRun() {
                     )}
                     <div className="flex flex-row items-center gap-2 mb-4">
                         <h2 className="text-xl font-bold grow-1">Stations</h2>
-                        <Button
+                        <Button colorMode="auto"
                             label="Import Point coordinates"
                             style="secondary"
                             onClick={() => alert('This feature is not implemented yet. It will allow users to import point coordinates from a CSV file to populate the points data for the level run calculation.')}
                         />
-                        <Button
+                        <Button colorMode="auto"
                             label="Add Station"
                             style="primary"
                             onClick={() => createStation()}

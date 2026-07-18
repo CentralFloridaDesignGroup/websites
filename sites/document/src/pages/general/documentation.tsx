@@ -138,7 +138,7 @@ export function Documentation({
 
         < div className="w-full flex flex-col justify-center items-center" >
             <div className="w-full max-w-3xl px-4 py-8">
-                <Textbox
+                <Textbox colorMode="auto"
                     field="search"
                     placeholder="Search documentation..."
                     value={search}

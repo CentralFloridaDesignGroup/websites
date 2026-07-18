@@ -154,7 +154,7 @@ export function AddressSearchControl({ records = [] }: AddressSearchControlProps
               Clear
             </button>
           ) : null}
-          <Button
+          <Button colorMode="auto"
             label={loading ? "..." : "Search"}
             style="primary"
             size="small"

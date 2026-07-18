@@ -166,7 +166,7 @@ export function InvertCalculator(): React.JSX.Element {
         <div className="md:col-span-4">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-bold mb-4 text-nile-blue">Invert Calculator</h2>
-            <Button
+            <Button colorMode="auto"
               label={showInstructions ? "Hide Instructions" : "Show Instructions"}
               style={showInstructions ? "secondary" : "primary"}
               size="small"
@@ -174,7 +174,7 @@ export function InvertCalculator(): React.JSX.Element {
             />
           </div>
           <div className="space-y-4">
-            <Textbox
+            <Textbox colorMode="auto"
               field="rimElevation"
               label="Rim Elevation"
               type="number"
@@ -183,7 +183,7 @@ export function InvertCalculator(): React.JSX.Element {
               onValidChange={(_, value) => setRimElevation(value)}
             />
 
-            <Textbox
+            <Textbox colorMode="auto"
               field="measureDown"
               label="Measure Down Distance"
               type="number"
@@ -197,7 +197,7 @@ export function InvertCalculator(): React.JSX.Element {
               }}
             />
 
-            <Textbox
+            <Textbox colorMode="auto"
               field="measureAngle"
               label="Measure Angle (degrees from plumb)"
               type="number"
@@ -212,12 +212,12 @@ export function InvertCalculator(): React.JSX.Element {
             />
 
             <div className="grid grid-cols-2 gap-4 pt-4">
-              <Button
+              <Button colorMode="auto"
                 label="Calculate"
                 style="primary"
                 onClick={calculateInvert}
               />
-              <Button
+              <Button colorMode="auto"
                 label="Clear"
                 style="secondary"
                 onClick={clearForm}
@@ -231,13 +231,13 @@ export function InvertCalculator(): React.JSX.Element {
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-bold text-nile-blue">History</h3>
             <div className="flex gap-2">
-              <Button
+              <Button colorMode="auto"
                 label="Export History"
                 style="secondary"
                 size="small"
                 onClick={exportHistory}
               />
-              <Button
+              <Button colorMode="auto"
                 label="Clear History"
                 style="danger"
                 size="small"

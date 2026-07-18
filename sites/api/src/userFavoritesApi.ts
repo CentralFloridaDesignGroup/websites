@@ -1,4 +1,5 @@
-import { assertRequestAuthMode } from './authContext'
+import { Hono } from 'hono'
+import { jsonHeaders, requireAuthMode, type ApiHonoEnv } from './apiTypes'
 const userFavoritesSchemaReadyByDb = new WeakMap<D1Database, Promise<void>>()
 
 export interface UserFavoritesApiEnv {
@@ -15,14 +16,14 @@ function normalizeString(value: unknown): string {
   return String(value ?? '').trim()
 }
 
-function serverError(message: string, jsonHeaders: Record<string, string>) {
+function serverError(message: string) {
   return new Response(JSON.stringify({ error: message }), {
     status: 500,
     headers: jsonHeaders,
   })
 }
 
-function badRequest(message: string, jsonHeaders: Record<string, string>) {
+function badRequest(message: string) {
   return new Response(JSON.stringify({ error: message }), {
     status: 400,
     headers: jsonHeaders,
@@ -99,18 +100,19 @@ function parseStoredFavorites(rawValue: string | null): string[] {
   }
 }
 
-export function registerUserFavoritesApiRoutes(router: any, jsonHeaders: Record<string, string>) {
-  router.get('/api/users/:userId/favorites', async (request: Request) => {
+export function createUserFavoritesApi() {
+  const app = new Hono<ApiHonoEnv>()
+  app.get('/api/users/:userId/favorites', async (context) => {
     try {
-      const env = (request as any).env as UserFavoritesApiEnv
-      const authError = assertRequestAuthMode(request, 'microsoft', jsonHeaders)
+      const env = context.env
+      const authError = requireAuthMode(context, 'microsoft')
       if (authError) return authError
 
       await ensureUserFavoritesSchemaReady(env.DB)
 
-      const userId = normalizeUserId((request as any).params?.userId)
+      const userId = normalizeUserId(context.req.param('userId'))
       if (!userId) {
-        return badRequest('userId is required', jsonHeaders)
+        return badRequest('userId is required')
       }
 
       const row = await env.DB.prepare(
@@ -128,24 +130,24 @@ export function registerUserFavoritesApiRoutes(router: any, jsonHeaders: Record<
       })
     } catch (error: any) {
       console.error('Error fetching user favorites:', error)
-      return serverError(String(error?.message || error), jsonHeaders)
+      return serverError(String(error?.message || error))
     }
   })
 
-  router.put('/api/users/:userId/favorites', async (request: Request) => {
+  app.put('/api/users/:userId/favorites', async (context) => {
     try {
-      const env = (request as any).env as UserFavoritesApiEnv
-      const authError = assertRequestAuthMode(request, 'microsoft', jsonHeaders)
+      const env = context.env
+      const authError = requireAuthMode(context, 'microsoft')
       if (authError) return authError
 
       await ensureUserFavoritesSchemaReady(env.DB)
 
-      const userId = normalizeUserId((request as any).params?.userId)
+      const userId = normalizeUserId(context.req.param('userId'))
       if (!userId) {
-        return badRequest('userId is required', jsonHeaders)
+        return badRequest('userId is required')
       }
 
-      const body = (await parseJsonBody(request)) as Record<string, unknown>
+      const body = (await parseJsonBody(context.req.raw)) as Record<string, unknown>
       const favorites = parseFavoritePaths(body.favorites)
       const favoritesJson = JSON.stringify(favorites)
       const now = new Date().toISOString()
@@ -163,7 +165,9 @@ export function registerUserFavoritesApiRoutes(router: any, jsonHeaders: Record<
       })
     } catch (error: any) {
       console.error('Error updating user favorites:', error)
-      return serverError(String(error?.message || error), jsonHeaders)
+      return serverError(String(error?.message || error))
     }
   })
+
+  return app
 }

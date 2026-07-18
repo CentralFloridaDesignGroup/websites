@@ -53,7 +53,7 @@ export function ProjectInfoSetup({ initialValues, onNext }: ProjectInfoSetupProp
             <p className="mb-6 text-gray-600">This is where you set up the project information.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="flex flex-col gap-2">
-                    <Textbox
+                    <Textbox colorMode="auto"
                         field="projectNumber"
                         label="Project Number"
                         required
@@ -65,7 +65,7 @@ export function ProjectInfoSetup({ initialValues, onNext }: ProjectInfoSetupProp
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-4 lg:col-span-2">
                     <div className="flex flex-col gap-2 md:col-span-4">
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field="projectName"
                             label="Project Name"
                             required
@@ -76,7 +76,7 @@ export function ProjectInfoSetup({ initialValues, onNext }: ProjectInfoSetupProp
                         {errors.errors.projectName && <p className="text-red-500 text-sm">{errors.errors.projectName}</p>}
                     </div>
                     <div className="flex flex-col gap-2">
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field="proposalDate"
                             label="Proposal Date"
                             type="date"
@@ -90,7 +90,7 @@ export function ProjectInfoSetup({ initialValues, onNext }: ProjectInfoSetupProp
                 </div>
                 <div className="flex flex-col gap-2">
                     <div className="flex-1 flex-col">
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field="projectAddress"
                             label="Project Address"
                             required
@@ -101,7 +101,7 @@ export function ProjectInfoSetup({ initialValues, onNext }: ProjectInfoSetupProp
                         {errors.errors.address && <p className="text-red-500 text-sm">{errors.errors.address}</p>}
                     </div>
                     <div className="shrink-0">
-                        <Checkbox
+                        <Checkbox colorMode="auto"
                             id="isApproximateAddress"
                             label="Address is Approximate"
                             checked={form.approxAddress || false}
@@ -112,7 +112,7 @@ export function ProjectInfoSetup({ initialValues, onNext }: ProjectInfoSetupProp
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:col-span-2">
                     <div className="flex flex-col gap-2">
                         <div className="flex-1 flex-col">
-                            <Textbox
+                            <Textbox colorMode="auto"
                                 field="projectJurisdiction"
                                 label="Jurisdiction"
                                 required
@@ -123,7 +123,7 @@ export function ProjectInfoSetup({ initialValues, onNext }: ProjectInfoSetupProp
                             {errors.errors.jurisdiction && <p className="text-red-500 text-sm">{errors.errors.jurisdiction}</p>}
                         </div>
                         <div className="shrink-0">
-                            <Checkbox
+                            <Checkbox colorMode="auto"
                                 id="jurisdictionUnincorporated"
                                 label="Unincorporated Area"
                                 checked={form.isJurisdictionUnincorporated || false}
@@ -132,7 +132,7 @@ export function ProjectInfoSetup({ initialValues, onNext }: ProjectInfoSetupProp
                         </div>
                     </div>
                     <div className="flex flex-col gap-2">
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field="county"
                             label="County"
                             required
@@ -143,7 +143,7 @@ export function ProjectInfoSetup({ initialValues, onNext }: ProjectInfoSetupProp
                         {errors.errors.county && <p className="text-red-500 text-sm">{errors.errors.county}</p>}
                     </div>
                     <div className="flex flex-col gap-2">
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field="state"
                             label="State"
                             required
@@ -154,7 +154,7 @@ export function ProjectInfoSetup({ initialValues, onNext }: ProjectInfoSetupProp
                         {errors.errors.state && <p className="text-red-500 text-sm">{errors.errors.state}</p>}
                     </div>
                     <div className="flex flex-col gap-2">
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field="zipCode"
                             label="Zip Code"
                             required
@@ -166,7 +166,7 @@ export function ProjectInfoSetup({ initialValues, onNext }: ProjectInfoSetupProp
                     </div>
                 </div>
                 <div className="flex flex-col gap-2 md:col-span-2 lg:col-span-3">
-                    <Textbox
+                    <Textbox colorMode="auto"
                         field="parcelIdList"
                         label="Parcel ID List"
                         required
@@ -179,7 +179,7 @@ export function ProjectInfoSetup({ initialValues, onNext }: ProjectInfoSetupProp
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:col-span-3">
                     <div className="flex flex-col gap-2">
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field="signerName"
                             label="Signer Name"
                             required
@@ -190,7 +190,7 @@ export function ProjectInfoSetup({ initialValues, onNext }: ProjectInfoSetupProp
                         {errors.errors.whitePointSigner && <p className="text-red-500 text-sm">{errors.errors.whitePointSigner}</p>}
                     </div>
                     <div className="flex flex-col gap-2">
-                        <Textbox
+                        <Textbox colorMode="auto"
                             field="signerTitle"
                             label="Signer Title"
                             required
@@ -202,7 +202,7 @@ export function ProjectInfoSetup({ initialValues, onNext }: ProjectInfoSetupProp
                     </div>
                 </div>
                 <div className="flex justify-end md:col-span-2 lg:col-span-3">
-                    <Button
+                    <Button colorMode="auto"
                         label="Next: Enter Client Information"
                         style="primary"
                         onClick={() => {
