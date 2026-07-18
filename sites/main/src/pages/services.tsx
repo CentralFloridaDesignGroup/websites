@@ -1,6 +1,7 @@
 ﻿import { useMemo, useState } from "react";
 import { timeframes, services } from "../data/servicesProvided.json";
 import { MarketingButton, MarketingServiceCard, MarketingTextField } from "../components/marketing";
+import { getServiceLandingByTitle } from "../data/serviceLandingPages";
 
 export function Services() {
     const [query, setQuery] = useState("");
@@ -82,6 +83,7 @@ function ServiceCard({
     costHigh: number | null;
     serviceDiscount?: boolean;
 }) {
+    const landingPage = getServiceLandingByTitle(title);
     const formatCurrency = (value: number | null) => {
         if (value === null) return "N/A";
         return `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -91,7 +93,7 @@ function ServiceCard({
         ? `${formatCurrency(costLow)} - ${formatCurrency(costHigh)}`
         : `Starts at ${formatCurrency(costLow)}`;
 
-    return (
+    const card = (
         <MarketingServiceCard
             title={title}
             description={description}
@@ -103,5 +105,13 @@ function ServiceCard({
                 </div>
             )}
         />
+    );
+
+    return landingPage ? (
+        <a href={`/services/${landingPage.slug}`} className="block h-full transition hover:-translate-y-0.5">
+            {card}
+        </a>
+    ) : (
+        card
     );
 }

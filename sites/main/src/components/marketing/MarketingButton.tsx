@@ -5,7 +5,7 @@ function cx(...classes: Array<string | false | null | undefined>): string {
   return classes.filter(Boolean).join(" ");
 }
 
-export type MarketingButtonVariant = "primary" | "secondary" | "link";
+export type MarketingButtonVariant = "primary" | "secondary" | "link" | "custom";
 export type MarketingButtonSize = "small" | "medium" | "large";
 
 export interface MarketingButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "className"> {
