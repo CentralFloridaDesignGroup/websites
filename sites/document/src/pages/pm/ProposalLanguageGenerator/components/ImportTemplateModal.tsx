@@ -128,6 +128,7 @@ export function ImportTemplateModal({ isOpen, onClose, onImport }: ImportTemplat
             onClose={handleClose}
             acceptText={step === 'select' ? 'Next →' : 'Insert'}
             acceptDisabled={!canAdvance}
+            colorMode="auto"
             size="3xl"
         >
             {step === 'select' ? (

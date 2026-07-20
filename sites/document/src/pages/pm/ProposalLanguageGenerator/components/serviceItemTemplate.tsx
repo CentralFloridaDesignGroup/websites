@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { ServiceEntry, ServicePriceType } from "../types/proposalTypes";
 import { Combobox, Textarea, Textbox } from "@wps/input";
 import { ArrowDown, ArrowUp, Import, X } from "lucide-react";
@@ -24,12 +23,11 @@ export interface ServiceItemTemplateProps {
 
 export function ServiceEntryTemplate(props: ServiceItemTemplateProps) {
     const { index, totalItems, serviceEntry, onChange, onReorder, onDelete, onImport } = props;
-    const [item, setItem] = useState<ServiceEntry>({ ...EMPTY_SERVICE, ...serviceEntry });
+    const item: ServiceEntry = { ...EMPTY_SERVICE, ...serviceEntry };
     const phaseCost = parseNumericValue(item.serviceCost);
     const phaseRetainerPercentage = parseNumericValue(item.retainerPercentage);
 
     function updateItem(updated: ServiceEntry) {
-        setItem(updated);
         onChange(index, updated);
     }
 
@@ -61,6 +59,7 @@ export function ServiceEntryTemplate(props: ServiceItemTemplateProps) {
                     <h2 className="text-lg font-semibold">PHASE {(index + 1).toString().padStart(2, '0')}:</h2>
                     <div className="flex-row items-center gap-2">
                         <button
+                            type="button"
                             className="px-1 py-1 text-black dark:text-white hover:text-red-500 rounded"
                             onClick={() => {
                                 onDelete(index);
@@ -69,12 +68,14 @@ export function ServiceEntryTemplate(props: ServiceItemTemplateProps) {
                             <X size={20} />
                         </button>
                         <button
+                            type="button"
                             className="px-1 py-1 text-black dark:text-white hover:text-blue-500 rounded"
                             onClick={() => onImport(index)}
                         >
                             <Import size={20} />
                         </button>
                         <button
+                            type="button"
                             className={`px-1 py-1 text-black dark:text-white hover:text-blue-500 rounded ${index === totalItems - 1 ? "invisible" : ""}`}
                             onClick={() => {
                                 onReorder("down", index);
@@ -83,6 +84,7 @@ export function ServiceEntryTemplate(props: ServiceItemTemplateProps) {
                             <ArrowDown size={20} />
                         </button>
                         <button
+                            type="button"
                             className={`px-1 py-1 text-black dark:text-white hover:text-blue-500 rounded ${index === 0 ? "invisible" : ""}`}
                             onClick={() => {
                                 onReorder("up", index);
@@ -131,7 +133,7 @@ export function ServiceEntryTemplate(props: ServiceItemTemplateProps) {
                     field={`serviceType-${index}`}
                     label="Service Type"
                     selections={PRICE_TYPES}
-                    defaultIndex={PRICE_TYPES.findIndex(p => p.value === item.serviceType)}
+                    value={item.serviceType}
                     onValidChange={(_field, value) => {
                         const updated = { ...item, serviceType: value as ServicePriceType };
                         updateItem(updated);
@@ -142,10 +144,10 @@ export function ServiceEntryTemplate(props: ServiceItemTemplateProps) {
                 field={`scopeOfWork-${index}`}
                 label="Scope of Work"
                 required
-                defaultValue={item.scopeOfWork}
+                value={item.scopeOfWork}
                 allowNewlines
-                onValidChange={(_, value) => {
-                    const updated = { ...item, scopeOfWork: value };
+                onChange={(event) => {
+                    const updated = { ...item, scopeOfWork: event.target.value };
                     updateItem(updated);
                 }}
             />
