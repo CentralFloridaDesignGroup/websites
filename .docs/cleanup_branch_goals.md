@@ -20,7 +20,7 @@ You are currently on a branch called `cleanup` for github. This is meant to be a
 
 1. [ ] Deprecate the package. Combine into a new `UI` package with items from `input`.
 
-### III. `Scripts` Package
+### III. `Scripts` Package - `Completed`
 
 1. [x] Split this package. Functions to remain in this package. Types should be moved to a new `types` package.`2026-07-25`
     - Relevant commits:
@@ -44,7 +44,9 @@ You are currently on a branch called `cleanup` for github. This is meant to be a
       - `3b065501cc98c6c5b89afd786b56f3b7180c5d32`
       - `2cd8ffaf07289ad526eb8b593729f601821bca15`
       - `5ae45187fe10595480cd4280008d28d65813f3dc`
-1. [ ] Perform module updates and checks.
+1. [x] Perform module updates and checks.
+    - Relevant commits:
+      - `f16015a9a668cf57e2544d1742c9ae538229e638`
 
 ### IV. NEW `UI` Package
 1. [ ] Combine `input` and `layout` into one package for easier management.
@@ -66,3 +68,9 @@ You are currently on a branch called `cleanup` for github. This is meant to be a
 
 ### III. `document` Site
 To be created. This branch is not complete without a checklist being present and marked as completed.
+
+## C. General Closeout
+1. [ ] Verify full compile of all packages and sites.
+2. [ ] Verify package sizing
+3. [ ] Verify Cloudflare publishing
+4. [ ] Verify production versions

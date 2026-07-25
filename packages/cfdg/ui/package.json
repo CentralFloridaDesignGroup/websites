@@ -1,0 +1,37 @@
+{
+  "name": "cfdg/ui",
+  "version": "5.0.0",
+  "description": "Shared UI components for the White Point Survey family of web applications",
+  "main": "dist/index.js",
+  "type": "module",
+  "types": "dist/types/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@headlessui/react": "2.2.10",
+    "lucide-react": "1.26.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "4.3.3",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.4",
+    "typescript": "5.9.3",
+    "vite": "8.1.5"
+  },
+  "peerDependencies": {
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "exports": {
+    "./input": {
+      "types": "./dist/input/index.d.ts",
+      "import": "./dist/input/index.js"
+    },
+    "./layout": {
+      "types": "./dist/layout/index.d.ts",
+      "import": "./dist/layout/index.js"
+    }
+  }
+}

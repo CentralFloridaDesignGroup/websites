@@ -1,7 +1,7 @@
 {
   "name": "cfdg/scripts",
-  "version": "1.0.0",
-  "description": "Shared utility scripts for SWP",
+  "version": "5.0.0",
+  "description": "Shared functions and scripts for the White Point Survey family of web applications",
   "main": "dist/index.js",
   "type": "module",
   "types": "dist/index.d.ts",
@@ -9,11 +9,10 @@
     "build": "tsc"
   },
   "dependencies": {
-    "proj4": "latest",
+    "proj4": "2.20.9",
     "cfdg/types": "workspace:*"
   },
   "devDependencies": {
-    "@types/proj4": "latest",
-    "typescript": "latest"
+    "typescript": "5.9.3"
   }
 }
