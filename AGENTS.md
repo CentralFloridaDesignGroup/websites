@@ -56,7 +56,7 @@ There are `.md` files in `.docs/`. These are management-written goals. They are 
 - When the branch was merged with `master`. This is named `Date Branch Merged:` and is either blank following this field, or has a date string in `yyyy-mm-dd` format if the document is complete.
 - A general overview of the goals for the branch.
 - A specific checklist of items to complete for the goals.
-  - For each goal, there should be a end of line date string of a date in `yyyy-mm-dd` format, indicating the date the specific item was completed.
+  - For each goal, there should be a end of line date string of a date in `yyyy-mm-dd` format and git commit entry, indicating the date the specific item was completed.
   - If a goal does have a date for completion, do not consider further updates for that goal.
 
 If there are multiple plan files, only review files with the current Git branch name at the beginning of the file name as being relevant. For example, files starting with `cleanup_*.md` are only relevant to the `cleanup` branch. Files with `general_*.md` names apply to all branches. Branch files override any instructions conflicting with general instructions. All branch files have equal weight and contradictions require human clarification prior to moving forward.
