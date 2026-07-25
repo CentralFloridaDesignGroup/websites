@@ -5,7 +5,10 @@ import { corsHeaders, jsonHeaders, type ApiHonoEnv } from './apiTypes'
 import { createCommentsApi } from './commentsApi'
 import { createGisPointsApi } from './gisPointsApi'
 import { handleTransactionEmail } from './transactionEmail'
+import { createInvoicesApi } from './invoicesApi'
+import { createQboApi } from './qboApi'
 import { createUserFavoritesApi } from './userFavoritesApi'
+import { createProjectManagementApi } from './projectManagementApi'
 
 const app = new Hono<ApiHonoEnv>()
 
@@ -28,7 +31,10 @@ app.get('/api/health', () => {
 
 app.route('/', createCommentsApi())
 app.route('/', createGisPointsApi())
+app.route('/', createInvoicesApi())
+app.route('/', createQboApi())
 app.route('/', createUserFavoritesApi())
+app.route('/', createProjectManagementApi())
 
 app.post('/api/email/transactionEmail', async (context) => {
   return handleTransactionEmail(context.req.raw, context.env)

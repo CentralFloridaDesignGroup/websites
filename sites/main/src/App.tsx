@@ -19,6 +19,7 @@ function App() {
           <Route path="/company" element={<Pages.Company />} />
           <Route path="/services/discounts" element={<Pages.Discount />} />
           <Route path="/terms-of-service" element={<Pages.TermsOfService />} />
+          <Route path="/eula" element={<Pages.Eula />} />
           <Route path="/privacy-policy" element={<Pages.Privacy />} />
           <Route path="/positions" element={<Pages.Positions />} />
           <Route path="/positions/:id" element={<Pages.JobDetail />} />

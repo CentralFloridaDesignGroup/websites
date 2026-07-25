@@ -1,3 +1,6 @@
 export { ClosureReportGenerator } from './ClosureReportGenerator/ClosureReportGenerator'
+export { ClientsManager } from './clients/Clients'
 export { CommentsManager } from './commentsManager/CommentsManager'
+export { InvoicesManager, PayInvoicePage } from './invoices/Invoices'
+export { ProjectsManager } from './projects/Projects'
 export { ProposalGenerator } from './ProposalLanguageGenerator/ProposalGenerator'

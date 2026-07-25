@@ -114,7 +114,7 @@ export function Textbox({
                     htmlFor={field}
                     className={labelClass({ colorMode, required: isRequired(required), hidden: !label, labelPosition })}
                 >
-                    {label ?? field}
+                    {label ?? field} {isRequired(required) && <span className="text-red-600 dark:text-red-400">*</span>}
                 </label>
                 <input
                     {...inputProps}

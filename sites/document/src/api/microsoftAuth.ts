@@ -1,4 +1,4 @@
-import { msalInstance } from '../auth/msalConfig'
+import { getMsalSilentRedirectUri, msalInstance } from '../auth/msalConfig'
 
 function normalizeString(value: unknown): string {
   return String(value ?? '').trim()
@@ -27,6 +27,7 @@ export async function acquireApiAccessToken(): Promise<string> {
   const result = await msalInstance.acquireTokenSilent({
     account,
     scopes: getApiScopes(),
+    redirectUri: getMsalSilentRedirectUri(),
   })
 
   const token = normalizeString(result.accessToken)

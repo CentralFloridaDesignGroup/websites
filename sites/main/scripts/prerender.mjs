@@ -27,6 +27,7 @@ const routes = [
   "/positions",
   "/privacy-policy",
   "/terms-of-service",
+  "/eula",
 ];
 
 const mimeTypes = new Map([

@@ -4,7 +4,7 @@
   "description": "Cloudflare Workers API for SWP",
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev --port 8787",
+    "dev": "wrangler dev --env preview --port 8787",
     "typecheck": "tsc --noEmit",
     "d1:migrate:local": "wrangler d1 migrations apply compass --local",
     "d1:migrate:remote": "wrangler d1 migrations apply compass --remote",

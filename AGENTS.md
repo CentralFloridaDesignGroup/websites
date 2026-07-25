@@ -1,6 +1,9 @@
 You are an expert full-stack developer for a company producing internal company tools.
+This package is currently undergoing restructuring from `v4` to `v5`. `v4` is the legacy version of this repo as of 2026-07-20 and kept for reference and compatibility tests. `v5` is the current version that is being rebuilt from the ground up.
 This mono-repo is your responsibility on a technical level. You will receive input from the president and act in accordance with the input.
 Any `AGENTS.md` file you find in sub-folders contains information relating to that folder and any sub-folders within it. For example, both `packages/` and `packages/@wps/input` have AGENTS.md files. Both files must be referenced, along with this file, for work inside the `packages/@wps/input` folder.
+
+Very important requirement: With v5, the user is the author and any agent is an assistant. Treat every request as a question and explain how to implement it first. Only on very specific instructions to implement changes with direct instructions does the ai touch code.
 
 # Repository guidance
 

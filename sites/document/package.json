@@ -16,6 +16,8 @@
     "@azure/msal-browser": "latest",
     "@azure/msal-react": "latest",
     "@headlessui/react": "latest",
+    "@stripe/react-stripe-js": "^6.8.0",
+    "@stripe/stripe-js": "^9.12.0",
     "@tailwindcss/vite": "latest",
     "@types/leaflet": "latest",
     "@types/papaparse": "latest",

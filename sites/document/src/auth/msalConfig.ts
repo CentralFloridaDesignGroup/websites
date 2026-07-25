@@ -9,6 +9,7 @@ import {
 const tenantId = import.meta.env.VITE_MSAL_TENANT_ID as string | undefined;
 const clientId = import.meta.env.VITE_MSAL_CLIENT_ID as string | undefined;
 const redirectUri = (import.meta.env.VITE_MSAL_REDIRECT_URI as string | undefined) ?? window.location.origin;
+const configuredSilentRedirectUri = import.meta.env.VITE_MSAL_SILENT_REDIRECT_URI as string | undefined;
 
 if (!clientId || !tenantId) {
   console.warn("MSAL config missing VITE_MSAL_CLIENT_ID or VITE_MSAL_TENANT_ID.");
@@ -36,6 +37,10 @@ export const loginRequest = {
 };
 
 export const msalInstance = new PublicClientApplication(msalConfig);
+
+export function getMsalSilentRedirectUri(): string {
+  return configuredSilentRedirectUri ?? `${window.location.origin}/auth/silent-redirect`;
+}
 
 msalInstance.addEventCallback((event: EventMessage) => {
   if (event.eventType !== EventType.LOGIN_SUCCESS) return;

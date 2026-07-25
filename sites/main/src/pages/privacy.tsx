@@ -2,7 +2,7 @@ export function Privacy() {
     return (
         <div className="max-w-7xl mx-auto px-4 py-6">
             <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">Privacy Policy</h1>
-            <p className="text-slate-600 mt-4">Last updated: February 15, 2026</p>
+            <p className="text-slate-600 mt-4">Last updated: July 21, 2026</p>
 
             <section className="mt-8">
                 <h2 className="text-2xl font-bold">Introduction</h2>
@@ -21,6 +21,7 @@ export function Privacy() {
                     <li>Communications you send to us (messages, inquiries, support requests).</li>
                     <li>Technical data (IP address, browser type, pages visited, device and usage data).</li>
                     <li>Information included in files or uploads you submit when requesting services.</li>
+                    <li>Business records used by authorized internal tools, including customer, sub-customer, project, invoice, payment, and address information retrieved from connected QuickBooks Online companies.</li>
                 </ul>
             </section>
 
@@ -30,6 +31,7 @@ export function Privacy() {
                     <li>To respond to your inquiries and provide requested services.</li>
                     <li>To improve and operate our Sites, analyze usage, and monitor performance.</li>
                     <li>To detect, prevent, and address technical or security issues.</li>
+                    <li>To support internal customer lookup, proposal preparation, invoice creation, invoice synchronization, and payment reconciliation with QuickBooks Online.</li>
                 </ul>
             </section>
 
@@ -44,6 +46,19 @@ export function Privacy() {
                 <h3 className="text-xl font-semibold">Third-Party Services</h3>
                 <p className="text-slate-600 mt-2">
                     We may share information with third-party service providers who perform services on our behalf (hosting, analytics, email delivery). These providers have access only to the data they need to perform their functions and are bound by confidentiality obligations.
+                </p>
+                <p className="text-slate-600 mt-2">
+                    The Sites and internal tools may use third-party services including Cloudflare for hosting and data storage, Microsoft for staff authentication, Brevo for transactional email delivery, Stripe for payment processing, and Intuit QuickBooks Online for customer, invoice, and payment synchronization.
+                </p>
+            </section>
+
+            <section className="mt-6">
+                <h3 className="text-xl font-semibold">QuickBooks Online Data</h3>
+                <p className="text-slate-600 mt-2">
+                    If a QuickBooks Online company is connected to our internal tools, we access QuickBooks data only as authorized by the connected company and only for White Point business purposes. This may include reading and caching customers and sub-customers, creating or updating invoices, and recording payment information connected to White Point invoices.
+                </p>
+                <p className="text-slate-600 mt-2">
+                    We do not sell QuickBooks data. We do not use QuickBooks data for advertising. Access can be revoked through QuickBooks Online or by contacting us.
                 </p>
             </section>
 

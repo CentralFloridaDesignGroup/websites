@@ -1,5 +1,6 @@
 import type { MiddlewareHandler } from 'hono'
 import { createRemoteJWKSet, jwtVerify, type JWTPayload } from 'jose'
+import { PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS } from '@wps/scripts'
 import { getRequestAuthContext, setRequestAuthContext, type RequestAuthContext, unauthorizedResponse } from './authContext'
 import { jsonHeaders, type ApiHonoEnv } from './apiTypes'
 
@@ -15,6 +16,7 @@ export interface ApiAuthEnv {
   TRANSACTION_EMAIL_API_KEY_PROD?: string
   MICROSOFT_TENANT_ID?: string
   MICROSOFT_CLIENT_ID?: string
+  MICROSOFT_CLIENT_SECRET?: string
   MICROSOFT_ALLOWED_AUDIENCES?: string
 }
 
@@ -26,12 +28,53 @@ type RoutePolicy = {
   path: string
   mode: RouteAuthMode
   apiKeys?: ApiKeyName[]
+  allowedGroupIds?: string[]
 }
 
 const routePolicies: RoutePolicy[] = [
   { method: 'GET', path: '/api/health', mode: 'public' },
 
   { method: 'POST', path: '/api/email/transactionEmail', mode: 'key', apiKeys: ['transactionEmail'] },
+  { method: 'GET', path: '/api/invoices/public/:token', mode: 'public' },
+  { method: 'POST', path: '/api/invoices/public/:token/checkout', mode: 'public' },
+  { method: 'POST', path: '/api/stripe/webhook', mode: 'public' },
+  { method: 'POST', path: '/api/brevo/webhook', mode: 'public' },
+  { method: 'GET', path: '/api/qbo/callback', mode: 'public' },
+
+  { method: '*', path: '/api/invoices', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: '*', path: '/api/invoices/:id', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: 'POST', path: '/api/invoices/:id/copy', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: 'POST', path: '/api/invoices/:id/send', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: 'POST', path: '/api/invoices/:id/void', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: 'POST', path: '/api/invoices/:id/refresh-project-address', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: 'POST', path: '/api/invoices/:id/mark-paid', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: 'POST', path: '/api/invoices/:id/sync-payments', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: 'POST', path: '/api/invoices/:id/payments/:paymentId/retry-stripe-details', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: 'POST', path: '/api/invoices/:id/payments/:paymentId/retry-qbo-payment', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: 'POST', path: '/api/invoices/:id/payments/:paymentId/retry-qbo-deposit', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: 'POST', path: '/api/invoices/:id/payments/:paymentId/retry-payout-sync', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: '*', path: '/api/qbo/status', mode: 'microsoft' },
+  { method: '*', path: '/api/qbo/connect', mode: 'microsoft' },
+  { method: '*', path: '/api/qbo/customers/sync', mode: 'microsoft' },
+  { method: '*', path: '/api/qbo/customers', mode: 'microsoft' },
+  { method: '*', path: '/api/qbo/customers/:id/projects', mode: 'microsoft' },
+  { method: '*', path: '/api/qbo/items/sync', mode: 'microsoft' },
+  { method: '*', path: '/api/qbo/items', mode: 'microsoft' },
+  { method: '*', path: '/api/qbo/accounts/sync', mode: 'microsoft' },
+  { method: '*', path: '/api/qbo/accounts', mode: 'microsoft' },
+  { method: '*', path: '/api/qbo/settings', mode: 'microsoft' },
+  { method: '*', path: '/api/clients', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: '*', path: '/api/clients/:id', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: '*', path: '/api/clients/:id/contacts', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: '*', path: '/api/clients/:id/contacts/:contactId', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: '*', path: '/api/projects', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: '*', path: '/api/projects/:id', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: '*', path: '/api/projects/:id/billing', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: '*', path: '/api/projects/:id/documents', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: '*', path: '/api/projects/:id/documents/:documentId', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: '*', path: '/api/projects/:id/documents/:documentId/download', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: '*', path: '/api/projects/:id/client', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: '*', path: '/api/projects/:id/manager', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
 
   { method: '*', path: '/api/reviews', mode: 'microsoft' },
   { method: '*', path: '/api/reviews/:id', mode: 'microsoft' },
@@ -173,6 +216,31 @@ function getSubjectFromPayload(payload: JWTPayload): string {
   return 'unknown'
 }
 
+function getGroupsFromPayload(payload: JWTPayload): string[] {
+  const groups = Array.isArray(payload.groups) ? payload.groups : []
+  return groups.map((group) => normalizeString(group)).filter(Boolean)
+}
+
+function getEmailFromPayload(payload: JWTPayload): string {
+  return normalizeString(payload.preferred_username || payload.email || payload.upn).toLowerCase()
+}
+
+function hasAllowedGroup(authContext: RequestAuthContext, allowedGroupIds?: string[]): boolean {
+  if (!allowedGroupIds || allowedGroupIds.length === 0) {
+    return true
+  }
+
+  // Some Microsoft access tokens do not include group claims unless the app registration
+  // is configured for them. The Document app performs a Graph-backed route gate in that
+  // case, so do not block API requests solely because the claim is absent.
+  if (!authContext.groups || authContext.groups.length === 0) {
+    return true
+  }
+
+  const userGroupIds = new Set((authContext.groups || []).map((group) => group.toLowerCase()))
+  return allowedGroupIds.some((groupId) => userGroupIds.has(groupId.toLowerCase()))
+}
+
 async function verifyMicrosoftToken(token: string, env: ApiAuthEnv): Promise<RequestAuthContext> {
   const tenantId = getTenantId(env)
   const audiences = buildAudienceList(env)
@@ -202,7 +270,9 @@ async function verifyMicrosoftToken(token: string, env: ApiAuthEnv): Promise<Req
   return {
     mode: 'microsoft',
     subject: getSubjectFromPayload(payload),
+    email: getEmailFromPayload(payload),
     tenantId,
+    groups: getGroupsFromPayload(payload),
   }
 }
 
@@ -263,6 +333,10 @@ export async function authorizeApiRequest(
 
   try {
     const authContext = await verifyMicrosoftToken(bearerToken, env)
+    if (!hasAllowedGroup(authContext, policy.allowedGroupIds)) {
+      console.warn(`${buildRequestLogContext(request)} missing required group`)
+      return unauthorizedResponse(jsonHeaders, 'Forbidden')
+    }
     setRequestAuthContext(request, authContext)
     return null
   } catch (error) {

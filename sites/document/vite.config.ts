@@ -1,55 +1,94 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
-import path from 'path'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
+import path from "path";
 
 export default defineConfig({
-  plugins: [
-    react(), 
-    tailwindcss()
-  ],
+  plugins: [react(), tailwindcss()],
   css: {
     postcss: {
       plugins: [],
     },
   },
   resolve: {
+    dedupe: ["react", "react-dom"],
     alias: {
-      '@styles': path.resolve(__dirname, '../../styles'),
-      '@wps/input': path.resolve(__dirname, '../../packages/@wps/input/src'),
-      '@wps/layout': path.resolve(__dirname, '../../packages/@wps/layout/src'),
-      '@wps/scripts': path.resolve(__dirname, '../../packages/@wps/scripts/src'),
+      "@styles": path.resolve(__dirname, "../../styles"),
+      "@wps/input": path.resolve(__dirname, "../../packages/@wps/input/src"),
+      "@wps/layout": path.resolve(__dirname, "../../packages/@wps/layout/src"),
+      "@wps/scripts": path.resolve(
+        __dirname,
+        "../../packages/@wps/scripts/src",
+      ),
     },
   },
   build: {
     rollupOptions: {
       output: {
         manualChunks(id: string) {
-          if (!id.includes('node_modules')) {
-            return
+          const normalizedId = id.replace(/\\/g, "/");
+          if (
+            normalizedId.includes("/node_modules/react/") ||
+            normalizedId.includes("/node_modules/react-dom/")
+          ) {
+            return "react-vendor";
           }
-
-          const groups: Record<string, string[]> = {
-            'react-vendor': ['react', 'react-dom'],
-            'react-router': ['react-router-dom'],
-            msal: ['@azure/msal-browser', '@azure/msal-react'],
-            'document-gen': ['docxtemplater', 'pizzip', 'file-saver'],
-            markdown: ['react-markdown', 'remark-gfm', 'rehype-slug'],
-            headless: ['@headlessui/react'],
-            lucide: ['lucide-react'],
-            gis: ['leaflet', 'react-leaflet', 'papaparse'],
-          }
-
-          for (const [chunkName, packages] of Object.entries(groups)) {
-            if (packages.some((pkg) => id.includes(`/node_modules/${pkg}/`) || id.includes(`\\node_modules\\${pkg}\\`) || id.includes(`/node_modules/.pnpm/${pkg.replace('/', '+')}@`) || id.includes('react/jsx-runtime'))) {
-              return chunkName
-            }
-          }
-
-          return 'vendor'
+          if (normalizedId.includes("/node_modules/@stripe/"))
+            return "stripe-vendor";
+          if (
+            normalizedId.includes("/node_modules/@azure/msal-") ||
+            normalizedId.includes("/node_modules/.pnpm/@azure+msal-")
+          )
+            return "auth-vendor";
+          if (
+            normalizedId.includes("/node_modules/react-router") ||
+            normalizedId.includes("/node_modules/.pnpm/react-router")
+          )
+            return "router-vendor";
+          if (
+            normalizedId.includes("/node_modules/@headlessui/") ||
+            normalizedId.includes("/node_modules/.pnpm/@headlessui+") ||
+            normalizedId.includes("/node_modules/@floating-ui/") ||
+            normalizedId.includes("/node_modules/.pnpm/@floating-ui+") ||
+            normalizedId.includes("/node_modules/lucide-react") ||
+            normalizedId.includes("/node_modules/.pnpm/lucide-react")
+          )
+            return "ui-vendor";
+          if (
+            normalizedId.includes("/node_modules/leaflet") ||
+            normalizedId.includes("/node_modules/react-leaflet")
+          )
+            return "map-vendor";
+          if (
+            normalizedId.includes("/node_modules/exceljs") ||
+            normalizedId.includes("/node_modules/jszip") ||
+            normalizedId.includes("/node_modules/fast-csv") ||
+            normalizedId.includes("/node_modules/saxes")
+          )
+            return "spreadsheet-vendor";
+          if (
+            normalizedId.includes("/node_modules/jspdf") ||
+            normalizedId.includes("/node_modules/docx") ||
+            normalizedId.includes("/node_modules/docxtemplater") ||
+            normalizedId.includes("/node_modules/pizzip")
+          )
+            return "document-vendor";
+          if (
+            normalizedId.includes("/node_modules/react-markdown") ||
+            normalizedId.includes("/node_modules/remark-") ||
+            normalizedId.includes("/node_modules/rehype-")
+          )
+            return "markdown-vendor";
+          if (
+            normalizedId.includes("/node_modules/proj4") ||
+            normalizedId.includes("/node_modules/mgrs") ||
+            normalizedId.includes("/node_modules/wkt-parser")
+          )
+            return "geodesy-vendor";
+          if (normalizedId.includes("/node_modules/")) return "vendor";
         },
       },
     },
-    chunkSizeWarningLimit: 600,
+    chunkSizeWarningLimit: 1000,
   },
-})
+});

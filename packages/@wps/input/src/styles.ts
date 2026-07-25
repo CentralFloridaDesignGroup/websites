@@ -94,25 +94,26 @@ export function buttonClass({
     colorMode = "light",
     className
 }: {
-    variant: "primary" | "secondary" | "danger" | "success";
+    variant: "primary" | "secondary" | "danger" | "success" | "textonly";
     size?: "small" | "medium" | "large";
     colorMode?: InputColorMode;
     className?: string;
 }): string {
     const sizeClasses = {
-        small: "px-3 py-1.5 text-sm",
-        medium: "px-4 py-2 text-base",
-        large: "px-5 py-2.5 text-lg"
+        small: "px-2 py-1.5 text-sm",
+        medium: "px-3 py-2 text-base",
+        large: "px-4 py-2.5 text-lg"
     };
     const variantClasses = {
         primary: modeClass(colorMode, "bg-primary text-white hover:bg-primary-700 disabled:bg-primary-300", "bg-primary-500 text-white hover:bg-primary-600 disabled:bg-primary-300", "bg-primary text-white hover:bg-primary-700 disabled:bg-primary-300 dark:bg-primary-500 dark:hover:bg-primary-600"),
         secondary: modeClass(colorMode, "bg-gray-200 text-gray-900 hover:bg-gray-300 disabled:bg-gray-100", "bg-gray-700 text-gray-100 hover:bg-gray-600 disabled:bg-gray-800", "bg-gray-200 text-gray-900 hover:bg-gray-300 disabled:bg-gray-100 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600 dark:disabled:bg-gray-800"),
         danger: modeClass(colorMode, "bg-red-600 text-white hover:bg-red-700 disabled:bg-red-300", "bg-red-500 text-white hover:bg-red-600 disabled:bg-red-300", "bg-red-600 text-white hover:bg-red-700 disabled:bg-red-300 dark:bg-red-500 dark:hover:bg-red-600"),
-        success: modeClass(colorMode, "bg-green-600 text-white hover:bg-green-700 disabled:bg-green-300", "bg-green-500 text-white hover:bg-green-600 disabled:bg-green-300", "bg-green-600 text-white hover:bg-green-700 disabled:bg-green-300 dark:bg-green-500 dark:hover:bg-green-600")
+        success: modeClass(colorMode, "bg-green-600 text-white hover:bg-green-700 disabled:bg-green-300", "bg-green-500 text-white hover:bg-green-600 disabled:bg-green-300", "bg-green-600 text-white hover:bg-green-700 disabled:bg-green-300 dark:bg-green-500 dark:hover:bg-green-600"),
+        textonly: modeClass(colorMode, "bg-transparent text-primary hover:bg-primary/10 disabled:text-gray-400", "bg-transparent text-primary-500 hover:bg-primary-500/10 disabled:text-gray-400", "bg-transparent text-primary hover:bg-primary/10 disabled:text-gray-400 dark:text-white dark:hover:bg-primary-500/10")
     };
 
     return cx(
-        "inline-flex items-center justify-center gap-2 border border-transparent font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary/35 disabled:cursor-not-allowed disabled:text-gray-500",
+        "inline-flex items-center justify-center gap-2 border border-transparent font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary/35 cursor-pointer disabled:cursor-not-allowed disabled:text-gray-500",
         sizeClasses[size],
         variantClasses[variant],
         className

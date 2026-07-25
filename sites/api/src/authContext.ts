@@ -3,7 +3,9 @@ export type RequestAuthMode = 'public' | 'key' | 'microsoft'
 export interface RequestAuthContext {
   mode: RequestAuthMode
   subject?: string
+  email?: string
   tenantId?: string
+  groups?: string[]
 }
 
 const REQUEST_AUTH_CONTEXT_KEY = '__wpsAuthContext__'

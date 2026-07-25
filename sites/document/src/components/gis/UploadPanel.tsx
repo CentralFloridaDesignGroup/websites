@@ -1,6 +1,5 @@
 import { useMemo, useState, type ChangeEvent } from 'react'
 import Papa from 'papaparse'
-import ExcelJS from 'exceljs'
 import { Button } from '@wps/input'
 import { Geodesy } from '@wps/scripts'
 import {
@@ -81,6 +80,7 @@ function downloadCsvTemplate() {
 }
 
 async function downloadExcelTemplate() {
+  const { default: ExcelJS } = await import('exceljs')
   const workbook = new ExcelJS.Workbook()
   const worksheet = workbook.addWorksheet('GIS Upload Template')
   const validationSheet = workbook.addWorksheet('Validation Lists')

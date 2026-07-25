@@ -5,30 +5,25 @@ compatibility_date = "2026-06-10"
 workers_dev = true
 preview_urls = true
 
-routes = [
-  { pattern = "api.whitepointsurvey.com", zone_name = "whitepointsurvey.com", custom_domain = true }
-]
-
-kv_namespaces = [
-  { binding = "WPS_KV_BINDING", id = "e7afc9b6d6b3496dafeba8292d326693" }
-]
-
-d1_databases = [
-  { binding = "DB", database_name = "compass", database_id = "17020e11-0fde-44b7-8c60-0989b6641c29" }
-]
-
 [vars]
 MICROSOFT_TENANT_ID="1398eec4-9845-4a21-8b11-4a0245047b16"
 MICROSOFT_CLIENT_ID="394b1593-0cd8-4306-8472-6b99995c944b"
 MICROSOFT_ALLOWED_AUDIENCES="394b1593-0cd8-4306-8472-6b99995c944b,api://394b1593-0cd8-4306-8472-6b99995c944b"
+INVOICE_PUBLIC_BASE_URL="https://docs.whitepointsurvey.com"
 
 [env.production]
 name = "wps-api"
+routes = [
+  { pattern = "api.whitepointsurvey.com", zone_name = "whitepointsurvey.com", custom_domain = true }
+]
 kv_namespaces = [
   { binding = "WPS_KV_BINDING", id = "e7afc9b6d6b3496dafeba8292d326693" }
 ]
 d1_databases = [
   { binding = "DB", database_name = "compass", database_id = "17020e11-0fde-44b7-8c60-0989b6641c29" }
+]
+r2_buckets = [
+  { binding = "INVOICE_DOCUMENTS", bucket_name = "wps-invoice-documents" }
 ]
 [env.production.vars]
 SENDER_EMAIL="noreply@whitepointsurvey.com"
@@ -36,6 +31,10 @@ BREVO_SANDBOX="false"
 MICROSOFT_TENANT_ID="1398eec4-9845-4a21-8b11-4a0245047b16"
 MICROSOFT_CLIENT_ID="394b1593-0cd8-4306-8472-6b99995c944b"
 MICROSOFT_ALLOWED_AUDIENCES="394b1593-0cd8-4306-8472-6b99995c944b,api://394b1593-0cd8-4306-8472-6b99995c944b"
+INVOICE_PUBLIC_BASE_URL="https://docs.whitepointsurvey.com"
+QBO_REDIRECT_URI="https://api.whitepointsurvey.com/api/qbo/callback"
+QBO_ENVIRONMENT="production"
+QBO_MINOR_VERSION="75"
 
 
 [env.preview]
@@ -47,9 +46,16 @@ kv_namespaces = [
 d1_databases = [
   { binding = "DB", database_name = "compass", database_id = "17020e11-0fde-44b7-8c60-0989b6641c29" }
 ]
+r2_buckets = [
+  { binding = "INVOICE_DOCUMENTS", bucket_name = "wps-invoice-documents-preview" }
+]
 [env.preview.vars]
 SENDER_EMAIL="noreply@whitepointsurvey.com"
 BREVO_SANDBOX="true"
 MICROSOFT_TENANT_ID="1398eec4-9845-4a21-8b11-4a0245047b16"
 MICROSOFT_CLIENT_ID="394b1593-0cd8-4306-8472-6b99995c944b"
 MICROSOFT_ALLOWED_AUDIENCES="394b1593-0cd8-4306-8472-6b99995c944b,api://394b1593-0cd8-4306-8472-6b99995c944b"
+INVOICE_PUBLIC_BASE_URL="http://localhost:5200"
+QBO_REDIRECT_URI="http://localhost:8787/api/qbo/callback"
+QBO_ENVIRONMENT="sandbox"
+QBO_MINOR_VERSION="75"
