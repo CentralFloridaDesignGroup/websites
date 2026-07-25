@@ -13,3 +13,9 @@ export {
     POSITION_SALARY_TYPES,
     POSITION_LOCATIONS
 } from './jobPosition';
+
+export {
+    PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS,
+    PROJECT_MANAGER_GROUP_ID,
+    PROJECT_MANAGER_GROUP_DISPLAY_NAME
+} from './projectManagement';

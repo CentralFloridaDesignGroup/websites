@@ -1,79 +1,59 @@
-/** Entra group object IDs allowed to use Project Management tools. Add IDs here as access expands. */
-export const PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS: string[] = ["1cb77436-5086-490c-8b77-49056339667b", "51ad0458-eb18-4f00-a829-6e8b6d4636e6"];
+import type { Address } from './general';
+import { normalizeBoolean, normalizeNumber, normalizeString } from './helpers';
 
-/** Entra group object ID for users eligible to be assigned as internal project managers. */
-export const PROJECT_MANAGER_GROUP_ID = '51ad0458-eb18-4f00-a829-6e8b6d4636e6';
-
-/** Fallback Entra group display name used when PROJECT_MANAGER_GROUP_ID is not configured. */
-export const PROJECT_MANAGER_GROUP_DISPLAY_NAME = 'Project Manager';
-
-/** Required address fields for creating QuickBooks clients and projects from Compass. */
-export type ProjectManagementAddressPayload = {
-  line1: string;
-  line2: string;
-  city: string;
-  state: string;
-  postalCode: string;
-};
-
-/** Payload for creating a top-level QuickBooks customer/client. */
-export type ClientCreatePayload = {
-  name: string;
-  address: ProjectManagementAddressPayload;
-  phone: string;
-  email: string;
-};
-
-/** Payload for updating a top-level QuickBooks customer/client. */
-export type ClientUpdatePayload = ClientCreatePayload;
-
-/** Payload for creating a QuickBooks sub-customer/project. */
-export type ProjectCreatePayload = {
-  parentCustomerId: string;
-  name: string;
-  address: ProjectManagementAddressPayload;
-  phone: string;
-  email: string;
-};
-
-/** Payload for updating a QuickBooks sub-customer/project without moving it. */
-export type ProjectUpdatePayload = Omit<ProjectCreatePayload, 'parentCustomerId'>;
-
-/** Payload for moving a QuickBooks sub-customer/project under a different client. */
-export type ProjectMovePayload = {
-  parentCustomerId: string;
-};
+// #region Project Management Types
 
 /** Project-level billing defaults used when creating and sending invoices. */
 export type ProjectBillingProfile = {
+  /** The QuickBooks Online project ID. */
   qboProjectId: string;
+  /** The purchase order number associated with the project. */
   poNumber: string;
+  /** A note to include in the invoice document. */
   invoiceDocumentNote: string;
+  /** The date when the project billing profile was last updated. */
   updatedDate: string;
+  /** The user who last updated the project billing profile. */
   updatedBy: string;
 };
 
 /** D1 row shape for project-level billing defaults. */
 export type ProjectBillingProfileRow = {
+  /** The QuickBooks Online project ID. */
   qbo_project_id?: unknown;
+  /** The purchase order number associated with the project. */
   po_number?: unknown;
+  /** A note to include in the invoice document. */
   invoice_document_note?: unknown;
+  /** The date when the project billing profile was last updated. */
   updated_date?: unknown;
+  /** The user who last updated the project billing profile. */
   updated_by?: unknown;
 };
 
 /** Metadata for an R2-backed document attached to project invoice emails. */
 export type ProjectInvoiceDocument = {
+  /** Unique identifier for the document. */
   id: string;
+  /** The QuickBooks Online project ID associated with the document. */
   qboProjectId: string;
+  /** The R2 key for the document. */
   r2Key: string;
+  /** The original filename of the document. */
   filename: string;
+  /** The MIME type of the document. */
   contentType: string;
+  /** The size of the document in bytes. */
   sizeBytes: number;
+  /** Whether the document is active (included in the invoice email). */
   active: boolean;
+  /** The date when the document was created. */
   createdDate: string;
+  /** The user who created the document. */
   createdBy: string;
+  /** The date when the document was last updated. */
   updatedDate: string;
+  /** The user who last updated the document. */
   updatedBy: string;
 };
 
@@ -94,82 +74,121 @@ export type ProjectInvoiceDocumentRow = {
 
 /** Active Entra account that is eligible for internal project assignment. */
 export type EntraUserAccount = {
+  /** The unique identifier for the Entra user account. */
   id: string;
+  /** The display name of the Entra user account. */
   displayName: string;
+  /** The email address of the Entra user account. */
   mail: string;
+  /** The user principal name of the Entra user account. */
   userPrincipalName: string;
+  /** Whether the Entra user account is enabled. */
   accountEnabled: boolean;
+  /** The job title of the Entra user account. */
   jobTitle: string;
+  /** The IDs of the groups the Entra user account belongs to. */
   groupIds: string[];
+  /** The names of the groups the Entra user account belongs to. */
   groupNames: string[];
 };
 
 /** Local Compass contact tied to a QuickBooks customer/client. */
 export type ClientContact = {
+  /** The unique identifier for the client contact. */
   id: string;
+  /** The QuickBooks Online customer ID associated with the client contact. */
   qboCustomerId: string;
+  /** The name of the client contact. */
   name: string;
+  /** The email address of the client contact. */
   email: string;
+  /** The phone number of the client contact. */
   phone: string;
+  /** The role of the client contact. */
   role: string;
+  /** Whether the client contact is an invoice recipient. */
   isInvoiceRecipient: boolean;
+  /** Whether the client contact is active. */
   active: boolean;
+  /** Notes about the client contact. */
   notes: string;
+  /** The date when the client contact was created. */
   createdDate: string;
+  /** The date when the client contact was last updated. */
   updatedDate: string;
+  /** The user who created the client contact. */
   createdBy: string;
+  /** The user who last updated the client contact. */
   updatedBy: string;
 };
 
 /** D1 row shape for local Compass client contacts. */
 export type ClientContactRow = {
+  /** The unique identifier for the client contact. */
   id?: unknown;
+  /** The QuickBooks Online customer ID associated with the client contact. */
   qbo_customer_id?: unknown;
+  /** The name of the client contact. */
   name?: unknown;
+  /** The email address of the client contact. */
   email?: unknown;
+  /** The phone number of the client contact. */
   phone?: unknown;
+  /** The role of the client contact. */
   role?: unknown;
+  /** Whether the client contact is an invoice recipient. */
   is_invoice_recipient?: unknown;
+  /** Whether the client contact is active. */
   active?: unknown;
+  /** Notes about the client contact. */
   notes?: unknown;
+  /** The date when the client contact was created. */
   created_date?: unknown;
+  /** The date when the client contact was last updated. */
   updated_date?: unknown;
+  /** The user who created the client contact. */
   created_by?: unknown;
+  /** The user who last updated the client contact. */
   updated_by?: unknown;
 };
 
 /** Internal project manager copied on outbound project invoice emails. */
 export type ProjectManager = {
+  /** The QuickBooks Online project ID associated with the project manager. */
   qboProjectId: string;
+  /** The name of the project manager. */
   managerName: string;
+  /** The email address of the project manager. */
   managerEmail: string;
+  /** The date when the project manager record was last updated. */
   updatedDate: string;
+  /** The user who last updated the project manager record. */
   updatedBy: string;
 };
 
 /** D1 row shape for internal project manager records. */
 export type ProjectManagerRow = {
+  /** The QuickBooks Online project ID associated with the project manager. */
   qbo_project_id?: unknown;
+  /** The name of the project manager. */
   manager_name?: unknown;
+  /** The email address of the project manager. */
   manager_email?: unknown;
+  /** The date when the project manager record was last updated. */
   updated_date?: unknown;
+  /** The user who last updated the project manager record. */
   updated_by?: unknown;
 };
 
-function normalizeString(value: unknown): string {
-  return String(value ?? '').trim();
-}
+// #endregion
 
-function normalizeBool(value: unknown): boolean {
-  return value === true || value === 1 || value === '1';
-}
+// #region Project Management Mappers
 
-function normalizeNumber(value: unknown): number {
-  const parsed = Number(value ?? 0);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
-/** Maps a D1 client contact row to the shared API type. */
+/** 
+ * Maps a D1 client contact row to the shared API type. 
+ * @param row - The D1 client contact row to map.
+ * @returns The mapped ClientContact object.
+ */
 export function mapClientContactRow(row: ClientContactRow): ClientContact {
   return {
     id: normalizeString(row.id),
@@ -178,8 +197,8 @@ export function mapClientContactRow(row: ClientContactRow): ClientContact {
     email: normalizeString(row.email),
     phone: normalizeString(row.phone),
     role: normalizeString(row.role),
-    isInvoiceRecipient: normalizeBool(row.is_invoice_recipient),
-    active: normalizeBool(row.active),
+    isInvoiceRecipient: normalizeBoolean(row.is_invoice_recipient),
+    active: normalizeBoolean(row.active),
     notes: normalizeString(row.notes),
     createdDate: normalizeString(row.created_date),
     updatedDate: normalizeString(row.updated_date),
@@ -188,7 +207,11 @@ export function mapClientContactRow(row: ClientContactRow): ClientContact {
   };
 }
 
-/** Maps a D1 project manager row to the shared API type. */
+/** 
+ * Maps a D1 project manager row to the shared API type. 
+ * @param row - The D1 project manager row to map.
+ * @returns The mapped ProjectManager object, or null if the row is invalid.
+ */
 export function mapProjectManagerRow(row: ProjectManagerRow | null | undefined): ProjectManager | null {
   if (!row) return null;
   const qboProjectId = normalizeString(row.qbo_project_id);
@@ -203,7 +226,12 @@ export function mapProjectManagerRow(row: ProjectManagerRow | null | undefined):
   };
 }
 
-/** Maps a D1 project billing profile row to the shared API type. */
+/** 
+ * Maps a D1 project billing profile row to the shared API type. 
+ * @param row - The D1 project billing profile row to map.
+ * @param qboProjectId - The QuickBooks Online project ID to use if the row does not have one.
+ * @returns The mapped ProjectBillingProfile object.
+ */
 export function mapProjectBillingProfileRow(row: ProjectBillingProfileRow | null | undefined, qboProjectId = ''): ProjectBillingProfile {
   return {
     qboProjectId: normalizeString(row?.qbo_project_id) || qboProjectId,
@@ -214,7 +242,11 @@ export function mapProjectBillingProfileRow(row: ProjectBillingProfileRow | null
   };
 }
 
-/** Maps a D1 project invoice document row to the shared API type. */
+/** 
+ * Maps a D1 project invoice document row to the shared API type. 
+ * @param row - The D1 project invoice document row to map.
+ * @returns The mapped ProjectInvoiceDocument object.
+ */
 export function mapProjectInvoiceDocumentRow(row: ProjectInvoiceDocumentRow): ProjectInvoiceDocument {
   return {
     id: normalizeString(row.id),
@@ -223,10 +255,50 @@ export function mapProjectInvoiceDocumentRow(row: ProjectInvoiceDocumentRow): Pr
     filename: normalizeString(row.filename),
     contentType: normalizeString(row.content_type),
     sizeBytes: normalizeNumber(row.size_bytes),
-    active: normalizeBool(row.active),
+    active: normalizeBoolean(row.active),
     createdDate: normalizeString(row.created_date),
     createdBy: normalizeString(row.created_by),
     updatedDate: normalizeString(row.updated_date),
     updatedBy: normalizeString(row.updated_by),
   };
 }
+
+// #endregion
+
+// #region Project Management Payloads
+
+/** Definition for a top-level QuickBooks customer/client. */
+export type ClientPayload = {
+  /** Display name value */
+  name: string;
+  /** Physical address of the client. */
+  address: Address;
+  /** Phone number of the client. */
+  phone: string;
+  /** Email address of the client. */
+  email: string;
+};
+
+/** Payload for creating a top-level QuickBooks customer/client. */
+export type ClientCreatePayload = ClientPayload;
+
+/** Payload for updating a top-level QuickBooks customer/client. */
+export type ClientUpdatePayload = ClientPayload;
+
+/** Definition for creating a QuickBooks sub-customer/project. */
+export type ProjectCreatePayload = ClientPayload & {
+  parentCustomerId: string;
+};
+
+/** Payload for updating a QuickBooks sub-customer/project without moving it. */
+export type ProjectUpdatePayload = ClientPayload;
+
+/** 
+ * Payload for moving a QuickBooks sub-customer/project under a different client. The parentCustomerId specifies the new parent client.
+ * @comment The current project ID is implied by the endpoint being called, so it is not included in this payload.
+ */
+export type ProjectMovePayload = {
+  parentCustomerId: string;
+};
+
+// #endregion

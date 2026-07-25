@@ -1,6 +1,7 @@
 // General Exports
 export type {
-    State
+    State,
+    Address
 } from './general';
 
 // Calculator Exports
@@ -41,3 +42,29 @@ export type {
     JobPositionLocation,
     JobPosition
 } from './jobPosition';
+
+// Project Management Exports
+export type {
+    ProjectBillingProfile,
+    ProjectBillingProfileRow,
+    ProjectInvoiceDocument,
+    ProjectInvoiceDocumentRow,
+    EntraUserAccount,
+    ClientContact,
+    ClientContactRow,
+    ProjectManager,
+    ProjectManagerRow,
+    ClientPayload,
+    ClientCreatePayload,
+    ClientUpdatePayload,
+    ProjectCreatePayload,
+    ProjectUpdatePayload,
+    ProjectMovePayload
+} from './projectManagement';
+
+export {
+    mapClientContactRow,
+    mapProjectManagerRow,
+    mapProjectBillingProfileRow,
+    mapProjectInvoiceDocumentRow
+} from './projectManagement';
