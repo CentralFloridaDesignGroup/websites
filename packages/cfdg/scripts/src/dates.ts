@@ -37,6 +37,11 @@ export function formatDate(
     }
 }
 
+/**
+ * Calculates the number of days remaining until the specified end date.
+ * @param endDate The end date, which can be a Date object or a date string. Use "0" for positions with no end date.
+ * @returns The number of days remaining until the end date. Returns Infinity for positions with no end date and 0 for invalid dates.
+ */
 export function getDaysRemaining(endDate: Date | string): number {
     if (typeof endDate === "string") {
         if (endDate === "0") {

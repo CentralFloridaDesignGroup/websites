@@ -1,11 +1,7 @@
-
-/**
- * Shared utility functions for calculator components
- */
-
 import { FormatNumber } from "./numbers";
 import { HistoryEntry } from "cfdg/types";
 
+/** Shared key press event type @deprecated This module is being sunset. Migrate to new home before this is deleted. */
 type KeyPressEvent = {
   key: string;
   preventDefault: () => void;
@@ -13,6 +9,7 @@ type KeyPressEvent = {
 
 /**
  * Format current time as HH:MM:SS
+ * @deprecated This module is being sunset. Migrate to new home before this is deleted.
  */
 export function formatTime(): string {
   const now = new Date();
@@ -26,6 +23,7 @@ export function formatTime(): string {
 
 /**
  * Handle Enter key press to trigger calculation
+ * @deprecated This module is being sunset. Migrate to new home before this is deleted.
  */
 export function handleKeyPress(event: KeyPressEvent, callback: () => void): void {
   if (event.key === "Enter") {
@@ -36,6 +34,7 @@ export function handleKeyPress(event: KeyPressEvent, callback: () => void): void
 
 /**
  * Format a number with specified decimal places
+ * @deprecated This module is being sunset. Migrate to new home before this is deleted.
  */
 export function formatNumber(value: number, decimals: number = 2): string {
   return FormatNumber(value, {
@@ -46,6 +45,7 @@ export function formatNumber(value: number, decimals: number = 2): string {
 
 /**
  * Export history to CSV file
+ * @deprecated This module is being sunset. Migrate to new home before this is deleted.
  */
 export function exportHistoryToCSV(history: HistoryEntry[], filename: string): void {
   const globalScope = globalThis as {
@@ -125,6 +125,7 @@ export function exportHistoryToCSV(history: HistoryEntry[], filename: string): v
 
 /**
  * Generate unique ID for history entries
+ * @deprecated This module is being sunset. Migrate to new home before this is deleted.
  */
 export function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
