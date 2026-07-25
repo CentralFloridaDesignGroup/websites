@@ -24,3 +24,8 @@ export {
     COMMENT_STATUSES,
     REVIEW_PACKAGE_STATUSES
 } from './reviewPackage';
+
+export {
+    KNOWN_STATE_PLANE_PROJECTIONS,
+    STATE_PLANE_DEFINITIONS
+} from './geodesy';

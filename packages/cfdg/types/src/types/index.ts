@@ -98,3 +98,11 @@ export type {
     Package,
     FormSubmission
 } from './transactionEmail';
+
+// Geodesy Exports
+export type {
+    KnownStatePlaneProjection,
+    StatePlaneProjection,
+    StatePlaneInput,
+    Wgs84Input
+} from './geodesy';
