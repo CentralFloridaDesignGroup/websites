@@ -10,7 +10,7 @@ You are currently on a branch called `cleanup` for github. This is meant to be a
 
 ## A. Packages
 
-1. [ ] Rename containing folder from `cfdg` to `cfdg`.
+1. [x] Rename containing folder from `@wps` to `cfdg`. `2026-07-25` `83bb3142a142ec7d069d35ba0b49e1fdff22efd2`
 
 ### I. `Input` Package
 
@@ -22,9 +22,28 @@ You are currently on a branch called `cleanup` for github. This is meant to be a
 
 ### III. `Scripts` Package
 
-1. [ ] Split this package. Functions to remain in this package. Types should be moved to a new `types` package.
-1. [ ] Complete a JSDoc review of all exported functions.
-1. [ ] Complete an organization pass for exports, allowing more targeted imports into end-components.
+1. [x] Split this package. Functions to remain in this package. Types should be moved to a new `types` package.`2026-07-25`
+    - Relevant commits:
+      - `20ed97ebe522852c6514f7f147bd56a4c20c1195`
+      - `5ae45187fe10595480cd4280008d28d65813f3dc`
+1. [x] Complete a JSDoc review of all exported functions. `2026-07-25`
+    - Relevant commits:
+      - `20ed97ebe522852c6514f7f147bd56a4c20c1195`
+      - `35e5df920e19c41a1d93831b9000dfce4413069d`
+      - `3a5e21baf0d7a034f24de2f42b45bd122b8b99ab`
+      - `30ff90a26702aa1977f0db5b503276503ff622fa`
+      - `3b065501cc98c6c5b89afd786b56f3b7180c5d32`
+      - `5ae45187fe10595480cd4280008d28d65813f3dc`
+      - `2cedb1bd1552f55cdd50f81eb1c609b950ab7220`
+1. [x] Complete an organization pass for exports, allowing more targeted imports into end-components. `2026-07-25`
+    - Relevant commits:
+      - `20ed97ebe522852c6514f7f147bd56a4c20c1195`
+      - `35e5df920e19c41a1d93831b9000dfce4413069d`
+      - `3a5e21baf0d7a034f24de2f42b45bd122b8b99ab`
+      - `30ff90a26702aa1977f0db5b503276503ff622fa`
+      - `3b065501cc98c6c5b89afd786b56f3b7180c5d32`
+      - `2cd8ffaf07289ad526eb8b593729f601821bca15`
+      - `5ae45187fe10595480cd4280008d28d65813f3dc`
 1. [ ] Perform module updates and checks.
 
 ### IV. NEW `UI` Package

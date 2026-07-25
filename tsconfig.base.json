@@ -27,6 +27,7 @@
       "cfdg/scripts/*": ["./packages/cfdg/scripts/src/*"],
       "cfdg/types": ["./packages/cfdg/types/src/types"],
       "cfdg/types/*": ["./packages/cfdg/types/src/types/*"],
+      "cfdg/types/mappers": ["./packages/cfdg/types/src/mappers"],
       "cfdg/constants": ["./packages/cfdg/types/src/constants"],
       "cfdg/constants/*": ["./packages/cfdg/types/src/constants/*"]
     }

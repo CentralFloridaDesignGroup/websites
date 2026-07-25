@@ -22,7 +22,7 @@
     "d1:migrate:local": "pnpm --filter sites-api run d1:migrate:local",
     "d1:migrate:remote": "pnpm --filter sites-api run d1:migrate:remote",
     "lint": "eslint .",
-    "type-check": "pnpm --filter cfdg/input exec tsc -b && pnpm --filter cfdg/layout exec tsc -b && pnpm --filter cfdg/scripts exec tsc -b && pnpm --filter sites-main exec tsc --noEmit && pnpm --filter sites-document exec tsc --noEmit && pnpm --filter sites-api exec tsc --noEmit"
+    "type-check": "pnpm --filter cfdg/input exec tsc -b && pnpm --filter cfdg/layout exec tsc -b && pnpm --filter cfdg/scripts exec tsc -b && pnpm --filter cfdg/types exec tsc -b && pnpm --filter sites-main exec tsc --noEmit && pnpm --filter sites-document exec tsc --noEmit && pnpm --filter sites-api exec tsc --noEmit"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

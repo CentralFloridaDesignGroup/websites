@@ -1,4 +1,3 @@
-import { FormatNumber } from "./numbers";
 import { HistoryEntry } from "cfdg/types";
 
 /** Shared key press event type @deprecated This module is being sunset. Migrate to new home before this is deleted. */
@@ -30,17 +29,6 @@ export function handleKeyPress(event: KeyPressEvent, callback: () => void): void
     event.preventDefault();
     callback();
   }
-}
-
-/**
- * Format a number with specified decimal places
- * @deprecated This module is being sunset. Migrate to new home before this is deleted.
- */
-export function formatNumber(value: number, decimals: number = 2): string {
-  return FormatNumber(value, {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  });
 }
 
 /**
