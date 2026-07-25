@@ -68,3 +68,26 @@ export {
     mapProjectBillingProfileRow,
     mapProjectInvoiceDocumentRow
 } from './projectManagement';
+
+// Quickbooks Online Exports
+export type {
+    QboCustomer,
+    QboConnectionStatus,
+    QboServiceItem,
+    QboAccount
+} from './qbo';
+
+// Review Package Exports
+export type {
+    CommentStatus,
+    ReviewPackageStatus,
+    CommentRecord,
+    ReviewPackage,
+    CommentRecordRow,
+    ReviewPackageRow
+} from './reviewPackage';
+
+export {
+    mapCommentRecordRow,
+    mapReviewPackageRow
+} from './reviewPackage';

@@ -1,96 +1,137 @@
-export const COMMENT_STATUSES = ['open', 'closed', 'answered', 'further information', 'not a comment'] as const;
+import { COMMENT_STATUSES, REVIEW_PACKAGE_STATUSES } from "../constants";
+import { normalizeString, normalizeType } from "./helpers";
+
+// #region Type Definitions
+
 export type CommentStatus = (typeof COMMENT_STATUSES)[number];
 
-export const REVIEW_PACKAGE_STATUSES = ['open', 'review', 'closed'] as const;
 export type ReviewPackageStatus = (typeof REVIEW_PACKAGE_STATUSES)[number];
 
+// #endregion
+
+// #region Review Package types
+
+/** Represents a comment record associated with a review package */
 export type CommentRecord = {
+    /** Unique identifier for the comment record */
     id: string
+    /** Identifier of the review package this comment belongs to */
     packageId: string
+    /** Date when the comment record was created */
     createdDate: string
+    /** Date when the comment record was last updated */
     updatedDate: string
+    /** Identifier of the user who created the comment record */
     createdBy: string
+    /** Identifier of the user who last updated the comment record */
     updatedBy: string
+    /** Unique identifier for the comment */
     commentId: string
+    /** Text content of the comment */
     comment: string
+    /** Text content of the response to the comment */
     response: string
+    /** Department associated with the comment */
     department: string
+    /** Current status of the comment */
     status: CommentStatus
 }
 
-/*export type CommentRecord = {
-    id: number;
-    packageId: number;
-    createdDate: Date;
-    updatedDate: Date;
-    createdBy: string;
-    updatedBy: string;
-    commentId: string;
-    comment: string;
-    response: string;
-    department: string;
-}*/
-
+/** Represents a review package record */
 export type ReviewPackage = {
+    /** Unique identifier for the review package record */
     id: string
+    /** Date when the review package record was created */
     createdDate: string
+    /** Date when the review package record was last updated */
     updatedDate: string
+    /** Identifier of the user who created the review package record */
     createdBy: string
+    /** Identifier of the user who last updated the review package record */
     updatedBy: string
+    /** Identifier of the user who completed the review package */
     completedBy: string
+    /** Project number associated with the review package */
     projectNumber: string
+    /** Municipal number associated with the review package */
     municipalNumber: string
+    /** Review number associated with the review package */
     reviewNumber: string
+    /** Review date associated with the review package */
     reviewDate: string
+    /** Project name associated with the review package */
     projectName: string
+    /** General comment about the review package */
     comment: string
+    /** Current status of the review package */
     status: ReviewPackageStatus
 }
 
+/** D1 Database row representation of a comment record */
 export type CommentRecordRow = {
+    /** Unique identifier for the comment record */
     id?: unknown
+    /** Identifier of the review package this comment belongs to */
     package?: unknown
+    /** Date when the comment record was created */
     created_date?: unknown
+    /** Date when the comment record was last updated */
     updated_date?: unknown
+    /** Identifier of the user who created the comment record */
     created_by?: unknown
+    /** Identifier of the user who last updated the comment record */
     updated_by?: unknown
+    /** Unique identifier for the comment */
     comment_id?: unknown
+    /** Text content of the comment */
     comment_text?: unknown
+    /** Text content of the response to the comment */
     response_text?: unknown
+    /** Department associated with the comment */
     department?: unknown
+    /** Current status of the comment */
     status?: unknown
 }
 
+/** D1 Database row representation of a review package record */
 export type ReviewPackageRow = {
+    /** Unique identifier for the review package record */
     id?: unknown
+    /** Date when the review package record was created */
     created_date?: unknown
+    /** Date when the review package record was last updated */
     updated_date?: unknown
+    /** Identifier of the user who created the review package record */
     created_by?: unknown
+    /** Identifier of the user who last updated the review package record */
     updated_by?: unknown
+    /** Identifier of the user who completed the review package */
     completed_by?: unknown
+    /** Project number associated with the review package */
     project_number?: unknown
+    /** Municipal number associated with the review package */
     municipal_number?: unknown
+    /** Review number associated with the review package */
     review_number?: unknown
+    /** Review date associated with the review package */
     review_date?: unknown
+    /** Project name associated with the review package */
     project_name?: unknown
+    /** General comment about the review package */
     comment?: unknown
+    /** Current status of the review package */
     status?: unknown
 }
 
-function normalizeString(value: unknown): string {
-    return String(value ?? '').trim();
-}
+// #endregion
 
-function normalizeEnum<T extends readonly string[]>(
-    value: unknown,
-    allowedValues: T,
-    fallback: T[number]
-): T[number] {
-    const normalized = normalizeString(value).toLowerCase();
-    const matched = allowedValues.find((candidate) => candidate === normalized);
-    return (matched ?? fallback) as T[number];
-}
+// #region Mapping Functions
 
+/**
+ * Maps a CommentRecordRow to a CommentRecord, normalizing the data types and values.
+ * @param row - D1 Database row representation of a comment record
+ * @returns Mapped CommentRecord with normalized values
+ */
 export function mapCommentRecordRow(row: CommentRecordRow): CommentRecord {
     return {
         id: normalizeString(row.id),
@@ -103,10 +144,15 @@ export function mapCommentRecordRow(row: CommentRecordRow): CommentRecord {
         comment: normalizeString(row.comment_text),
         response: normalizeString(row.response_text),
         department: normalizeString(row.department),
-        status: normalizeEnum(row.status, COMMENT_STATUSES, 'open'),
+        status: normalizeType<CommentStatus>(row.status, COMMENT_STATUSES, 'open'),
     };
 }
 
+/**
+ * Maps a ReviewPackageRow to a ReviewPackage, normalizing the data types and values.
+ * @param row - D1 Database row representation of a review package record
+ * @returns Mapped ReviewPackage with normalized values
+ */
 export function mapReviewPackageRow(row: ReviewPackageRow): ReviewPackage {
     return {
         id: normalizeString(row.id),
@@ -121,19 +167,8 @@ export function mapReviewPackageRow(row: ReviewPackageRow): ReviewPackage {
         reviewDate: normalizeString(row.review_date),
         projectName: normalizeString(row.project_name),
         comment: normalizeString(row.comment),
-        status: normalizeEnum(row.status, REVIEW_PACKAGE_STATUSES, 'open'),
+        status: normalizeType<ReviewPackageStatus>(row.status, REVIEW_PACKAGE_STATUSES, 'open'),
     };
 }
 
-/*export type ReviewPackage = {
-    id: number;
-    createdDate: Date;
-    updatedDate: Date;
-    createdBy: string;
-    updatedBy: string;
-    projectNumber: string;
-    municipalNumber: string;
-    reviewNumber: string;
-    reviewDate: Date;
-    projectName: string;
-}*/
+// #endregion

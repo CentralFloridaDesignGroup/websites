@@ -19,3 +19,8 @@ export {
     PROJECT_MANAGER_GROUP_ID,
     PROJECT_MANAGER_GROUP_DISPLAY_NAME
 } from './projectManagement';
+
+export {
+    COMMENT_STATUSES,
+    REVIEW_PACKAGE_STATUSES
+} from './reviewPackage';
