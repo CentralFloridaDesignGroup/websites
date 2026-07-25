@@ -24,7 +24,11 @@
       "cfdg/layout": ["./packages/cfdg/layout/src"],
       "cfdg/layout/*": ["./packages/cfdg/layout/src/*"],
       "cfdg/scripts": ["./packages/cfdg/scripts/src"],
-      "cfdg/scripts/*": ["./packages/cfdg/scripts/src/*"]
+      "cfdg/scripts/*": ["./packages/cfdg/scripts/src/*"],
+      "cfdg/types": ["./packages/cfdg/types/src/types"],
+      "cfdg/types/*": ["./packages/cfdg/types/src/types/*"],
+      "cfdg/constants": ["./packages/cfdg/types/src/constants"],
+      "cfdg/constants/*": ["./packages/cfdg/types/src/constants/*"]
     }
   },
   "include": ["packages", "sites"],
@@ -33,6 +37,7 @@
     { "path": "./packages/cfdg/input" },
     { "path": "./packages/cfdg/layout" },
     { "path": "./packages/cfdg/scripts" },
+    { "path": "./packages/cfdg/types" },
     { "path": "./sites/main" },
     { "path": "./sites/document" },
     { "path": "./sites/api" }

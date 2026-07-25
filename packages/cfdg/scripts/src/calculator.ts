@@ -4,7 +4,7 @@
  */
 
 import { FormatNumber } from "./numbers";
-import { HistoryEntry } from "cfdg/types/calculators";
+import { HistoryEntry } from "cfdg/types";
 
 type KeyPressEvent = {
   key: string;
