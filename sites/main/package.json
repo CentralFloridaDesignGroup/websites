@@ -14,9 +14,9 @@
   "dependencies": {
     "@headlessui/react": "latest",
     "@types/topojson-specification": "latest",
-    "@wps/input": "workspace:*",
-    "@wps/layout": "workspace:*",
-    "@wps/scripts": "workspace:*",
+    "cfdg/input": "workspace:*",
+    "cfdg/layout": "workspace:*",
+    "cfdg/scripts": "workspace:*",
     "d3-geo": "latest",
     "lucide-react": "latest",
     "react": "latest",

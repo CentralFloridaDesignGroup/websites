@@ -1,4 +1,4 @@
-import type { Geodesy } from "@wps/scripts";
+import type { Geodesy } from "cfdg/scripts";
 import type { GisDatum, PointMaterial } from "./types";
 
 export const gisDatumOptions: Array<{ value: GisDatum; label: string }> = [

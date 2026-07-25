@@ -1,7 +1,7 @@
 import { useMemo, useState, type ChangeEvent } from 'react'
 import Papa from 'papaparse'
-import { Button } from '@wps/input'
-import { Geodesy } from '@wps/scripts'
+import { Button } from 'cfdg/input'
+import { Geodesy } from 'cfdg/scripts'
 import {
   defaultPointMaterial,
   getDatumFromProjection,

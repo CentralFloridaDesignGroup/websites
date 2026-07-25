@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Modal } from '@wps/layout';
-import { Combobox, Multiselect, Textarea, Textbox } from '@wps/input';
+import { Modal } from 'cfdg/layout';
+import { Combobox, Multiselect, Textarea, Textbox } from 'cfdg/input';
 import type { ParamEntry, TemplateEntry } from '../types/proposalTypes';
 import templatesData from './proposalLanguage.json';
 import { formatTemplateScopeAsMarkdown } from '../utils/scopeOfWorkFormatting';

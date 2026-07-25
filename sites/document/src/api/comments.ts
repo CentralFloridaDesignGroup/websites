@@ -5,7 +5,7 @@ import {
   type CommentStatus,
   type ReviewPackage,
   type ReviewPackageStatus,
-} from '@wps/scripts'
+} from 'cfdg/scripts'
 import { requestJson } from './client'
 
 export interface CommentQueryResponse {

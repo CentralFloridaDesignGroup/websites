@@ -1,4 +1,4 @@
-import { Textbox } from '@wps/input'
+import { Textbox } from 'cfdg/input'
 import { type ProjectSummary } from '../../../api/projectManagement'
 
 type ProjectListProps = {

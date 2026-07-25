@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Checkbox, Textbox } from "@wps/input";
+import { Button, Checkbox, Textbox } from "cfdg/input";
 import { Plus, Trash2, X } from "lucide-react";
 import { DATASET_TYPE_OPTIONS, ENTER_METHOD_OPTIONS, FILED_TYPE_OPTIONS, SYMBOL_OPTIONS, newFieldEntry, type FieldEntry } from "./types";
 import type { CxlLayer } from "./layeredModel";

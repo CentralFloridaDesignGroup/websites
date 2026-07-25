@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useMsal } from '@azure/msal-react';
-import { Combobox, Textbox } from '@wps/input';
-import { Button } from '@wps/input';
+import { Combobox, Textbox } from 'cfdg/input';
+import { Button } from 'cfdg/input';
 import type { ClientInfo } from '../types/proposalTypes';
 import { EMPTY_CLIENT } from '../types/emptyClientInfo';
 import { Building, Link, RefreshCw, User } from 'lucide-react';
 import { fetchQboCustomers, fetchQboProjects, fetchQboStatus, startQboConnection, syncQboCustomers } from '../../../../api/qbo';
-import { showNotification } from '@wps/layout';
-import type { QboConnectionStatus, QboCustomer } from '@wps/scripts';
+import { showNotification } from 'cfdg/layout';
+import type { QboConnectionStatus, QboCustomer } from 'cfdg/scripts';
 
 interface ClientInfoStepProps {
     initialValues?: Partial<ClientInfo>;

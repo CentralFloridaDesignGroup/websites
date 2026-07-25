@@ -1,5 +1,5 @@
 import confusedWorker from "../../assets/confused_worker.webp";
-import { Button } from "@wps/input";
+import { Button } from "cfdg/input";
 
 export function ErrorPage() {
     return (

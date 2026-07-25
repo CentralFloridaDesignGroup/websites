@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { Button, Textbox, Checkbox } from "@wps/input";
+import { Button, Textbox, Checkbox } from "cfdg/input";
 import { Trash2 } from "lucide-react";
-import { Calculator, type HistoryEntry } from "@wps/scripts";
-import { showNotification } from "@wps/layout";
+import { Calculator, type HistoryEntry } from "cfdg/scripts";
+import { showNotification } from "cfdg/layout";
 
 /**
  * Slope Calculator Component

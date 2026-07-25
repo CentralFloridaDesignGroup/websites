@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Checkbox } from "@wps/input";
+import { Checkbox } from "cfdg/input";
 import { Printer } from "lucide-react";
 
 interface TableAEntry {

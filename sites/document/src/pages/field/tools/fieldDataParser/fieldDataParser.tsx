@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Button } from "@wps/input";
+import { Button } from "cfdg/input";
 import { Upload, Download, X } from "lucide-react";
 
 type FileFormat = "txt" | "csv" | null;

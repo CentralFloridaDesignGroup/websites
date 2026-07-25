@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState } from 'react';
-import { Dates, type JobPosition } from "@wps/scripts";
+import { Dates, type JobPosition } from "cfdg/scripts";
 import { MarketingSelect, MarketingTextField } from '../../components/marketing';
 import { JobPostingCard } from './components/jobPostingCard';
 

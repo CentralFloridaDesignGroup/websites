@@ -1,13 +1,12 @@
 # Purpose
 
-The purpose of this package is to handle user interaction components. This includes, but is not limited to:
-- Textboxes
-- Textareas
-- Buttons
-- Checkboxes
-- Comboboxes
+The purpose of this package is to handle combined or complex components. This includes, but is not limited to:
+- layouts
+- modals
+- dialogs
+- shared component groups
 
-This package is not intended to handle layouts or complex components. See `packages/@wps/layout` for the correct area.
+This package is not intended to handle basic UI inputs. See `packages/cfdg/input` for the correct area.
 
 # Constraints
 
@@ -17,16 +16,11 @@ This package is not intended to handle layouts or complex components. See `packa
 
 # Design Criteria
 
-- The overall design goal is `Industrial Operations Form`. Spacing is handled in other modules.
+- The overall design goal is `Industrial Operations Form` for `document` and `Brand Marketing UI` for `main`. If a component is for both, default to `Brand Marketing UI`.
 - Exported UI components should accept a `colorMode` prop with `light`, `dark`, or `auto`. Default value should be `light`.
   - `light` UI elements should be planned to be on a white background (`bg-white`). 
   - `dark` UI elements should be planned to be on either `bg-neutral-900` or `bg-gray-800` backgrounds.
   - `auto` UI elements should assume both `light` and `dark` classNames will be used.
-- Key points for UI elements:
-  - Dense desktop data-entry format. Spacing will be handled by the front-end if needed.
-  - Flat industrial UI.
-  - Engineering or CAD-adjacent feel.
-  - Simple text and optimized for readability.
 - UI elements have access to the following:
   - Tailwind for styling.
   - Lucide React Icons.
@@ -35,5 +29,4 @@ This package is not intended to handle layouts or complex components. See `packa
 
 # Guardrails
 
-- All UI elements should be usable as either `controlled` or `uncontrolled` components.
-- The limit of responsibility is the `div` that contains a `label`, optional `description`, `input` and `error` section. Everything outside of the div, including padding with other elements and components, are outside this scope.
+- Layout components are responsible for their own outer wrapper and internal behavior, but not for page-level spacing, surrounding padding, or placement relative to unrelated components.

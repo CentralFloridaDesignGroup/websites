@@ -1,5 +1,5 @@
 {
-  "name": "@wps/scripts",
+  "name": "cfdg/scripts",
   "version": "1.0.0",
   "description": "Shared utility scripts for SWP",
   "main": "dist/index.js",

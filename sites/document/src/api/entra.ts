@@ -2,7 +2,7 @@ import {
   PROJECT_MANAGER_GROUP_DISPLAY_NAME,
   PROJECT_MANAGER_GROUP_ID,
   type EntraUserAccount,
-} from '@wps/scripts'
+} from 'cfdg/scripts'
 import { InteractionRequiredAuthError } from '@azure/msal-browser'
 import { getMsalSilentRedirectUri, msalInstance } from '../auth/msalConfig'
 

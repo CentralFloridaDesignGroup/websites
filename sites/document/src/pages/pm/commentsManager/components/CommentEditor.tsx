@@ -1,6 +1,6 @@
-import { Combobox, Textarea, Textbox } from '@wps/input';
+import { Combobox, Textarea, Textbox } from 'cfdg/input';
 import { X, Plus } from 'lucide-react';
-import { COMMENT_STATUSES, type CommentStatus } from '@wps/scripts';
+import { COMMENT_STATUSES, type CommentStatus } from 'cfdg/scripts';
 
 type CommentForm = {
     id?: string;

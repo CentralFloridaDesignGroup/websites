@@ -1,4 +1,4 @@
-import { Button } from "@wps/input"
+import { Button } from "cfdg/input"
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 

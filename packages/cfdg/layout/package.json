@@ -1,5 +1,5 @@
 {
-  "name": "@wps/layout",
+  "name": "cfdg/layout",
   "version": "1.0.0",
   "description": "Shared layout components for SWP",
   "main": "dist/index.js",
@@ -10,7 +10,7 @@
   "dependencies": {
     "@headlessui/react": "latest",
     "@tailwindcss/vite": "latest",
-    "@wps/input": "workspace:*",
+    "cfdg/input": "workspace:*",
     "lucide-react": "latest",
     "react": "latest",
     "react-dom": "latest",

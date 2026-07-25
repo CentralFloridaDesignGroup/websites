@@ -1,4 +1,4 @@
-import { type Invoice, type InvoiceStatus } from '@wps/scripts'
+import { type Invoice, type InvoiceStatus } from 'cfdg/scripts'
 import { AlertTriangle } from 'lucide-react'
 
 const statusLabels: Record<InvoiceStatus, string> = {

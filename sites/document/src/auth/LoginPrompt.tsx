@@ -1,7 +1,7 @@
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
 import { useLocation } from "react-router-dom";
 import { loginRequest } from "../auth/msalConfig";
-import { Button } from "@wps/input";
+import { Button } from "cfdg/input";
 
 type LoginPromptProps = {
   title?: string;

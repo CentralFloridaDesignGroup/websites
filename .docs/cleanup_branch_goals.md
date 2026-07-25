@@ -10,7 +10,7 @@ You are currently on a branch called `cleanup` for github. This is meant to be a
 
 ## A. Packages
 
-1. [ ] Rename containing folder from `@wps` to `cfdg`.
+1. [ ] Rename containing folder from `cfdg` to `cfdg`.
 
 ### I. `Input` Package
 

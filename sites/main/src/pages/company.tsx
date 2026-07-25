@@ -1,5 +1,5 @@
-import { Dates } from '@wps/scripts';
-import { Modal } from '@wps/layout';
+import { Dates } from 'cfdg/scripts';
+import { Modal } from 'cfdg/layout';
 import { StatementCard } from '../components/layout/statementCard';
 import { useState } from 'react';
 

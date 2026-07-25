@@ -1,4 +1,4 @@
-﻿import { Button } from '@wps/input';
+﻿import { Button } from 'cfdg/input';
 import { X } from 'lucide-react';
 
 type ModalColorMode = 'light' | 'dark' | 'auto';

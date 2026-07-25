@@ -1,4 +1,4 @@
-import { Textarea, Textbox } from '@wps/input'
+import { Textarea, Textbox } from 'cfdg/input'
 import { type ContactForm } from './types'
 
 type ClientContactFormProps = {

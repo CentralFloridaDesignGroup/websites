@@ -9,7 +9,7 @@ import {
   type ProjectMovePayload,
   type ProjectUpdatePayload,
   type QboCustomer,
-} from '@wps/scripts'
+} from 'cfdg/scripts'
 import { requestBlob, requestJson } from './client'
 
 type UnknownRecord = Record<string, unknown>

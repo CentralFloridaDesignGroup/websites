@@ -4,7 +4,7 @@ import remarkGfm from "remark-gfm";
 import rehypeSlug from "rehype-slug";
 import { useOutletContext } from "react-router-dom";
 import { OutletContext, SidebarHeaderItem, SidebarLinkItem } from "../../contexts/outletContext";
-import { Textbox } from "@wps/input";
+import { Textbox } from "cfdg/input";
 
 interface HeaderItem {
     level: number;

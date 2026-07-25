@@ -5,7 +5,7 @@ The purpose of this site is to provide the shared back-end API for White Point S
 # Ownership
 
 - This site owns API routes, request validation, service integration, database access, and worker-specific behavior.
-- Shared constants, reusable types, and pure data utilities should live in `packages/@wps/scripts` when they are needed outside this API.
+- Shared constants, reusable types, and pure data utilities should live in `packages/cfdg/scripts` when they are needed outside this API.
 - Front-end display behavior belongs in the consuming front-end site or shared UI packages, not in this API.
 
 # Constraints

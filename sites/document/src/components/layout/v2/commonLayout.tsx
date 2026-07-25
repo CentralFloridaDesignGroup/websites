@@ -8,7 +8,7 @@ import { useIsAuthenticated, useMsal } from "@azure/msal-react";
 import { getMsalSilentRedirectUri, loginRequest } from '../../../auth/msalConfig'
 import { ChevronDown, Settings } from "lucide-react";
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
-import { NotificationCard } from "@wps/layout";
+import { NotificationCard } from "cfdg/layout";
 import { QboSettingsModal } from "../../qbo/QboSettingsModal";
 
 export function CommonLayout() {

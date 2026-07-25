@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { Numbers } from "@wps/scripts";
-import { Textbox, Combobox } from "@wps/input";
+import { Numbers } from "cfdg/scripts";
+import { Textbox, Combobox } from "cfdg/input";
 import { type Station, type ProjectSettings } from "./index";
 import { SquareChevronDown, SquareChevronUp, X, Plus } from "lucide-react";
 

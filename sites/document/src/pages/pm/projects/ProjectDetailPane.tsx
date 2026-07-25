@@ -1,5 +1,5 @@
-import { Button, Combobox, Textbox } from '@wps/input'
-import { type EntraUserAccount, type Invoice, type ProjectBillingProfile, type ProjectInvoiceDocument, type ProjectManager } from '@wps/scripts'
+import { Button, Combobox, Textbox } from 'cfdg/input'
+import { type EntraUserAccount, type Invoice, type ProjectBillingProfile, type ProjectInvoiceDocument, type ProjectManager } from 'cfdg/scripts'
 import { FileText, MoveRight, Save } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { type ProjectSummary } from '../../../api/projectManagement'

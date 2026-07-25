@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Button, Combobox, Textarea, Textbox } from "@wps/input";
-import { Geodesy } from "@wps/scripts";
+import { Button, Combobox, Textarea, Textbox } from "cfdg/input";
+import { Geodesy } from "cfdg/scripts";
 import {
   defaultPointMaterial,
   getDatumFromProjection,

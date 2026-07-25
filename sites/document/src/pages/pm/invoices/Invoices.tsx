@@ -5,9 +5,9 @@ import { useMsal } from '@azure/msal-react'
 import { CheckoutElementsProvider, PaymentElement, useCheckoutElements } from '@stripe/react-stripe-js/checkout'
 import { loadStripe } from '@stripe/stripe-js'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { Button, Combobox, Multiselect, Textarea, Textbox } from '@wps/input'
-import { Modal, showNotification } from '@wps/layout'
-import { type ClientContact, type Invoice, type InvoicePayment, type InvoicePaymentKind, type ProjectManager, type QboConnectionStatus, type QboCustomer } from '@wps/scripts'
+import { Button, Combobox, Multiselect, Textarea, Textbox } from 'cfdg/input'
+import { Modal, showNotification } from 'cfdg/layout'
+import { type ClientContact, type Invoice, type InvoicePayment, type InvoicePaymentKind, type ProjectManager, type QboConnectionStatus, type QboCustomer } from 'cfdg/scripts'
 import { ArrowLeft, Banknote, Check, Copy, CopyPlus, CreditCard, Download, ExternalLink, File, Mail, Plus, RefreshCw, Save, SquareArrowOutUpRight, Trash2, X } from 'lucide-react'
 import {
   copyInvoice,

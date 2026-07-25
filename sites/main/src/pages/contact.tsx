@@ -1,6 +1,6 @@
 ﻿import { Mail, Phone } from 'lucide-react';
-import { showNotification } from '@wps/layout';
-import { type FormSubmission, type Package } from '@wps/scripts';
+import { showNotification } from 'cfdg/layout';
+import { type FormSubmission, type Package } from 'cfdg/scripts';
 import { useState } from 'react';
 import { MarketingButton, MarketingSelect, MarketingTextarea, MarketingTextField } from '../components/marketing';
 

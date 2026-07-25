@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useMsal } from '@azure/msal-react'
 import { useSearchParams } from 'react-router-dom'
-import { Button, Textbox } from '@wps/input'
-import { Modal, showNotification } from '@wps/layout'
-import { type ClientContact, type Invoice, type QboCustomer } from '@wps/scripts'
+import { Button, Textbox } from 'cfdg/input'
+import { Modal, showNotification } from 'cfdg/layout'
+import { type ClientContact, type Invoice, type QboCustomer } from 'cfdg/scripts'
 import { ArrowLeft, Plus, RefreshCw } from 'lucide-react'
 import { fetchInvoices } from '../../../api/invoices'
 import {

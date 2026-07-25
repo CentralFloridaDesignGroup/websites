@@ -1,6 +1,6 @@
-import { Button } from '@wps/input'
+import { Button } from 'cfdg/input'
 import { type NoteProps } from './notesWindow'
-import { showNotification } from '@wps/layout';
+import { showNotification } from 'cfdg/layout';
 
 export function ExportWindow({
     notes,

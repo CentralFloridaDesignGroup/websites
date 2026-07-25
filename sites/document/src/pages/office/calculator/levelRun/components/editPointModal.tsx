@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Textbox } from '@wps/input'
-import { Modal } from '@wps/layout'
+import { Textbox } from 'cfdg/input'
+import { Modal } from 'cfdg/layout'
 import { type Point } from './index'
 
 export function EditPointModal({

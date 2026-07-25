@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Button } from '@wps/input';
+import { Button } from 'cfdg/input';
 import { Download } from 'lucide-react';
-import { showNotification } from '@wps/layout';
+import { showNotification } from 'cfdg/layout';
 import { generateWordDocument } from '../utils/documentGenerator';
 import type { ClientInfo, ServiceEntry } from '../types/proposalTypes';
 import { formatProposalDate, Proposal } from '../types/proposalTypes';

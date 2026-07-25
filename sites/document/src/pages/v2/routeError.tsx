@@ -1,5 +1,5 @@
 import { isRouteErrorResponse, useRouteError } from "react-router-dom";
-import { Button } from "@wps/input";
+import { Button } from "cfdg/input";
 import confusedWorker from "../../assets/confused_worker.webp";
 
 export function RouteError() {

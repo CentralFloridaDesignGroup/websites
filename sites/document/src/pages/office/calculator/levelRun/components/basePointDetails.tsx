@@ -1,5 +1,5 @@
 import { type Point } from './index';
-import { Numbers } from '@wps/scripts';
+import { Numbers } from 'cfdg/scripts';
 
 export function BasePointDetails({
     point, label, openModal

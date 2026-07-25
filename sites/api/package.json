@@ -12,7 +12,7 @@
     "deploy": "tsc && wrangler deploy --env production"
   },
   "dependencies": {
-    "@wps/scripts": "workspace:*",
+    "cfdg/scripts": "workspace:*",
     "hono": "^4.12.29",
     "jose": "^6.2.3"
   },

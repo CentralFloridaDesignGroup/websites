@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Textbox, Combobox } from "@wps/input";
-import { Numbers } from "@wps/scripts";
+import { Textbox, Combobox } from "cfdg/input";
+import { Numbers } from "cfdg/scripts";
 import { type Point, type ProjectSettings, type VerticalAccuracyLevels, type CorrectionData } from "./index";
 import { BasePointDetails } from "./basePointDetails";
 import { EditPointModal } from "./editPointModal";

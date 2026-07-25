@@ -1,7 +1,7 @@
 import { CommonLayout } from "./components/layout/v2";
 import { AuthProvider, ProtectedRoutes } from "./auth/AuthContext";
 import { ErrorPage, HomeV2, Login, RouteError } from "./pages/v2";
-import { PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS } from "@wps/scripts/types/projectManagement";
+import { PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS } from "cfdg/scripts/types/projectManagement";
 
 // V2 imports
 import { lazy, Suspense } from "react";

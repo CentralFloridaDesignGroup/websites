@@ -1,6 +1,6 @@
 import type { MiddlewareHandler } from 'hono'
 import { createRemoteJWKSet, jwtVerify, type JWTPayload } from 'jose'
-import { PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS } from '@wps/scripts'
+import { PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS } from 'cfdg/scripts'
 import { getRequestAuthContext, setRequestAuthContext, type RequestAuthContext, unauthorizedResponse } from './authContext'
 import { jsonHeaders, type ApiHonoEnv } from './apiTypes'
 

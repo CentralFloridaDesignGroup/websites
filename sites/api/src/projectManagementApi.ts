@@ -16,7 +16,7 @@ import {
   type ProjectMovePayload,
   type ProjectUpdatePayload,
   type QboCustomer,
-} from '@wps/scripts'
+} from 'cfdg/scripts'
 import { Hono } from 'hono'
 import { badRequest, jsonResponse, noContent, requireAuthMode, serverError, type ApiHonoEnv } from './apiTypes'
 import {

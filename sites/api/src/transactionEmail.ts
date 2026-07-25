@@ -1,4 +1,4 @@
-import { type FormSubmission } from '@wps/scripts';
+import { type FormSubmission } from 'cfdg/scripts';
 
 export interface TransactionEmailEnv {
     BREVO_API_KEY: string;

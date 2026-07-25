@@ -14,11 +14,11 @@ export default defineConfig({
     dedupe: ["react", "react-dom"],
     alias: {
       "@styles": path.resolve(__dirname, "../../styles"),
-      "@wps/input": path.resolve(__dirname, "../../packages/@wps/input/src"),
-      "@wps/layout": path.resolve(__dirname, "../../packages/@wps/layout/src"),
-      "@wps/scripts": path.resolve(
+      "cfdg/input": path.resolve(__dirname, "../../packages/cfdg/input/src"),
+      "cfdg/layout": path.resolve(__dirname, "../../packages/cfdg/layout/src"),
+      "cfdg/scripts": path.resolve(
         __dirname,
-        "../../packages/@wps/scripts/src",
+        "../../packages/cfdg/scripts/src",
       ),
     },
   },

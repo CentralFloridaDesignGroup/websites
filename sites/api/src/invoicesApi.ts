@@ -16,7 +16,7 @@ import {
   type InvoiceStatus,
   type ProjectManager,
   type ProjectInvoiceDocument,
-} from '@wps/scripts'
+} from 'cfdg/scripts'
 import { Hono } from 'hono'
 import { invoiceSyncState, paymentSyncState, payoutSyncState } from './accountingSyncState'
 import { badRequest, jsonResponse, requireAuthMode, serverError, type ApiHonoEnv } from './apiTypes'

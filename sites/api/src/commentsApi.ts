@@ -7,7 +7,7 @@ import {
   type ReviewPackageRow,
   type CommentStatus,
   type ReviewPackageStatus,
-} from "@wps/scripts"
+} from "cfdg/scripts"
 import { Hono } from 'hono'
 import { jsonHeaders, requireAuthMode, type ApiHonoEnv } from './apiTypes'
 
@@ -250,7 +250,7 @@ export function createCommentsApi() {
     }
   })
 
-  // 3. Upsert a review package — provide `id` in the body to update, omit to create
+  // 3. Upsert a review package ï¿½ provide `id` in the body to update, omit to create
   app.post('/api/reviews', async (context) => {
     try {
       const env = context.env
@@ -351,7 +351,7 @@ export function createCommentsApi() {
     }
   })
 
-  // 4. Upsert a comment — provide `id` in the body to update, omit to create
+  // 4. Upsert a comment ï¿½ provide `id` in the body to update, omit to create
   app.post('/api/comments', async (context) => {
     try {
       const env = context.env

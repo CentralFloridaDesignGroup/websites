@@ -1,5 +1,5 @@
-import { Button } from '@wps/input'
-import { type ClientContact, type Invoice, type QboCustomer } from '@wps/scripts'
+import { Button } from 'cfdg/input'
+import { type ClientContact, type Invoice, type QboCustomer } from 'cfdg/scripts'
 import { FileText, FolderOpen, Plus, Save, Trash2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { type ProjectSummary } from '../../../api/projectManagement'

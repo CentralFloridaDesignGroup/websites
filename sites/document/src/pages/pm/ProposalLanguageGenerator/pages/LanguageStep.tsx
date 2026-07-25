@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { ClientInfo, ServiceEntry } from '../types/proposalTypes';
 import { ServiceEntryTemplate } from '../components/serviceItemTemplate';
 import { ImportTemplateModal } from '../components/ImportTemplateModal';
-import { Button } from '@wps/input';
+import { Button } from 'cfdg/input';
 
 const EMPTY_SERVICE: ServiceEntry = {
     serviceName: "",

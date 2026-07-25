@@ -1,5 +1,5 @@
 import {Routes, Route} from 'react-router-dom'
-import {CommonLayout} from '@wps/layout'
+import {CommonLayout} from 'cfdg/layout'
 import { Navbar } from './components/layout/mainNavbar'
 
 import * as Pages from './pages'

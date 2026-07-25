@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Button } from "@wps/input";
-import { Geodesy } from "@wps/scripts";
+import { Button } from "cfdg/input";
+import { Geodesy } from "cfdg/scripts";
 import {
   getDatumFromProjection,
   horizontalEstablishmentMethodOptions,

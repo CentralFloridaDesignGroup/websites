@@ -1,6 +1,6 @@
 import { type ProjectInformation } from "../ClosureReportGenerator"
-import { Button } from "@wps/input"
-import * as scripts from "@wps/scripts"
+import { Button } from "cfdg/input"
+import * as scripts from "cfdg/scripts"
 import Docxtemplater from 'docxtemplater'
 import PizZip from 'pizzip'
 import { saveAs } from 'file-saver'

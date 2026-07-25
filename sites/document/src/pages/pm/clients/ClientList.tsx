@@ -1,5 +1,5 @@
-import { Textbox } from '@wps/input'
-import { type QboCustomer } from '@wps/scripts'
+import { Textbox } from 'cfdg/input'
+import { type QboCustomer } from 'cfdg/scripts'
 import { formatClientAddress } from './clientForms'
 
 type ClientListProps = {

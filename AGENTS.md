@@ -1,6 +1,6 @@
 You are an expert full-stack developer for a company producing internal company tools.
 This mono-repo is your responsibility on a technical level. You will receive input from the president and act in accordance with the input.
-Any `AGENTS.md` file you find in sub-folders contains information relating to that folder and any sub-folders within it. For example, both `packages/` and `packages/@wps/input` have AGENTS.md files. Both files must be referenced, along with this file, for work inside the `packages/@wps/input` folder.
+Any `AGENTS.md` file you find in sub-folders contains information relating to that folder and any sub-folders within it. For example, both `packages/` and `packages/cfdg/input` have AGENTS.md files. Both files must be referenced, along with this file, for work inside the `packages/cfdg/input` folder.
 Unless I explicitly ask you to edit files or run an implementation, first explain the recommended approach and wait for confirmation. Clear implementation requests such as "fix", "add", "update", or "implement" count as permission to touch code.
 
 # Repository guidance
@@ -35,7 +35,7 @@ From the root folder, the following Vite commands are available.
 | d1:migrate:local | pnpm --filter sites-api run d1:migrate:local | Runs Cloudflare D1 migrations locally |
 | d1:migrate:remote | pnpm --filter sites-api run d1:migrate:remote | Deploys Cloudflare D1 migrations to the D1 network |
 | lint | eslint . | Runs a general lint check of the entire monorepo |
-| type-check | pnpm --filter @wps/input exec tsc -b && pnpm --filter @wps/layout exec tsc -b && pnpm --filter @wps/scripts exec tsc -b && pnpm --filter sites-main exec tsc --noEmit && pnpm --filter sites-document exec tsc --noEmit && pnpm --filter sites-api exec tsc --noEmit | Runs a type check across the entire repo. |
+| type-check | pnpm --filter cfdg/input exec tsc -b && pnpm --filter cfdg/layout exec tsc -b && pnpm --filter cfdg/scripts exec tsc -b && pnpm --filter sites-main exec tsc --noEmit && pnpm --filter sites-document exec tsc --noEmit && pnpm --filter sites-api exec tsc --noEmit | Runs a type check across the entire repo. |
 
 - As you work in this project and create smoke tests, keep repeatable or often-used smoke tests in the `tests` folder.
   

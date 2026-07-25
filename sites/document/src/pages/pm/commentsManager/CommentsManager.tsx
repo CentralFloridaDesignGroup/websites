@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMsal } from '@azure/msal-react';
-import { Button, Combobox, Textarea, Textbox } from '@wps/input';
-import { showNotification } from '@wps/layout';
+import { Button, Combobox, Textarea, Textbox } from 'cfdg/input';
+import { showNotification } from 'cfdg/layout';
 import {
   createReviewPackage,
   createComment,
@@ -16,7 +16,7 @@ import PackageSelection from './components/PackageSelection';
 import NewPackage from './components/NewPackage';
 import CommentEditor from './components/CommentEditor';
 import { createPdfReport } from './components/createPDF';
-import { COMMENT_STATUSES, Dates, REVIEW_PACKAGE_STATUSES, type CommentRecord, type CommentStatus, type ReviewPackage } from '@wps/scripts';
+import { COMMENT_STATUSES, Dates, REVIEW_PACKAGE_STATUSES, type CommentRecord, type CommentStatus, type ReviewPackage } from 'cfdg/scripts';
 import { ListStart, Pencil, FileText, Save, X } from 'lucide-react';
 
 type CommentForm = {

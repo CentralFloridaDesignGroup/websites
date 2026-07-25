@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { Button } from "@wps/input";
-import { Numbers } from "@wps/scripts"
+import { Button } from "cfdg/input";
+import { Numbers } from "cfdg/scripts"
 import { StationInformation, PointInformation, ProjectInformation } from './components'
 import { type Point, type ProjectSettings, type CorrectionData, type Station } from "./components/_interfaces";
-import { WorkInProgressComponent } from "@wps/layout";
+import { WorkInProgressComponent } from "cfdg/layout";
 
 /* TODO: Stage 1 - Implement a closed-level run calculator with the following features:
 - Add stations with backsight and foresight measurements

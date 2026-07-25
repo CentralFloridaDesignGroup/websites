@@ -1,4 +1,4 @@
-import { type ProjectInvoiceDocument } from '@wps/scripts'
+import { type ProjectInvoiceDocument } from 'cfdg/scripts'
 import { type ProjectSummary } from '../../../api/projectManagement'
 
 export function formatProjectAddress(project: ProjectSummary): string {

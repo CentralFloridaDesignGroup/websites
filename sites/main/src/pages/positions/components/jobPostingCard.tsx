@@ -1,6 +1,6 @@
 ﻿import { MarketingButton } from '../../../components/marketing';
-import { showNotification } from '@wps/layout';
-import { type JobPosition, Numbers, Dates } from "@wps/scripts";
+import { showNotification } from 'cfdg/layout';
+import { type JobPosition, Numbers, Dates } from "cfdg/scripts";
 
 export function JobPostingCard({ position }: { position: JobPosition }) {
 

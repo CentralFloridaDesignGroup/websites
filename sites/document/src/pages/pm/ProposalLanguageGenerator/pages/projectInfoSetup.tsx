@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ClientInfo } from "../types/proposalTypes";
 import { EMPTY_CLIENT } from "../types/emptyClientInfo";
-import { Button, Checkbox, Textbox } from "@wps/input";
+import { Button, Checkbox, Textbox } from "cfdg/input";
 
 interface ProjectInfoSetupProps {
     initialValues: Partial<ClientInfo> | undefined;

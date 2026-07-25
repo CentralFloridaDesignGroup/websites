@@ -1,4 +1,4 @@
-import { type QboAccount, type QboConnectionStatus, type QboCustomer, type QboServiceItem } from '@wps/scripts'
+import { type QboAccount, type QboConnectionStatus, type QboCustomer, type QboServiceItem } from 'cfdg/scripts'
 import { requestJson } from './client'
 
 type UnknownRecord = Record<string, unknown>

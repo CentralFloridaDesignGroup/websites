@@ -1,5 +1,5 @@
-import { Button } from "@wps/input";
-import { Numbers } from "@wps/scripts";
+import { Button } from "cfdg/input";
+import { Numbers } from "cfdg/scripts";
 import { type Point } from "./index";
 import { EditPointModal } from "./editPointModal";
 import { useState } from "react";

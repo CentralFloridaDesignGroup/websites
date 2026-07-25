@@ -1,4 +1,4 @@
-import { INVOICE_STATUSES, INVOICE_PAYMENT_KINDS, INVOICE_PAYMENT_STATUSES, type Invoice, type InvoiceContactRecipient, type InvoiceEmailDeliveryState, type InvoiceLineItem, type InvoicePayment, type InvoicePaymentKind, type InvoicePaymentStatus, type InvoiceStatus } from '@wps/scripts'
+import { INVOICE_STATUSES, INVOICE_PAYMENT_KINDS, INVOICE_PAYMENT_STATUSES, type Invoice, type InvoiceContactRecipient, type InvoiceEmailDeliveryState, type InvoiceLineItem, type InvoicePayment, type InvoicePaymentKind, type InvoicePaymentStatus, type InvoiceStatus } from 'cfdg/scripts'
 import { requestJson } from './client'
 
 export type InvoiceLineItemDraft = {

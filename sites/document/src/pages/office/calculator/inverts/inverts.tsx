@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { Button, Textbox } from "@wps/input";
+import { Button, Textbox } from "cfdg/input";
 import { Trash2 } from "lucide-react";
-import { Calculator, type HistoryEntry } from "@wps/scripts";
-import { showNotification } from "@wps/layout";
+import { Calculator, type HistoryEntry } from "cfdg/scripts";
+import { showNotification } from "cfdg/layout";
 
 /**
  * Invert Calculator Component
