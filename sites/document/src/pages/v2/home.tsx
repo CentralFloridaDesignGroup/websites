@@ -7,6 +7,7 @@ import { Keyboard, LucideIcon, Star } from "lucide-react";
 import { OutletContext, SidebarHeaderItem, SidebarLinkItem } from "../../contexts/outletContext";
 import { useOutletContext } from "react-router-dom";
 import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from "@headlessui/react";
+import { useAuth } from "../../auth/AuthContext";
 
 type SectionLink = {
     name: string;
@@ -14,6 +15,7 @@ type SectionLink = {
     tags?: string[];
     path: string;
     requiresAuth?: boolean;
+    allowedGroupIds?: string[];
 };
 
 type HomeSection = {
@@ -21,6 +23,7 @@ type HomeSection = {
     description: string;
     icon?: string;
     requiresAuth?: boolean;
+    allowedGroupIds?: string[];
     links?: SectionLink[];
 };
 
@@ -41,6 +44,7 @@ function normalizePaths(value: unknown): string[] {
 
 export function HomeV2() {
     const isAuthenticated = useIsAuthenticated();
+    const { hasAnyGroup } = useAuth();
     const { accounts } = useMsal();
     const account = accounts[0];
     const userId = account?.homeAccountId ?? account?.username ?? null;
@@ -83,13 +87,13 @@ export function HomeV2() {
     }, []);
 
     const getVisibleLinks = useCallback(
-        (section: HomeSection) => (section.links ?? []).filter((link) => !link.requiresAuth || isAuthenticated),
-        [isAuthenticated]
+        (section: HomeSection) => (section.links ?? []).filter((link) => (!link.requiresAuth || isAuthenticated) && hasAnyGroup(link.allowedGroupIds)),
+        [hasAnyGroup, isAuthenticated]
     );
 
     const visibleSections = useMemo(() => {
         return (Sections as HomeSection[])
-            .filter((section) => !section.requiresAuth || isAuthenticated)
+            .filter((section) => (!section.requiresAuth || isAuthenticated) && hasAnyGroup(section.allowedGroupIds))
             .map((section) => ({ ...section, visibleLinks: getVisibleLinks(section) }))
             .filter((section) => section.visibleLinks.length > 0);
     }, [getVisibleLinks, isAuthenticated]);

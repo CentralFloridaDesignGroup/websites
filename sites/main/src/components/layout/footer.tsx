@@ -8,6 +8,7 @@ export function Footer({showSitemapLink = true} : {showSitemapLink?: boolean }) 
                 </div>
                 <div className="mt-4 md:mt-0 grid grid-cols-2 text-center md:flex md:justify-end md:gap-6">
                     <a href="https://www.whitepointsurvey.com/privacy-policy" className="text-sm text-gray-600 hover:text-gray-900 transition">Privacy Policy</a>
+                    <a href="https://www.whitepointsurvey.com/eula" className="text-sm text-gray-600 hover:text-gray-900 transition">EULA</a>
                     <a href="https://www.whitepointsurvey.com/terms-of-service" className="text-sm text-gray-600 hover:text-gray-900 transition">Terms of Service</a>
                     <a href="https://www.whitepointsurvey.com/contact" className="text-sm text-gray-600 hover:text-gray-900 transition">Contact Us</a>
                     {showSitemapLink && (

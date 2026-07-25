@@ -48,6 +48,10 @@ const routeSeo: Record<string, RouteSeo> = {
     title: "Privacy Policy | White Point Surveying & Mapping",
     description: "Read the privacy policy for White Point Surveying & Mapping.",
   },
+  "/eula": {
+    title: "End-User License Agreement | White Point Surveying & Mapping",
+    description: "Read the end-user license agreement for White Point Surveying & Mapping internal software tools.",
+  },
   "/404": {
     title: "Page Not Found | White Point Surveying & Mapping",
     description: "The requested White Point Surveying & Mapping page could not be found.",

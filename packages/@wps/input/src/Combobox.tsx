@@ -70,12 +70,22 @@ export function Combobox({
     const options = useMemo(() => [{ key: placeholder, value: "" }, ...normalizeSelections(selections)], [placeholder, selections]);
     const initialValue = defaultIndex !== undefined ? options[defaultIndex + 1]?.value ?? "" : "";
     const [internalValue, setInternalValue] = useState(initialValue);
+    const [query, setQuery] = useState("");
     const [error, setError] = useState<string | null>(null);
     const selectedValue = value ?? internalValue;
 
     const selectedLabel = useMemo(() => {
         return options.find((option) => option.value === selectedValue)?.key ?? "";
     }, [options, selectedValue]);
+
+    const filteredOptions = useMemo(() => {
+        const normalizedQuery = query.trim().toLocaleLowerCase();
+        if (!normalizedQuery) return options;
+        return options.filter((option) => (
+            option.key.toLocaleLowerCase().includes(normalizedQuery)
+            || option.value.toLocaleLowerCase().includes(normalizedQuery)
+        ));
+    }, [options, query]);
 
     const validateSelection = (nextValue: string): boolean => {
         if (required && !nextValue) {
@@ -91,8 +101,13 @@ export function Combobox({
     const handleChange = (nextValue: string | null) => {
         const resolvedValue = nextValue ?? "";
         if (value === undefined) setInternalValue(resolvedValue);
+        setQuery("");
         onChange?.(field, resolvedValue);
         if (validateSelection(resolvedValue)) onValidChange?.(field, resolvedValue);
+    };
+
+    const handleQueryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setQuery(event.target.value);
     };
 
     useEffect(() => {
@@ -107,7 +122,7 @@ export function Combobox({
 
     return (
         <div className={props?.classNames || ""}>
-            <HeadlessCombobox as="div" value={selectedValue} onChange={handleChange} disabled={disabled}>
+            <HeadlessCombobox as="div" value={selectedValue} onChange={handleChange} onClose={() => setQuery("")} disabled={disabled}>
                 <div className={fieldShellClass(labelPosition)}>
                     <label
                         htmlFor={field}
@@ -122,14 +137,14 @@ export function Combobox({
                             className={controlClass({ colorMode, invalid: Boolean(error), disabled, className: `pr-8 ${props?.inputClassNames || ""}` })}
                             placeholder={placeholder}
                             displayValue={() => selectedLabel}
-                            readOnly
+                            onChange={handleQueryChange}
                             autoComplete="off"
                         />
                         <ComboboxButton className="absolute inset-y-0 right-0 flex items-center pr-2 disabled:hidden" disabled={disabled}>
                             <ChevronDown className="h-5 w-5 text-gray-400" aria-hidden="true" />
                         </ComboboxButton>
                         <ComboboxOptions transition className={menuClass(colorMode, props?.optionsClassNames)}>
-                            {options.map((option, index) => (
+                            {filteredOptions.length > 0 ? filteredOptions.map((option, index) => (
                                 <ComboboxOption
                                     key={`${option.key}-${option.value}-${index}`}
                                     value={option.value}
@@ -137,7 +152,11 @@ export function Combobox({
                                 >
                                     {option.key}
                                 </ComboboxOption>
-                            ))}
+                            )) : (
+                                <div className="relative cursor-default select-none px-4 py-2 text-gray-500 dark:text-gray-400">
+                                    No matches found.
+                                </div>
+                            )}
                         </ComboboxOptions>
                     </div>
                 </div>

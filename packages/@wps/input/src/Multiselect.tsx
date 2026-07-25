@@ -14,9 +14,11 @@ export interface MultiselectComponentProps {
   /** Optional parent grid span from 1 to 6. */
   columns?: number;
   /** Options rendered as selectable cards. */
-  options?: { key: string, value: string }[];
+  options?: { key: string, value: string, exportValue?: string }[];
   /** Called after user interaction with the formatted selected values. */
   onChange?: (field: string, value: string) => void;
+  /** Called after user interaction with the selected option values. */
+  onValueChange?: (field: string, values: string[]) => void;
   /** Separator used when formatting three or more selected values. */
   separator?: string;
   /** Helper copy shown below the legend. */
@@ -40,6 +42,7 @@ export function Multiselect ({
   columns = 1,
   options = [],
   onChange,
+  onValueChange,
   separator = ', ',
   helperText = '',
   exportType = 'key',
@@ -51,6 +54,7 @@ export function Multiselect ({
   const selectedValues = value ?? internalSelectedValues;
   const hasInteractedRef = useRef(false);
   const onChangeRef = useRef(onChange);
+  const onValueChangeRef = useRef(onValueChange);
 
   const formatSelectedValues = (values: string[]): string => {
     if (!values.length) return '';
@@ -63,7 +67,8 @@ export function Multiselect ({
 
   useEffect(() => {
     onChangeRef.current = onChange;
-  }, [onChange]);
+    onValueChangeRef.current = onValueChange;
+  }, [onChange, onValueChange]);
 
   useEffect(() => {
     if (value === undefined) setInternalSelectedValues(defaultValue);
@@ -77,6 +82,7 @@ export function Multiselect ({
 
     if (value === undefined) setInternalSelectedValues(nextSelectedValues);
     onChangeRef.current?.(field, formatSelectedValues(nextSelectedValues));
+    onValueChangeRef.current?.(field, nextSelectedValues);
   };
 
   const getGridColsClass = (cols: number): string => {
@@ -101,7 +107,7 @@ export function Multiselect ({
       ) : null}
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
         {options.map((option, index) => {
-          const optionValue = exportType === 'key' ? option.key : option.value;
+          const optionValue = option.exportValue ?? (exportType === 'key' ? option.key : option.value);
           const optionLabel = option.key;
           const displayValue = option.value;
           const optionId = `${field}-${index}`;
@@ -114,7 +120,7 @@ export function Multiselect ({
               className={cx(
                 "relative flex cursor-pointer items-start border p-3 transition-colors focus-within:ring-2 focus-within:ring-primary/35",
                 colorMode === "dark" ? "border-gray-700 bg-gray-800 text-gray-100" : colorMode === "auto" ? "border-gray-200 bg-white text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100" : "border-gray-200 bg-white text-gray-900",
-                isSelected && (colorMode === "dark" ? "border-primary-500 bg-primary-500/15 ring-2 ring-primary-500/40" : colorMode === "auto" ? "border-primary bg-primary/10 ring-2 ring-primary/35 dark:border-primary-500 dark:bg-primary-500/15 dark:ring-primary-500/40" : "border-primary bg-primary/10 ring-2 ring-primary/35")
+                isSelected && (colorMode === "dark" ? "border-green-500 bg-primary-500/15 ring-2 ring-green-500/40" : colorMode === "auto" ? "border-green-500 bg-primary/10 ring-2 ring-green-500/35 dark:border-green-500 dark:bg-primary/15 dark:ring-green-500/40" : "border-green-500 bg-primary/10 ring-2 ring-green-500/35")
               )}
             >
               <input

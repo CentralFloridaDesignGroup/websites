@@ -2,11 +2,11 @@ export function TermsOfService() {
     return (
         <div className="max-w-7xl mx-auto px-4 py-6">
             <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">Terms of Service</h1>
-            <p className="text-slate-600 mt-4">Last updated: February 15, 2026</p>
+            <p className="text-slate-600 mt-4">Last updated: July 21, 2026</p>
             <section className="mt-8">
                 <h2 className="text-2xl font-bold">Introduction</h2>
                 <p className="text-slate-600 mt-2">
-                    These Terms of Service ("Terms") govern your access to and use of the website at whitepointsurvey.com (the "Main Site") and the website at docs.whitepointsurvey.com (the "Docs Site"), each referred to individually as a "Site" and collectively as the "Sites", and any related services provided by Whitepoint Survey ("we", "us", "our"). By accessing or using the Sites you agree to be bound by these Terms.
+                    These Terms of Service ("Terms") govern your access to and use of the website at whitepointsurvey.com (the "Main Site") and the website at docs.whitepointsurvey.com (the "Docs Site"), each referred to individually as a "Site" and collectively as the "Sites", and any related services provided by White Point Surveying & Mapping LLC ("we", "us", "our"). By accessing or using the Sites you agree to be bound by these Terms.
                 </p>
             </section>
 
@@ -22,7 +22,7 @@ export function TermsOfService() {
 
             <section className="mt-6">
                 <h3 className="text-xl font-semibold">Privacy</h3>
-                <p className="text-slate-600 mt-2">Our <a href="/privacy-policy" className="text-blue-500">Privacy Policy</a> explains how we collect and use information. By using the Sites you agree to those practices.</p>
+                <p className="text-slate-600 mt-2">Our <a href="/privacy-policy" className="text-blue-500">Privacy Policy</a> explains how we collect and use information. Internal application users are also subject to our <a href="/eula" className="text-blue-500">End-User License Agreement</a>.</p>
             </section>
 
             <section className="mt-6">
@@ -88,7 +88,7 @@ export function TermsOfService() {
                     Altamonte Springs, FL 32701</p>
             </section>
 
-            <p className="text-slate-600 mt-8 text-sm">These Terms were last updated on the date at the top of this page. Replace bracketed placeholders with your company details as needed.</p>
+            <p className="text-slate-600 mt-8 text-sm">These Terms were last updated on the date at the top of this page.</p>
         </div>
     )
 }

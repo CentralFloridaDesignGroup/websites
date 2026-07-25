@@ -5,10 +5,11 @@ import {
     SidebarDividerItem, SidebarProgressGroup
 } from "../../../contexts/outletContext";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
-import { loginRequest } from '../../../auth/msalConfig'
-import { ChevronDown } from "lucide-react";
+import { getMsalSilentRedirectUri, loginRequest } from '../../../auth/msalConfig'
+import { ChevronDown, Settings } from "lucide-react";
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { NotificationCard } from "@wps/layout";
+import { QboSettingsModal } from "../../qbo/QboSettingsModal";
 
 export function CommonLayout() {
     const [sidebarItems, setSidebarItems] = useState<SidebarItem[]>([]);
@@ -19,7 +20,10 @@ export function CommonLayout() {
     const userId = accounts[0]?.homeAccountId ?? accounts[0]?.username ?? "anonymous";
     const recentStorageKey = `wps-document:recent:${userId}`;
     const [accountImageUrl, setAccountImageUrl] = useState<string | null>(null);
+    const [qboSettingsOpen, setQboSettingsOpen] = useState(false);
     const accountLabel = accounts[0]?.name ?? accounts[0]?.username;
+    const accountEmail = accounts[0]?.username?.toLowerCase() ?? "";
+    const canManageQbo = accountEmail === "nwhite@whitepointsurvey.com";
 
     function normalizePaths(value: unknown): string[] {
         const items = Array.isArray(value) ? value : [];
@@ -70,6 +74,7 @@ export function CommonLayout() {
             const token = await instance.acquireTokenSilent({
                 ...loginRequest,
                 account: accounts[0],
+                redirectUri: getMsalSilentRedirectUri(),
             });
 
             const response = await fetch("https://graph.microsoft.com/v1.0/me/photo/$value", {
@@ -210,6 +215,7 @@ export function CommonLayout() {
     return (
         <div className="flex flex-col h-screen overflow-hidden text-black dark:text-white bg-neutral-100 dark:bg-neutral-900">
             <NotificationCard />
+            {canManageQbo && <QboSettingsModal isOpen={qboSettingsOpen} onClose={() => setQboSettingsOpen(false)} />}
             {!isAuthenticated && (
                 <div className="w-full bg-blue-100 dark:bg-primary flex flex-row items-center justify-center px-4 py-2">
                     <p className="text-sm text-center text-blue-700 dark:text-blue-300 mr-4">You are viewing the public information resource version of this site. If you are an employee, please sign in to access the full features.</p>
@@ -248,11 +254,22 @@ export function CommonLayout() {
                                     )}
                                     <ChevronDown className="ml-1" />
                                 </MenuButton>
-                                <MenuItems anchor="bottom end" className="w-[100px]">
+                                <MenuItems anchor="bottom end" className="w-56 overflow-hidden rounded-md border border-gray-200 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-700">
+                                    {canManageQbo && (
+                                        <MenuItem>
+                                            <button
+                                                onClick={() => setQboSettingsOpen(true)}
+                                                className="flex w-full items-center gap-2 px-4 py-2 text-left dark:text-white data-focus:bg-gray-200 dark:data-focus:bg-gray-600"
+                                            >
+                                                <Settings className="h-4 w-4" />
+                                                QuickBooks Settings
+                                            </button>
+                                        </MenuItem>
+                                    )}
                                     <MenuItem>
                                         <button
                                             onClick={handleLogout}
-                                            className={`text-left px-4 py-2 w-[100px] dark:text-white data-focus:bg-gray-200 dark:data-focus:bg-gray-600 bg-white dark:bg-gray-700`}
+                                            className="w-full px-4 py-2 text-left dark:text-white data-focus:bg-gray-200 dark:data-focus:bg-gray-600"
                                         >
                                             Sign out
                                         </button>

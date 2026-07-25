@@ -142,3 +142,22 @@ export async function requestJson<T>(pathOrUrl: string, options: ApiRequestOptio
 
   return response.json() as Promise<T>
 }
+
+export async function requestBlob(pathOrUrl: string, options: ApiRequestOptions): Promise<Blob> {
+  const { authMode, headers, apiKeyPreference = 'any', ...init } = options
+  const authHeaders = await buildAuthHeaders(authMode, apiKeyPreference)
+  const response = await fetch(getApiUrl(pathOrUrl), {
+    ...init,
+    headers: {
+      ...authHeaders,
+      ...(headers || {}),
+    },
+  })
+
+  if (!response.ok) {
+    const bodyText = await response.text()
+    throw new Error(bodyText || `Request failed with status ${response.status}`)
+  }
+
+  return response.blob()
+}

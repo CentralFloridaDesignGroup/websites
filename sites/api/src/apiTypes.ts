@@ -5,9 +5,20 @@ import type { RequestAuthContext, RequestAuthMode } from './authContext'
 export interface ApiEnv extends ApiAuthEnv {
   DB: D1Database
   WPS_KV_BINDING: KVNamespace
+  INVOICE_DOCUMENTS: R2Bucket
   BREVO_API_KEY: string
   SENDER_EMAIL: string
   BREVO_SANDBOX?: string
+  BREVO_WEBHOOK_SECRET?: string
+  STRIPE_SECRET_KEY?: string
+  STRIPE_PUBLISHABLE_KEY?: string
+  STRIPE_WEBHOOK_SECRET?: string
+  INVOICE_PUBLIC_BASE_URL?: string
+  QBO_CLIENT_ID?: string
+  QBO_CLIENT_SECRET?: string
+  QBO_REDIRECT_URI?: string
+  QBO_ENVIRONMENT?: string
+  QBO_MINOR_VERSION?: string
 }
 
 export type ApiVariables = {

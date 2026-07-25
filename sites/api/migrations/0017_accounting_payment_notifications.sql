@@ -1,0 +1,1 @@
+ALTER TABLE invoice_payments ADD COLUMN accounting_notification_sent_date DATETIME;

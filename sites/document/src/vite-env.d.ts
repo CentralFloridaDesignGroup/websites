@@ -7,6 +7,7 @@ interface ImportMetaEnv {
 	readonly VITE_MSAL_CLIENT_ID?: string;
 	readonly VITE_MSAL_TENANT_ID?: string;
 	readonly VITE_MSAL_REDIRECT_URI?: string;
+	readonly VITE_MSAL_SILENT_REDIRECT_URI?: string;
 	readonly VITE_COMMENTS_API_KEY?: string;
 	readonly VITE_COMMENTS_API_KEY_LOCAL?: string;
 	readonly VITE_COMMENTS_API_KEY_PROD?: string;

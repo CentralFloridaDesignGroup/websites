@@ -17,6 +17,39 @@
             ]
         },
         {
+            "name": "Project Management",
+            "description": "Client, project, invoice, and billing workflows.",
+            "icon": "BriefcaseBusiness",
+            "requiresAuth": true,
+            "allowedGroupIds": [],
+            "links": [
+                {
+                    "name": "Clients",
+                    "description": "Review QuickBooks clients and manage internal invoice contacts.",
+                    "path": "/clients",
+                    "tags": ["Clients", "Contacts", "QuickBooks", "Billing"],
+                    "requiresAuth": true,
+                    "allowedGroupIds": []
+                },
+                {
+                    "name": "Projects",
+                    "description": "Review QuickBooks projects and assign internal project managers.",
+                    "path": "/projects",
+                    "tags": ["Projects", "QuickBooks", "Managers", "Billing"],
+                    "requiresAuth": true,
+                    "allowedGroupIds": []
+                },
+                {
+                    "name": "Invoices",
+                    "description": "Create invoices, send payment links, and manage paid or void statuses.",
+                    "path": "/invoices",
+                    "tags": ["Invoices", "Payments", "Stripe", "Billing"],
+                    "requiresAuth": true,
+                    "allowedGroupIds": []
+                }
+            ]
+        },
+        {
             "name": "Company Documents",
             "description": "Important documents related to company policies, procedures, and operations.",
             "icon": "Files",

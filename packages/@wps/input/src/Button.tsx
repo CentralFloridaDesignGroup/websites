@@ -8,7 +8,9 @@ import { buttonClass, type InputColorMode } from "./styles";
 export interface ButtonProperties {
     disabled?: boolean;
     classNames?: string;
-    colorMode?: InputColorMode;
+
+    title?: string;
+    ariaLabel?: string;
 }
 
 /**
@@ -28,15 +30,15 @@ export function Button({
     onClick,
     properties
 }: {
-    label: string;
-    style: 'primary' | 'secondary' | 'danger' | 'success';
+    style: 'primary' | 'secondary' | 'danger' | 'success' | 'textonly';
+    label?: string;
     size?: 'small' | 'medium' | 'large';
     icon?: LucideIcon;
     colorMode?: InputColorMode;
     onClick?: () => void;
     properties?: ButtonProperties;
 }) : React.JSX.Element {
-    const resolvedColorMode = colorMode ?? properties?.colorMode ?? "light";
+    const resolvedColorMode = colorMode ?? "light";
 
     return (
         <button
@@ -44,9 +46,11 @@ export function Button({
             onClick={onClick}
             disabled={properties?.disabled}
             className={buttonClass({ variant: style, size, colorMode: resolvedColorMode, className: properties?.classNames })}
+            title={properties?.title}
+            aria-label={properties?.ariaLabel ?? properties?.title ?? label}
         >
             {icon && React.createElement(icon, { className: "h-4.5 w-4.5" })}
-            <span>{label}</span>
+            {label && <span>{label}</span>}
         </button>
     );
 }
