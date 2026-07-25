@@ -9,7 +9,8 @@
     "build": "tsc"
   },
   "dependencies": {
-    "proj4": "latest"
+    "proj4": "latest",
+    "cfdg/types": "workspace:*"
   },
   "devDependencies": {
     "@types/proj4": "latest",

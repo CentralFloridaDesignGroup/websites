@@ -1,0 +1,14 @@
+{
+  "name": "cfdg/types",
+  "version": "5.0.0",
+  "description": "Shared types for the White Point Survey family of web applications",
+  "main": "dist/index.js",
+  "type": "module",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
