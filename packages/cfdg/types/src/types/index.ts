@@ -91,3 +91,10 @@ export {
     mapCommentRecordRow,
     mapReviewPackageRow
 } from './reviewPackage';
+
+// Transaction Email Exports
+export type {
+    Attachment,
+    Package,
+    FormSubmission
+} from './transactionEmail';
