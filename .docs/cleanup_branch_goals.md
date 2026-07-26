@@ -53,6 +53,8 @@ You are currently on a branch called `cleanup` for github. This is meant to be a
 1. [ ] Create 'core' ui components that will be expandable and stylized by middleware components.
 1. [ ] Review current props and unify how props are handled, generated, and stylized.
 1. [ ] Perform module updates and checks.
+    - Relevant commits:
+      - `6eb4fae0cfc45ad25a535d17412905690da72138`
 
 ## B. Sites
 
@@ -61,10 +63,14 @@ You are currently on a branch called `cleanup` for github. This is meant to be a
 1. [ ] Create a D1 map for current schema and refactoring later.
 1. [ ] Review JSDocs for functions and routes.
 1. [ ] Perform module updates and checks.
+    - Relevant commits:
+      - `6eb4fae0cfc45ad25a535d17412905690da72138`
 
 ### II. `main` Site
 1. [ ] Review current layouts, SEO, and components.
 1. [ ] Perform module updates and checks.
+    - Relevant commits:
+      - `6eb4fae0cfc45ad25a535d17412905690da72138`
 
 ### III. `document` Site
 To be created. This branch is not complete without a checklist being present and marked as completed.

@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2020",
+    "jsx": "react-jsx",
     "useDefineForClassFields": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
@@ -30,10 +31,10 @@
       "cfdg/types/mappers": ["./packages/cfdg/types/src/mappers"],
       "cfdg/constants": ["./packages/cfdg/types/src/constants"],
       "cfdg/constants/*": ["./packages/cfdg/types/src/constants/*"],
-      "cfdg/ui/input": ["./packages/cfdg/ui/input/src"],
-      "cfdg/ui/input/*": ["./packages/cfdg/ui/input/src/*"],
-      "cfdg/ui/layout": ["./packages/cfdg/ui/layout/src"],
-      "cfdg/ui/layout/*": ["./packages/cfdg/ui/layout/src/*"]
+      "cfdg/ui/input": ["./packages/cfdg/ui/src/input"],
+      "cfdg/ui/input/*": ["./packages/cfdg/ui/src/input/*"],
+      "cfdg/ui/layout": ["./packages/cfdg/ui/src/layout"],
+      "cfdg/ui/layout/*": ["./packages/cfdg/ui/src/layout/*"]
     }
   },
   "include": ["packages", "sites"],

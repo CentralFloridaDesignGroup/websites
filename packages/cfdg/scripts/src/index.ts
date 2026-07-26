@@ -5,3 +5,11 @@ export * as Dates from './dates';
 export * as Numbers from './numbers';
 export * as Calculator from './calculator';
 export * as Geodesy from './geodesy';
+
+export {
+  compileClasses,
+  isRequired,
+  getRequiredMessage,
+  getRegexPattern,
+  getRegexMessage,
+} from './ui';
