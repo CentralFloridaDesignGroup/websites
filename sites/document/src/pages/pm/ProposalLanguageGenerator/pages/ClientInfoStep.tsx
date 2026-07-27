@@ -7,7 +7,7 @@ import { EMPTY_CLIENT } from '../types/emptyClientInfo';
 import { Building, Link, RefreshCw, User } from 'lucide-react';
 import { fetchQboCustomers, fetchQboProjects, fetchQboStatus, startQboConnection, syncQboCustomers } from '../../../../api/qbo';
 import { showNotification } from 'cfdg/layout';
-import type { QboConnectionStatus, QboCustomer } from 'cfdg/scripts';
+import type { QboConnectionStatus, QboCustomer } from 'cfdg/types';
 
 interface ClientInfoStepProps {
     initialValues?: Partial<ClientInfo>;

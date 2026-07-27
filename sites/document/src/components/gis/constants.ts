@@ -1,5 +1,5 @@
-import type { Geodesy } from "cfdg/scripts";
 import type { GisDatum, PointMaterial } from "./types";
+import { KnownStatePlaneProjection } from "cfdg/types";
 
 export const gisDatumOptions: Array<{ value: GisDatum; label: string }> = [
   { value: "wgs84", label: "WGS84" },
@@ -10,7 +10,7 @@ export const gisDatumOptions: Array<{ value: GisDatum; label: string }> = [
 ];
 
 export const statePlaneProjectionOptions: Array<{
-  value: Geodesy.KnownStatePlaneProjection;
+  value: KnownStatePlaneProjection;
   label: string;
 }> = [
   { value: "EPSG:2236", label: "NAD83 (2011) Florida East" },
@@ -20,7 +20,7 @@ export const statePlaneProjectionOptions: Array<{
 ];
 
 export function getDatumFromProjection(
-  projection: Geodesy.KnownStatePlaneProjection,
+  projection: KnownStatePlaneProjection,
 ): GisDatum {
   switch (projection) {
     case "EPSG:2236":
@@ -43,7 +43,7 @@ export function getDatumLabel(datum: GisDatum): string {
 
 export function getDefaultProjectionForDatum(
   datum: GisDatum,
-): Geodesy.KnownStatePlaneProjection {
+): KnownStatePlaneProjection {
   switch (datum) {
     case "nad83-2011-fl-east":
       return "EPSG:2236";

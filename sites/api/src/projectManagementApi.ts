@@ -1,24 +1,21 @@
-import {
-  mapClientContactRow,
-  mapProjectBillingProfileRow,
-  mapProjectInvoiceDocumentRow,
-  mapProjectManagerRow,
-  type ClientContact,
-  type ClientContactRow,
-  type ClientCreatePayload,
-  type ClientUpdatePayload,
-  type ProjectCreatePayload,
-  type ProjectBillingProfile,
-  type ProjectBillingProfileRow,
-  type ProjectInvoiceDocument,
-  type ProjectInvoiceDocumentRow,
-  type ProjectManagerRow,
-  type ProjectMovePayload,
-  type ProjectUpdatePayload,
-  type QboCustomer,
-} from 'cfdg/scripts'
+import type {
+  ClientContact,
+  ClientContactRow,
+  ClientCreatePayload,
+  ClientUpdatePayload,
+  ProjectCreatePayload,
+  ProjectBillingProfile,
+  ProjectBillingProfileRow,
+  ProjectInvoiceDocument,
+  ProjectInvoiceDocumentRow,
+  ProjectManagerRow,
+  ProjectMovePayload,
+  ProjectUpdatePayload,
+  QboCustomer,
+  State,
+} from 'cfdg/types'
 import { Hono } from 'hono'
-import { badRequest, jsonResponse, noContent, requireAuthMode, serverError, type ApiHonoEnv } from './apiTypes'
+import { badRequest, jsonResponse, noContent, requireAuthMode, serverError, type HonoEnv } from './apiTypes'
 import {
   createQboClientCustomer,
   createQboProjectCustomer,
@@ -27,6 +24,7 @@ import {
   updateQboClientCustomer,
   updateQboProjectCustomer,
 } from './qboApi'
+import { mapClientContactRow, mapProjectBillingProfileRow, mapProjectInvoiceDocumentRow, mapProjectManagerRow } from 'cfdg/types/projectManagement'
 
 type ContactPayload = {
   name?: unknown
@@ -302,7 +300,7 @@ function parseAddressPayload(value: unknown): ClientCreatePayload['address'] | R
     line1: normalizeString(address.line1),
     line2: normalizeString(address.line2),
     city: normalizeString(address.city),
-    state: normalizeString(address.state),
+    state: normalizeString(address.state) as State,
     postalCode: normalizeString(address.postalCode),
   }
   if (!parsed.line1) return badRequest('address.line1 is required')
@@ -352,7 +350,7 @@ function sanitizeFilename(value: string): string {
 }
 
 export function createProjectManagementApi() {
-  const app = new Hono<ApiHonoEnv>()
+  const app = new Hono<HonoEnv>()
 
   app.get('/api/clients', async (context) => {
     try {

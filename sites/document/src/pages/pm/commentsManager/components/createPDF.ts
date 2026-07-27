@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { showNotification } from 'cfdg/layout';
-import { type CommentStatus, type ReviewPackage } from 'cfdg/scripts';
+import { type CommentStatus, type ReviewPackage } from 'cfdg/types';
 
 type PdfCommentEntry = {
   commentId: string;

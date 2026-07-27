@@ -15,5 +15,14 @@ export {
 
 export {
   mapCommentRecordRow,
+  mapCommentRecord,
   mapReviewPackageRow,
+  mapReviewPackage,
 } from '../types/reviewPackage';
+
+export {
+  mapQuickbooksSyncStateRow,
+  mapStripeSyncStateRow,
+  mapNotificationSyncStateRow,
+  mapAccountingSyncStateRow
+} from '../types/accounting';

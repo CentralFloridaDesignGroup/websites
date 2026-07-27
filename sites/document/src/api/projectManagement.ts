@@ -1,16 +1,17 @@
-import {
-  type ClientContact,
-  type ClientCreatePayload,
-  type ClientUpdatePayload,
-  type ProjectBillingProfile,
-  type ProjectManager,
-  type ProjectCreatePayload,
-  type ProjectInvoiceDocument,
-  type ProjectMovePayload,
-  type ProjectUpdatePayload,
-  type QboCustomer,
-} from 'cfdg/scripts'
+import type {
+  ClientContact,
+  ClientCreatePayload,
+  ClientUpdatePayload,
+  ProjectBillingProfile,
+  ProjectManager,
+  ProjectCreatePayload,
+  ProjectInvoiceDocument,
+  ProjectMovePayload,
+  ProjectUpdatePayload,
+  QboCustomer,
+} from 'cfdg/types'
 import { requestBlob, requestJson } from './client'
+import { normalizeBoolean, normalizeString } from 'cfdg/scripts'
 
 type UnknownRecord = Record<string, unknown>
 
@@ -45,13 +46,6 @@ function asRecord(value: unknown): UnknownRecord {
   return value && typeof value === 'object' ? value as UnknownRecord : {}
 }
 
-function normalizeString(value: unknown): string {
-  return String(value ?? '').trim()
-}
-
-function normalizeBool(value: unknown): boolean {
-  return value === true || value === 1 || value === '1'
-}
 
 function normalizeCustomer(value: unknown): QboCustomer {
   const row = asRecord(value)
@@ -75,7 +69,7 @@ function normalizeCustomer(value: unknown): QboCustomer {
     shipAddrCity: normalizeString(row.shipAddrCity ?? row.ship_addr_city),
     shipAddrState: normalizeString(row.shipAddrState ?? row.ship_addr_state),
     shipAddrPostalCode: normalizeString(row.shipAddrPostalCode ?? row.ship_addr_postal_code),
-    active: normalizeBool(row.active),
+    active: normalizeBoolean(row.active),
     syncToken: normalizeString(row.syncToken ?? row.sync_token),
     qboUpdatedTime: normalizeString(row.qboUpdatedTime ?? row.qbo_updated_time),
     lastSyncedDate: normalizeString(row.lastSyncedDate ?? row.last_synced_date),
@@ -91,8 +85,8 @@ function normalizeContact(value: unknown): ClientContact {
     email: normalizeString(row.email),
     phone: normalizeString(row.phone),
     role: normalizeString(row.role),
-    isInvoiceRecipient: normalizeBool(row.isInvoiceRecipient ?? row.is_invoice_recipient),
-    active: normalizeBool(row.active),
+    isInvoiceRecipient: normalizeBoolean(row.isInvoiceRecipient ?? row.is_invoice_recipient),
+    active: normalizeBoolean(row.active),
     notes: normalizeString(row.notes),
     createdDate: normalizeString(row.createdDate ?? row.created_date),
     updatedDate: normalizeString(row.updatedDate ?? row.updated_date),
@@ -136,7 +130,7 @@ function normalizeInvoiceDocument(value: unknown): ProjectInvoiceDocument {
     filename: normalizeString(row.filename),
     contentType: normalizeString(row.contentType ?? row.content_type),
     sizeBytes: Number(row.sizeBytes ?? row.size_bytes ?? 0) || 0,
-    active: normalizeBool(row.active),
+    active: normalizeBoolean(row.active),
     createdDate: normalizeString(row.createdDate ?? row.created_date),
     createdBy: normalizeString(row.createdBy ?? row.created_by),
     updatedDate: normalizeString(row.updatedDate ?? row.updated_date),

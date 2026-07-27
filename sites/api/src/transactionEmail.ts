@@ -1,13 +1,5 @@
-import { type FormSubmission } from 'cfdg/scripts';
-
-export interface TransactionEmailEnv {
-    BREVO_API_KEY: string;
-    SENDER_EMAIL: string;
-    BREVO_SANDBOX?: string;
-    TRANSACTION_EMAIL_API_KEY?: string;
-    TRANSACTION_EMAIL_API_KEY_LOCAL?: string;
-    TRANSACTION_EMAIL_API_KEY_PROD?: string;
-}
+import type { FormSubmission } from 'cfdg/types';
+import type { ApiEnv } from './apiTypes';
 
 const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
@@ -29,17 +21,8 @@ function logPrefix(request: Request, company: string, maskedApiKey: string): str
     return `[transactionEmail] company=${company} apiKey=${maskedApiKey} requestId=${requestId}`;
 }
 
-function getInboundApiKeyCandidates(env: TransactionEmailEnv): string[] {
-    const candidates = [
-        String(env.TRANSACTION_EMAIL_API_KEY ?? "").trim(),
-        String(env.TRANSACTION_EMAIL_API_KEY_LOCAL ?? "").trim(),
-        String(env.TRANSACTION_EMAIL_API_KEY_PROD ?? "").trim(),
-    ].filter(Boolean);
 
-    return Array.from(new Set(candidates));
-}
-
-export async function handleTransactionEmail(request: Request, env: TransactionEmailEnv) {
+export async function handleTransactionEmail(request: Request, env: ApiEnv): Promise<Response> {
     try {
         const company = (request.headers.get("X-Company") || "unknown").trim() || "unknown";
 
@@ -59,8 +42,8 @@ export async function handleTransactionEmail(request: Request, env: TransactionE
             });
         }
 
-        const expectedInboundApiKeys = getInboundApiKeyCandidates(env);
-        if (expectedInboundApiKeys.length === 0) {
+        const expectedApiKey = String(env.TRANSACTION_EMAIL_API_KEY ?? "").trim();
+        if (!expectedApiKey) {
             console.error(`${logPrefix(request, company, "missing")}: missing TRANSACTION_EMAIL_API_KEY configuration`);
             return new Response("Server configuration error: Missing TRANSACTION_EMAIL_API_KEY", {
                 status: 500,
@@ -69,7 +52,7 @@ export async function handleTransactionEmail(request: Request, env: TransactionE
         }
 
         const inboundApiKey = String(request.headers.get("X-Api-Key") ?? "").trim();
-        if (!inboundApiKey || !expectedInboundApiKeys.includes(inboundApiKey)) {
+        if (!inboundApiKey || inboundApiKey !== expectedApiKey) {
             console.warn(`${logPrefix(request, company, maskApiKey(inboundApiKey || "invalid"))}: unauthorized request`);
             return new Response("Unauthorized", {
                 status: 401,
@@ -276,7 +259,7 @@ export async function handleTransactionEmail(request: Request, env: TransactionE
 
 export async function onRequest(context: {
     request: any;
-    env: TransactionEmailEnv;
+    env: ApiEnv;
 }) {
     return handleTransactionEmail(context.request as Request, context.env);
 }

@@ -1,5 +1,7 @@
 import { Hono } from 'hono'
-import { jsonHeaders, requireAuthMode, type ApiHonoEnv } from './apiTypes'
+import { JSON_HEADERS } from 'cfdg/types/constants'
+import { badRequest, requireAuthMode, serverError, type HonoEnv } from './apiTypes'
+import { normalizeNumber, normalizeString } from 'cfdg/scripts'
 const GIS_DATUMS = ['wgs84', 'nad83-2011-fl-east', 'nad83-2011-fl-north', 'nad83-2011-fl-west'] as const
 const POINT_MATERIALS = [
   '5/8" Iron Rod',
@@ -29,7 +31,6 @@ const GIS_POINT_SELECT_COLUMNS = `id, created_date, updated_date, created_by, up
   elevation_ngvd29, conversion_factor, conversion_sigma, additional_info,
   latitude, longitude, source_datum`
 const GIS_POINT_SELECT_BASE_QUERY = `SELECT ${GIS_POINT_SELECT_COLUMNS} FROM gis_points`
-const gisSchemaReadyByDb = new WeakMap<D1Database, Promise<void>>()
 
 export interface GisPointsApiEnv {
   DB: D1Database
@@ -58,94 +59,6 @@ type GisPointRow = {
   source_datum: string | null
 }
 
-async function ensureColumn(db: D1Database, tableName: 'gis_points', columnDefinitionSql: string): Promise<void> {
-  try {
-    await db.prepare(`ALTER TABLE ${tableName} ADD COLUMN ${columnDefinitionSql}`).run()
-  } catch (error: any) {
-    const message = String(error?.message || error).toLowerCase()
-    if (!message.includes('duplicate column name')) {
-      throw error
-    }
-  }
-}
-
-async function ensureGisSchema(db: D1Database): Promise<void> {
-  await db.prepare(
-    `CREATE TABLE IF NOT EXISTS gis_points (
-      id INTEGER PRIMARY KEY,
-      created_date DATETIME NOT NULL,
-      updated_date DATETIME,
-      created_by TEXT NOT NULL,
-      updated_by TEXT,
-      point_number TEXT NOT NULL,
-      northing REAL NOT NULL,
-      easting REAL NOT NULL,
-      elevation REAL NOT NULL,
-      material TEXT NOT NULL,
-      witness TEXT,
-      project_number TEXT,
-      notes TEXT,
-      elevation_ngvd29 REAL,
-      conversion_factor REAL,
-      conversion_sigma REAL,
-      additional_info TEXT NOT NULL DEFAULT '{}' CHECK (json_valid(additional_info)),
-      latitude REAL NOT NULL,
-      longitude REAL NOT NULL,
-      source_datum TEXT NOT NULL
-    )`
-  ).run()
-
-  await db.prepare(`CREATE INDEX IF NOT EXISTS idx_gis_points_id ON gis_points(id)`).run()
-  await db.prepare(`CREATE INDEX IF NOT EXISTS idx_gis_points_point_number ON gis_points(point_number)`).run()
-  await db.prepare(`CREATE INDEX IF NOT EXISTS idx_gis_points_project_number ON gis_points(project_number)`).run()
-
-  const requiredColumns = [
-    'point_number TEXT',
-    'project_number TEXT',
-    'latitude REAL',
-    'longitude REAL',
-    'elevation REAL',
-    `additional_info TEXT NOT NULL DEFAULT '{}' CHECK (json_valid(additional_info))`,
-  ]
-
-  for (const column of requiredColumns) {
-    await ensureColumn(db, 'gis_points', column)
-  }
-}
-
-function ensureGisSchemaReady(db: D1Database): Promise<void> {
-  const existing = gisSchemaReadyByDb.get(db)
-  if (existing) {
-    return existing
-  }
-
-  const schemaPromise = ensureGisSchema(db)
-  gisSchemaReadyByDb.set(db, schemaPromise)
-  return schemaPromise
-}
-
-function badRequest(message: string) {
-  return new Response(JSON.stringify({ error: message }), {
-    status: 400,
-    headers: jsonHeaders,
-  })
-}
-
-function serverError(message: string) {
-  return new Response(JSON.stringify({ error: message }), {
-    status: 500,
-    headers: jsonHeaders,
-  })
-}
-
-function normalizeString(value: unknown): string {
-  return String(value ?? '').trim()
-}
-
-function normalizeNumber(value: unknown, fallback = 0): number {
-  const parsed = Number(value)
-  return Number.isFinite(parsed) ? parsed : fallback
-}
 
 function normalizeNullableNumber(value: unknown): number | null {
   const text = normalizeString(value)
@@ -260,14 +173,12 @@ function mapGisPointRow(row: GisPointRow) {
 }
 
 export function createGisPointsApi() {
-  const app = new Hono<ApiHonoEnv>()
+  const app = new Hono<HonoEnv>()
   app.get('/api/gis/points', async (context) => {
     try {
       const env = context.env
       const authError = requireAuthMode(context, 'key')
       if (authError) return authError
-
-      await ensureGisSchemaReady(env.DB)
 
       const rows = await env.DB.prepare(
         `${GIS_POINT_SELECT_BASE_QUERY}
@@ -275,7 +186,7 @@ export function createGisPointsApi() {
       ).all()
 
       return new Response(JSON.stringify({ points: (rows.results || []).map((row) => mapGisPointRow(row as GisPointRow)) }), {
-        headers: jsonHeaders,
+        headers: JSON_HEADERS,
       })
     } catch (error: any) {
       console.error('Error listing gis points:', error)
@@ -289,7 +200,6 @@ export function createGisPointsApi() {
       const authError = requireAuthMode(context, 'key')
       if (authError) return authError
 
-      await ensureGisSchemaReady(env.DB)
 
       const id = normalizeString(context.req.param('id'))
       if (!id) return badRequest('id is required')
@@ -302,12 +212,12 @@ export function createGisPointsApi() {
       if (!row) {
         return new Response(JSON.stringify({ error: 'Point not found' }), {
           status: 404,
-          headers: jsonHeaders,
+          headers: JSON_HEADERS,
         })
       }
 
       return new Response(JSON.stringify({ point: mapGisPointRow(row as GisPointRow) }), {
-        headers: jsonHeaders,
+        headers: JSON_HEADERS,
       })
     } catch (error: any) {
       console.error('Error fetching gis point:', error)
@@ -321,7 +231,6 @@ export function createGisPointsApi() {
       const authError = requireAuthMode(context, 'microsoft')
       if (authError) return authError
 
-      await ensureGisSchemaReady(env.DB)
       const body = (await parseJsonBody(context.req.raw)) as Record<string, unknown>
 
       const id = normalizeString(body.id) || null
@@ -356,7 +265,7 @@ export function createGisPointsApi() {
         if (!existing) {
           return new Response(JSON.stringify({ error: 'Point not found' }), {
             status: 404,
-            headers: jsonHeaders,
+            headers: JSON_HEADERS,
           })
         }
 
@@ -397,7 +306,7 @@ export function createGisPointsApi() {
         ).bind(id).first()
 
         return new Response(JSON.stringify({ point: mapGisPointRow(row as GisPointRow) }), {
-          headers: jsonHeaders,
+          headers: JSON_HEADERS,
         })
       }
 
@@ -439,7 +348,7 @@ export function createGisPointsApi() {
 
       return new Response(JSON.stringify({ point: mapGisPointRow(row as GisPointRow) }), {
         status: 201,
-        headers: jsonHeaders,
+        headers: JSON_HEADERS,
       })
     } catch (error: any) {
       console.error('Error saving gis point:', error)
@@ -453,7 +362,6 @@ export function createGisPointsApi() {
       const authError = requireAuthMode(context, 'microsoft')
       if (authError) return authError
 
-      await ensureGisSchemaReady(env.DB)
       const body = (await parseJsonBody(context.req.raw)) as Record<string, unknown>
       const points = Array.isArray(body.points) ? body.points : []
       const user = normalizeString(body.user)
@@ -530,7 +438,7 @@ export function createGisPointsApi() {
           errors,
         },
       }), {
-        headers: jsonHeaders,
+        headers: JSON_HEADERS,
       })
     } catch (error: any) {
       console.error('Error importing gis points:', error)
@@ -544,7 +452,6 @@ export function createGisPointsApi() {
       const authError = requireAuthMode(context, 'microsoft')
       if (authError) return authError
 
-      await ensureGisSchemaReady(env.DB)
       const id = normalizeString(context.req.param('id'))
       if (!id) return badRequest('id is required')
 
@@ -552,11 +459,11 @@ export function createGisPointsApi() {
       if (!result.success || (result.meta?.changes ?? 0) === 0) {
         return new Response(JSON.stringify({ error: 'Point not found' }), {
           status: 404,
-          headers: jsonHeaders,
+          headers: JSON_HEADERS,
         })
       }
 
-      return new Response(null, { status: 204, headers: jsonHeaders })
+      return new Response(null, { status: 204, headers: JSON_HEADERS })
     } catch (error: any) {
       console.error('Error deleting gis point:', error)
       return serverError(String(error?.message || error))

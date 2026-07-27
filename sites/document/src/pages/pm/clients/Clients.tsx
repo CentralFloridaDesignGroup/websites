@@ -3,7 +3,7 @@ import { useMsal } from '@azure/msal-react'
 import { useSearchParams } from 'react-router-dom'
 import { Button, Textbox } from 'cfdg/input'
 import { Modal, showNotification } from 'cfdg/layout'
-import { type ClientContact, type Invoice, type QboCustomer } from 'cfdg/scripts'
+import { type ClientContact, type Invoice, type QboCustomer } from 'cfdg/types'
 import { ArrowLeft, Plus, RefreshCw } from 'lucide-react'
 import { fetchInvoices } from '../../../api/invoices'
 import {
@@ -167,7 +167,7 @@ export function ClientsManager() {
         line1: selectedClient.billAddrLine1,
         line2: selectedClient.billAddrLine2,
         city: selectedClient.billAddrCity,
-        state: selectedClient.billAddrState,
+        state: selectedClient.billAddrState as ClientForm['address']['state'],
         postalCode: selectedClient.billAddrPostalCode,
       },
       phone: selectedClient.primaryPhone,
@@ -186,7 +186,7 @@ export function ClientsManager() {
           line1: clientForm.address.line1.trim(),
           line2: clientForm.address.line2.trim(),
           city: clientForm.address.city.trim(),
-          state: clientForm.address.state.trim(),
+          state: clientForm.address.state.trim() as ClientForm['address']['state'],
           postalCode: clientForm.address.postalCode.trim(),
         },
         phone: clientForm.phone.trim(),

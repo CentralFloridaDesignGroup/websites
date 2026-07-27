@@ -1,12 +1,12 @@
-import {
-  COMMENT_STATUSES,
-  REVIEW_PACKAGE_STATUSES,
-  type CommentRecord,
-  type CommentStatus,
-  type ReviewPackage,
-  type ReviewPackageStatus,
-} from 'cfdg/scripts'
+import type {
+  CommentRecord,
+  CommentStatus,
+  ReviewPackage,
+  ReviewPackageStatus,
+} from 'cfdg/types'
 import { requestJson } from './client'
+import { REVIEW_PACKAGE_STATUSES, COMMENT_STATUSES, JSON_HEADERS } from 'cfdg/types/constants'
+import { normalizeString, normalizeType } from 'cfdg/scripts'
 
 export interface CommentQueryResponse {
   package: ReviewPackage
@@ -20,20 +20,6 @@ function asRecord(value: unknown): UnknownRecord {
     return value as UnknownRecord
   }
   return {}
-}
-
-function normalizeString(value: unknown): string {
-  return String(value ?? '').trim()
-}
-
-function normalizeStatus<T extends readonly string[]>(
-  value: unknown,
-  allowedValues: T,
-  fallback: T[number]
-): T[number] {
-  const normalized = normalizeString(value).toLowerCase()
-  const match = allowedValues.find((candidate) => candidate === normalized)
-  return (match ?? fallback) as T[number]
 }
 
 function normalizeReviewPackage(value: unknown): ReviewPackage {
@@ -51,7 +37,7 @@ function normalizeReviewPackage(value: unknown): ReviewPackage {
     reviewDate: normalizeString(row.reviewDate ?? row.review_date),
     projectName: normalizeString(row.projectName ?? row.project_name),
     comment: normalizeString(row.comment),
-    status: normalizeStatus(row.status, REVIEW_PACKAGE_STATUSES, 'open'),
+    status: normalizeType(row.status, REVIEW_PACKAGE_STATUSES, 'open'),
   }
 }
 
@@ -68,14 +54,16 @@ function normalizeCommentRecord(value: unknown): CommentRecord {
     comment: normalizeString(row.comment ?? row.comment_text),
     response: normalizeString(row.response ?? row.response_text),
     department: normalizeString(row.department),
-    status: normalizeStatus(row.status, COMMENT_STATUSES, 'open'),
+    status: normalizeType(row.status, COMMENT_STATUSES, 'open'),
   }
 }
 
 export async function fetchReviewPackages(): Promise<ReviewPackage[]> {
   const data = await requestJson<{ packages?: unknown[] }>('/api/reviews', {
     method: 'GET',
+    headers: JSON_HEADERS,
     authMode: 'microsoft',
+    apiKeyName: 'comments'
   })
 
   return (data.packages || []).map((item) => normalizeReviewPackage(item))

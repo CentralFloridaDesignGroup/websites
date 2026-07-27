@@ -1,7 +1,7 @@
 import { CommonLayout } from "./components/layout/v2";
 import { AuthProvider, ProtectedRoutes } from "./auth/AuthContext";
 import { ErrorPage, HomeV2, Login, RouteError } from "./pages/v2";
-import { PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS } from "cfdg/scripts/types/projectManagement";
+import { PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS } from "cfdg/types/constants";
 
 // V2 imports
 import { lazy, Suspense } from "react";
@@ -9,10 +9,6 @@ import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom"
 import { MsalProvider } from "@azure/msal-react";
 import { msalInstance } from "./auth/msalConfig";
 
-const LevelRun = lazy(() => import("./pages/office/calculator/levelRun/levelRun").then((module) => ({ default: module.LevelRun })));
-const SlopeCalculator = lazy(() => import("./pages/office/calculator/slope/slope").then((module) => ({ default: module.SlopeCalculator })));
-const ProrateCalculator = lazy(() => import("./pages/office/calculator/prorate/prorate").then((module) => ({ default: module.ProrateCalculator })));
-const InvertCalculator = lazy(() => import("./pages/office/calculator/inverts/inverts").then((module) => ({ default: module.InvertCalculator })));
 const FieldDataParser = lazy(() => import("./pages/field/tools/fieldDataParser/fieldDataParser").then((module) => ({ default: module.FieldDataParser })));
 const CxlEditor = lazy(() => import("./pages/field/tools/cxlEditor/LayeredCxlEditor").then((module) => ({ default: module.LayeredCxlEditor })));
 const Checklist = lazy(() => import("./pages/office/checklists/checklist"));
@@ -47,10 +43,6 @@ const router = createBrowserRouter([
       { index: true, element: <HomeV2 /> },
       { path: 'office', element: <HomeV2 /> },
       { path: 'login', element: <Login /> },
-      { path: 'tools/level-run', element: <LevelRun /> },
-      { path: 'tools/slope-calculator', element: <SlopeCalculator /> },
-      { path: 'tools/prorate-calculator', element: <ProrateCalculator /> },
-      { path: 'tools/invert-calculator', element: <InvertCalculator /> },
       { path: 'tools/field-data-parser', element: <FieldDataParser /> },
       { path: 'field/data-parser', element: <FieldDataParser /> },
       { path: 'tools/cxl-editor', element: <CxlEditor /> },

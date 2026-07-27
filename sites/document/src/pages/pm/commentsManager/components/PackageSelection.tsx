@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Button, Textbox } from 'cfdg/input';
 import { CircleX, Folder, FolderOpen } from 'lucide-react';
 import { Modal } from 'cfdg/layout';
-import { ReviewPackage, Dates } from 'cfdg/scripts';
+import { Dates } from 'cfdg/scripts';
+import { type ReviewPackage } from 'cfdg/types';
 
 type ReviewPackageProperties = {
 	packages: ReviewPackage[];

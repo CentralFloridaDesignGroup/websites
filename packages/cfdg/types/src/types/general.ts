@@ -1,6 +1,6 @@
 import { STATES } from "../constants";
 
-export type State = typeof STATES[number];
+export type State = keyof typeof STATES
 
 /** Generic Address type */
 export type Address = {
@@ -11,7 +11,7 @@ export type Address = {
   /** City name. */
   city: string;
   /** State or province code. */
-  state: string;
+  state: State;
   /** Postal or ZIP code. */
   postalCode: string;
 };

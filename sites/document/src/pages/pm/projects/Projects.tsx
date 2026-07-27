@@ -3,7 +3,7 @@ import { useMsal } from '@azure/msal-react'
 import { useSearchParams } from 'react-router-dom'
 import { Button, Combobox, Textbox } from 'cfdg/input'
 import { Modal, showNotification } from 'cfdg/layout'
-import { type EntraUserAccount, type Invoice, type ProjectBillingProfile, type ProjectInvoiceDocument, type ProjectManager, type QboCustomer } from 'cfdg/scripts'
+import { State, type EntraUserAccount, type Invoice, type ProjectBillingProfile, type ProjectInvoiceDocument, type ProjectManager, type QboCustomer } from 'cfdg/types'
 import { ArrowLeft, Plus, RefreshCw } from 'lucide-react'
 import { fetchEligibleProjectManagers } from '../../../api/entra'
 import { fetchInvoices } from '../../../api/invoices'
@@ -46,7 +46,7 @@ const emptyProject: ProjectForm = {
     line1: '',
     line2: '',
     city: '',
-    state: '',
+    state: 'FL',
     postalCode: '',
   },
   phone: '',
@@ -364,7 +364,7 @@ export function ProjectsManager() {
         line1: selectedProject.shipAddrLine1 || selectedProject.billAddrLine1,
         line2: selectedProject.shipAddrLine2 || selectedProject.billAddrLine2,
         city: selectedProject.shipAddrCity || selectedProject.billAddrCity,
-        state: selectedProject.shipAddrState || selectedProject.billAddrState,
+        state: selectedProject.shipAddrState as State || selectedProject.billAddrState as State,
         postalCode: selectedProject.shipAddrPostalCode || selectedProject.billAddrPostalCode,
       },
       phone: selectedProject.primaryPhone,
@@ -383,7 +383,7 @@ export function ProjectsManager() {
           line1: projectForm.address.line1.trim(),
           line2: projectForm.address.line2.trim(),
           city: projectForm.address.city.trim(),
-          state: projectForm.address.state.trim(),
+          state: projectForm.address.state.trim() as State,
           postalCode: projectForm.address.postalCode.trim(),
         },
         phone: projectForm.phone.trim(),

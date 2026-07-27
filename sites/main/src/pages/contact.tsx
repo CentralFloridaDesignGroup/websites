@@ -1,6 +1,6 @@
 ﻿import { Mail, Phone } from 'lucide-react';
 import { showNotification } from 'cfdg/layout';
-import { type FormSubmission, type Package } from 'cfdg/scripts';
+import type { FormSubmission, Package } from 'cfdg/types';
 import { useState } from 'react';
 import { MarketingButton, MarketingSelect, MarketingTextarea, MarketingTextField } from '../components/marketing';
 

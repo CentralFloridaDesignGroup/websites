@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
-import { jsonHeaders, requireAuthMode, type ApiHonoEnv } from './apiTypes'
+import { JSON_HEADERS } from 'cfdg/types/constants'
+import { requireAuthMode, type HonoEnv } from './apiTypes'
 const userFavoritesSchemaReadyByDb = new WeakMap<D1Database, Promise<void>>()
 
 export interface UserFavoritesApiEnv {
@@ -19,14 +20,14 @@ function normalizeString(value: unknown): string {
 function serverError(message: string) {
   return new Response(JSON.stringify({ error: message }), {
     status: 500,
-    headers: jsonHeaders,
+    headers: JSON_HEADERS,
   })
 }
 
 function badRequest(message: string) {
   return new Response(JSON.stringify({ error: message }), {
     status: 400,
-    headers: jsonHeaders,
+    headers: JSON_HEADERS,
   })
 }
 
@@ -101,7 +102,7 @@ function parseStoredFavorites(rawValue: string | null): string[] {
 }
 
 export function createUserFavoritesApi() {
-  const app = new Hono<ApiHonoEnv>()
+  const app = new Hono<HonoEnv>()
   app.get('/api/users/:userId/favorites', async (context) => {
     try {
       const env = context.env
@@ -126,7 +127,7 @@ export function createUserFavoritesApi() {
         favorites: parseStoredFavorites(row?.favorites_json ?? null),
         updatedAt: normalizeString(row?.updated_date),
       }), {
-        headers: jsonHeaders,
+        headers: JSON_HEADERS,
       })
     } catch (error: any) {
       console.error('Error fetching user favorites:', error)
@@ -161,7 +162,7 @@ export function createUserFavoritesApi() {
       ).bind(userId, favoritesJson, now).run()
 
       return new Response(JSON.stringify({ userId, favorites, updatedAt: now }), {
-        headers: jsonHeaders,
+        headers: JSON_HEADERS,
       })
     } catch (error: any) {
       console.error('Error updating user favorites:', error)

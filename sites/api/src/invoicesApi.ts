@@ -1,27 +1,24 @@
-import {
-  INVOICE_STATUSES,
-  mapInvoiceContactRecipientRow,
-  mapInvoiceLineItemRow,
-  mapInvoicePaymentRow,
-  mapInvoiceRow,
-  type Invoice,
-  type InvoiceContactRecipient,
-  type InvoiceContactRecipientRow,
-  type InvoiceLineItem,
-  type InvoiceLineItemRow,
-  type InvoicePayment,
-  type InvoicePaymentKind,
-  type InvoicePaymentRow,
-  type InvoiceRow,
-  type InvoiceStatus,
-  type ProjectManager,
-  type ProjectInvoiceDocument,
-} from 'cfdg/scripts'
+import type {
+  Invoice,
+  InvoiceContactRecipient,
+  InvoiceContactRecipientRow,
+  InvoiceLineItem,
+  InvoiceLineItemRow,
+  InvoicePayment,
+  InvoicePaymentKind,
+  InvoicePaymentRow,
+  InvoiceRow,
+  InvoiceStatus,
+  ProjectManager,
+  ProjectInvoiceDocument,
+} from 'cfdg/types'
 import { Hono } from 'hono'
 import { invoiceSyncState, paymentSyncState, payoutSyncState } from './accountingSyncState'
-import { badRequest, jsonResponse, requireAuthMode, serverError, type ApiHonoEnv } from './apiTypes'
+import { badRequest, jsonResponse, requireAuthMode, serverError, type HonoEnv } from './apiTypes'
 import { ensureQboSchemaReady, syncInvoiceToQbo, syncStripePayoutDepositToQbo, trySyncInvoicePaymentToQbo, voidInvoiceInQbo } from './qboApi'
 import { ensureProjectManagementSchemaReady, fetchActiveClientContactsByIds, fetchProjectBillingProfile, fetchProjectInvoiceDocuments, fetchProjectManager } from './projectManagementApi'
+import { INVOICE_STATUSES } from 'cfdg/types/constants'
+import { mapInvoiceContactRecipientRow, mapInvoiceLineItemRow, mapInvoicePaymentRow, mapInvoiceRow } from 'cfdg/types/mappers'
 
 type InvoiceLineItemInput = {
   description?: unknown
@@ -175,7 +172,7 @@ function normalizeString(value: unknown): string {
   return String(value ?? '').trim()
 }
 
-function getStripeSecretKey(env: ApiHonoEnv['Bindings']): string {
+function getStripeSecretKey(env: HonoEnv['Bindings']): string {
   const stripeSecretKey = normalizeString(env.STRIPE_SECRET_KEY)
   if (!stripeSecretKey) {
     throw new Error('Server configuration error: Missing STRIPE_SECRET_KEY')
@@ -189,7 +186,7 @@ function getStripeSecretKey(env: ApiHonoEnv['Bindings']): string {
   return stripeSecretKey
 }
 
-function getStripePublishableKey(env: ApiHonoEnv['Bindings']): string {
+function getStripePublishableKey(env: HonoEnv['Bindings']): string {
   const publishableKey = normalizeString(env.STRIPE_PUBLISHABLE_KEY)
   if (!publishableKey) {
     throw new Error('Server configuration error: Missing STRIPE_PUBLISHABLE_KEY')
@@ -977,7 +974,7 @@ function formatInvoiceEmailDate(value: string): string {
   return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(date)
 }
 
-function getInvoicePublicBaseUrl(env: ApiHonoEnv['Bindings']): string {
+function getInvoicePublicBaseUrl(env: HonoEnv['Bindings']): string {
   const configured = normalizeString(env.INVOICE_PUBLIC_BASE_URL)
   if (!configured) {
     throw new Error('Server configuration error: Missing INVOICE_PUBLIC_BASE_URL')
@@ -1012,7 +1009,7 @@ function encodeBase64(bytes: Uint8Array): string {
   return btoa(binary)
 }
 
-async function buildProjectEmailAttachments(env: ApiHonoEnv['Bindings'], documents: ProjectInvoiceDocument[]): Promise<NormalizedEmailAttachment[]> {
+async function buildProjectEmailAttachments(env: HonoEnv['Bindings'], documents: ProjectInvoiceDocument[]): Promise<NormalizedEmailAttachment[]> {
   const attachments: NormalizedEmailAttachment[] = []
   for (const document of documents) {
     const object = await env.INVOICE_DOCUMENTS.get(document.r2Key)
@@ -1160,7 +1157,7 @@ function hasInvoiceDeliveryNoticeForFailure(invoice: Invoice, event: string, rec
     && (!messageId || existing.messageId === messageId)
 }
 
-async function sendInvoiceDeliveryIssueEmail(env: ApiHonoEnv['Bindings'], invoice: Invoice, manager: ProjectManager, state: InvoiceEmailDeliveryStatePayload): Promise<string[]> {
+async function sendInvoiceDeliveryIssueEmail(env: HonoEnv['Bindings'], invoice: Invoice, manager: ProjectManager, state: InvoiceEmailDeliveryStatePayload): Promise<string[]> {
   const apiKey = normalizeString(env.BREVO_API_KEY)
   const senderEmail = normalizeString(env.SENDER_EMAIL)
   if (!apiKey) {
@@ -1209,7 +1206,7 @@ async function sendInvoiceDeliveryIssueEmail(env: ApiHonoEnv['Bindings'], invoic
   return noticeRecipients
 }
 
-async function handleBrevoInvoiceDeliveryWebhook(db: D1Database, env: ApiHonoEnv['Bindings'], payload: BrevoWebhookPayload): Promise<boolean> {
+async function handleBrevoInvoiceDeliveryWebhook(db: D1Database, env: HonoEnv['Bindings'], payload: BrevoWebhookPayload): Promise<boolean> {
   const event = getBrevoDeliveryEvent(payload)
   if (!isTrackedBrevoDeliveryEvent(event)) return false
 
@@ -1241,7 +1238,7 @@ async function handleBrevoInvoiceDeliveryWebhook(db: D1Database, env: ApiHonoEnv
   return true
 }
 
-async function sendInvoiceEmail(invoice: Invoice, env: ApiHonoEnv['Bindings'], manager: ProjectManager, attachments: NormalizedEmailAttachment[] = [], bccSenderEmail = ''): Promise<string> {
+async function sendInvoiceEmail(invoice: Invoice, env: HonoEnv['Bindings'], manager: ProjectManager, attachments: NormalizedEmailAttachment[] = [], bccSenderEmail = ''): Promise<string> {
   const apiKey = normalizeString(env.BREVO_API_KEY)
   const senderEmail = normalizeString(env.SENDER_EMAIL)
   if (!apiKey) {
@@ -1299,7 +1296,7 @@ async function sendInvoiceEmail(invoice: Invoice, env: ApiHonoEnv['Bindings'], m
   return normalizeString(data?.messageId || data?.messageIds?.[0])
 }
 
-async function sendStripePayoutEmail(env: ApiHonoEnv['Bindings'], payout: StripePayout, matchedPaymentsCount = 0): Promise<void> {
+async function sendStripePayoutEmail(env: HonoEnv['Bindings'], payout: StripePayout, matchedPaymentsCount = 0): Promise<void> {
   const apiKey = normalizeString(env.BREVO_API_KEY)
   const senderEmail = normalizeString(env.SENDER_EMAIL)
   if (!apiKey) {
@@ -1340,7 +1337,7 @@ async function sendStripePayoutEmail(env: ApiHonoEnv['Bindings'], payout: Stripe
   }
 }
 
-async function getGraphAccessToken(env: ApiHonoEnv['Bindings']): Promise<string> {
+async function getGraphAccessToken(env: HonoEnv['Bindings']): Promise<string> {
   const tenantId = normalizeString(env.MICROSOFT_TENANT_ID)
   const clientId = normalizeString(env.MICROSOFT_CLIENT_ID)
   const clientSecret = normalizeString(env.MICROSOFT_CLIENT_SECRET)
@@ -1365,7 +1362,7 @@ async function getGraphAccessToken(env: ApiHonoEnv['Bindings']): Promise<string>
   return data.access_token
 }
 
-async function fetchAccountingAccessRecipients(env: ApiHonoEnv['Bindings']): Promise<Array<{ email: string; name: string }>> {
+async function fetchAccountingAccessRecipients(env: HonoEnv['Bindings']): Promise<Array<{ email: string; name: string }>> {
   const accessToken = await getGraphAccessToken(env)
   const recipients = new Map<string, { email: string; name: string }>()
   let url = `https://graph.microsoft.com/v1.0/groups/${encodeURIComponent(ACCOUNTING_ACCESS_GROUP_ID)}/members/microsoft.graph.user?$select=displayName,mail,userPrincipalName&$top=999`
@@ -1390,7 +1387,7 @@ async function fetchAccountingAccessRecipients(env: ApiHonoEnv['Bindings']): Pro
   return Array.from(recipients.values())
 }
 
-async function sendAccountingPaymentSubmittedEmail(env: ApiHonoEnv['Bindings'], invoice: Invoice, payment: InvoicePayment): Promise<void> {
+async function sendAccountingPaymentSubmittedEmail(env: HonoEnv['Bindings'], invoice: Invoice, payment: InvoicePayment): Promise<void> {
   const apiKey = normalizeString(env.BREVO_API_KEY)
   const senderEmail = normalizeString(env.SENDER_EMAIL)
   if (!apiKey) {
@@ -1441,7 +1438,7 @@ async function sendAccountingPaymentSubmittedEmail(env: ApiHonoEnv['Bindings'], 
   }
 }
 
-async function notifyAccountingPaymentSubmitted(db: D1Database, env: ApiHonoEnv['Bindings'], invoice: Invoice, payment: InvoicePayment): Promise<void> {
+async function notifyAccountingPaymentSubmitted(db: D1Database, env: HonoEnv['Bindings'], invoice: Invoice, payment: InvoicePayment): Promise<void> {
   if (payment.status !== 'succeeded' || payment.grossCents <= 0 || payment.accountingNotificationSentDate) return
   try {
     await sendAccountingPaymentSubmittedEmail(env, invoice, payment)
@@ -1482,7 +1479,7 @@ function getInvoiceBillingEmail(invoice: Invoice): string {
   return invoice.contacts[0]?.email || invoice.clientEmail
 }
 
-async function createStripeCheckoutSession(invoice: Invoice, env: ApiHonoEnv['Bindings'], amountCents: number): Promise<StripeCheckoutSession> {
+async function createStripeCheckoutSession(invoice: Invoice, env: HonoEnv['Bindings'], amountCents: number): Promise<StripeCheckoutSession> {
   const stripeSecretKey = getStripeSecretKey(env)
 
   const params = new URLSearchParams()
@@ -1528,7 +1525,7 @@ async function createStripeCheckoutSession(invoice: Invoice, env: ApiHonoEnv['Bi
   return data as StripeCheckoutSession
 }
 
-async function stripeFetch<T>(env: ApiHonoEnv['Bindings'], path: string): Promise<T | null> {
+async function stripeFetch<T>(env: HonoEnv['Bindings'], path: string): Promise<T | null> {
   const stripeSecretKey = getStripeSecretKey(env)
   const response = await fetch(`https://api.stripe.com/v1${path}`, {
     headers: { Authorization: `Bearer ${stripeSecretKey}` },
@@ -1561,7 +1558,7 @@ function escapeHtml(value: unknown): string {
     .replace(/'/g, '&#39;')
 }
 
-async function getStripePaymentDetails(env: ApiHonoEnv['Bindings'], paymentIntentId: string): Promise<{
+async function getStripePaymentDetails(env: HonoEnv['Bindings'], paymentIntentId: string): Promise<{
   chargeId: string
   balanceTransactionId: string
   grossCents: number
@@ -1600,7 +1597,7 @@ async function getStripePaymentDetails(env: ApiHonoEnv['Bindings'], paymentInten
   }
 }
 
-async function listStripePayoutBalanceTransactions(env: ApiHonoEnv['Bindings'], payoutId: string): Promise<StripeBalanceTransaction[]> {
+async function listStripePayoutBalanceTransactions(env: HonoEnv['Bindings'], payoutId: string): Promise<StripeBalanceTransaction[]> {
   const transactions: StripeBalanceTransaction[] = []
   let startingAfter = ''
   while (true) {
@@ -1876,7 +1873,7 @@ async function markPayoutPaymentsReconciled(db: D1Database, payoutId: string, ba
   }
 }
 
-async function handleStripePayoutPaid(db: D1Database, env: ApiHonoEnv['Bindings'], payout: StripePayout): Promise<void> {
+async function handleStripePayoutPaid(db: D1Database, env: HonoEnv['Bindings'], payout: StripePayout): Promise<void> {
   const payoutId = normalizeString(payout.id)
   if (!payoutId) return
   const row = await upsertStripePayout(db, payout, 'paid')
@@ -1892,7 +1889,7 @@ async function handleStripePayoutPaid(db: D1Database, env: ApiHonoEnv['Bindings'
   ).bind(date, payoutSyncState({ payoutStatus: 'paid', payoutEmailSentDate: date }), date, payoutId).run()
 }
 
-async function handleStripePayoutReconciled(db: D1Database, env: ApiHonoEnv['Bindings'], payout: StripePayout): Promise<void> {
+async function handleStripePayoutReconciled(db: D1Database, env: HonoEnv['Bindings'], payout: StripePayout): Promise<void> {
   const payoutId = normalizeString(payout.id)
   if (!payoutId) return
   await upsertStripePayout(db, payout, 'reconciled')
@@ -1936,7 +1933,7 @@ async function handleStripePayoutReconciled(db: D1Database, env: ApiHonoEnv['Bin
   }
 }
 
-async function markInvoicePaidFromStripe(db: D1Database, env: ApiHonoEnv['Bindings'], session: StripeCheckoutSession): Promise<void> {
+async function markInvoicePaidFromStripe(db: D1Database, env: HonoEnv['Bindings'], session: StripeCheckoutSession): Promise<void> {
   const invoiceId = normalizeString(session.metadata?.invoice_id)
   const sessionId = normalizeString(session.id)
   const paymentIntentId = normalizeString(session.payment_intent)
@@ -2031,7 +2028,7 @@ async function markInvoicePaidFromStripe(db: D1Database, env: ApiHonoEnv['Bindin
   }
 }
 
-async function markInvoicePaidFromStripePaymentIntent(db: D1Database, env: ApiHonoEnv['Bindings'], paymentIntent: StripePaymentIntent): Promise<void> {
+async function markInvoicePaidFromStripePaymentIntent(db: D1Database, env: HonoEnv['Bindings'], paymentIntent: StripePaymentIntent): Promise<void> {
   const paymentIntentId = normalizeString(paymentIntent.id)
   const invoiceId = normalizeString(paymentIntent.metadata?.invoice_id)
   const paidAt = nowIso()
@@ -2082,7 +2079,7 @@ async function markInvoicePaidFromStripePaymentIntent(db: D1Database, env: ApiHo
 }
 
 export function createInvoicesApi() {
-  const app = new Hono<ApiHonoEnv>()
+  const app = new Hono<HonoEnv>()
 
   app.get('/api/invoices', async (context) => {
     try {

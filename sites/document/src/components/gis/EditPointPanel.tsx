@@ -17,6 +17,7 @@ import type {
   UpdateGisRecordInput,
 } from "./types";
 import { X } from "lucide-react";
+import { KnownStatePlaneProjection, Wgs84Input } from "cfdg/types";
 
 type EditPointPanelProps = {
   isOpen: boolean;
@@ -65,7 +66,7 @@ export function EditPointPanel({
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
   const [statePlaneProjection, setStatePlaneProjection] =
-    useState<Geodesy.KnownStatePlaneProjection>("EPSG:2236");
+    useState<KnownStatePlaneProjection>("EPSG:2236");
   const [errorMessage, setErrorMessage] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -76,7 +77,7 @@ export function EditPointPanel({
   function recomputeCoordinates(
     nextNorthing: string,
     nextEasting: string,
-    projection: Geodesy.KnownStatePlaneProjection = statePlaneProjection,
+    projection: KnownStatePlaneProjection = statePlaneProjection,
   ) {
     const parsedNorthing = Number(nextNorthing);
     const parsedEasting = Number(nextEasting);
@@ -199,7 +200,7 @@ export function EditPointPanel({
       return;
     }
 
-    let convertedCoordinates: Geodesy.Wgs84Coordinates;
+    let convertedCoordinates: Wgs84Input;
     if (statePlaneProjection === "EPSG:4326") {
       convertedCoordinates = {
         latitude: parsedNorthing,
@@ -344,7 +345,7 @@ export function EditPointPanel({
               (o) => o.value === statePlaneProjection,
             )}
             onValidChange={(_, value) => {
-              const projection = value as Geodesy.KnownStatePlaneProjection;
+              const projection = value as KnownStatePlaneProjection;
               setStatePlaneProjection(projection);
               recomputeCoordinates(northing, easting, projection);
             }}

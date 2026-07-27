@@ -7,7 +7,7 @@ import { loadStripe } from '@stripe/stripe-js'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { Button, Combobox, Multiselect, Textarea, Textbox } from 'cfdg/input'
 import { Modal, showNotification } from 'cfdg/layout'
-import { type ClientContact, type Invoice, type InvoicePayment, type InvoicePaymentKind, type ProjectManager, type QboConnectionStatus, type QboCustomer } from 'cfdg/scripts'
+import { type ClientContact, type Invoice, type InvoicePayment, type InvoicePaymentKind, type ProjectManager, type QboConnectionStatus, type QboCustomer } from 'cfdg/types'
 import { ArrowLeft, Banknote, Check, Copy, CopyPlus, CreditCard, Download, ExternalLink, File, Mail, Plus, RefreshCw, Save, SquareArrowOutUpRight, Trash2, X } from 'lucide-react'
 import {
   copyInvoice,
@@ -502,11 +502,11 @@ export function InvoicesManager() {
       }
     })
   }
-  
+
   // If creating a new invoice, automatically set the contactIds to the active invoice recipients for the selected client.
   useEffect(() => {
     if (selectedInvoice) return; // Only apply this logic when creating a new invoice.
-    if(clientContacts.length === 0) return; // No contacts to select from, cancel.
+    if (clientContacts.length === 0) return; // No contacts to select from, cancel.
     updateContactIds(clientContacts.filter(contact => contact.isInvoiceRecipient).map(contact => contact.id));
   }, [clientContacts])
 

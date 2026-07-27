@@ -8,8 +8,8 @@
     "sites/**"
   ],
   "scripts": {
-    "dev:main": "pnpm -r --parallel --filter main --filter api run dev",
-    "dev:document": "pnpm -r --parallel --filter document --filter api run dev",
+    "dev:main": "pnpm -r --parallel --filter api --filter main run dev",
+    "dev:document": "pnpm -r --parallel --filter api --filter document run dev",
     "dev:api": "pnpm --filter api run dev",
     "build:main": "pnpm --filter main run build",
     "build:document": "pnpm --filter document run build",

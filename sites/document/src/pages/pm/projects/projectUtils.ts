@@ -1,4 +1,4 @@
-import { type ProjectInvoiceDocument } from 'cfdg/scripts'
+import { type ProjectInvoiceDocument } from 'cfdg/types'
 import { type ProjectSummary } from '../../../api/projectManagement'
 
 export function formatProjectAddress(project: ProjectSummary): string {

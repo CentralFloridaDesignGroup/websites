@@ -9,6 +9,7 @@ import {
   verticalEstablishmentMethodOptions,
 } from "./constants";
 import type { GisRecord, PointMaterial, UpdateGisRecordInput } from "./types";
+import { KnownStatePlaneProjection } from "cfdg/types";
 
 type BulkEditTablePanelProps = {
   isOpen: boolean;
@@ -26,7 +27,7 @@ type EditableRow = {
   material: PointMaterial;
   witness: string;
   notes: string;
-  statePlaneProjection: Geodesy.KnownStatePlaneProjection;
+  statePlaneProjection: KnownStatePlaneProjection;
   northing: string;
   easting: string;
   elevation: string;
@@ -61,7 +62,7 @@ function parseRequiredNumber(value: string, label: string): number {
 
 function getProjectionForRecord(
   record: GisRecord,
-): Geodesy.KnownStatePlaneProjection {
+): KnownStatePlaneProjection {
   switch (record.sourceDatum) {
     case "nad83-2011-fl-east":
       return "EPSG:2236";
@@ -517,7 +518,7 @@ export function BulkEditTablePanel({
                         updateCell(
                           row.id,
                           "statePlaneProjection",
-                          event.target.value as Geodesy.KnownStatePlaneProjection,
+                          event.target.value as KnownStatePlaneProjection,
                         )
                       }
                       className="w-44 rounded border border-slate-300 px-2 py-1 dark:bg-slate-700 dark:text-white"
