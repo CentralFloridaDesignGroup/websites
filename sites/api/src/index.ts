@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { createAuthMiddleware } from './auth/authPolicy'
-import { CORS_HEADERS, JSON_HEADERS } from 'cfdg/types/constants'
+import { CORS_HEADERS, CORS_HEADERS_V2, JSON_HEADERS, JSON_HEADERS_V2 } from 'cfdg/types/constants'
 import { serverError, type HonoEnv } from './apiTypes'
 import { createCommentsApi } from './comments/hono'
 import { createGisPointsApi } from './gisPointsApi'
@@ -13,12 +13,22 @@ import { createProjectManagementApi } from './projectManagementApi'
 
 const app = new Hono<HonoEnv>()
 
+// V1 original routes. To be deprecated.
 app.use(
   '/api/*',
   cors({
     origin: CORS_HEADERS['Access-Control-Allow-Origin'],
     allowMethods: CORS_HEADERS['Access-Control-Allow-Methods'].split(', '),
     allowHeaders: CORS_HEADERS['Access-Control-Allow-Headers'].split(', '),
+  })
+)
+
+app.use(
+  '/api/v2/*',
+  cors({
+    origin: CORS_HEADERS_V2['Access-Control-Allow-Origin'],
+    allowMethods: CORS_HEADERS_V2['Access-Control-Allow-Methods'].split(', '),
+    allowHeaders: CORS_HEADERS_V2['Access-Control-Allow-Headers'].split(', '),
   })
 )
 

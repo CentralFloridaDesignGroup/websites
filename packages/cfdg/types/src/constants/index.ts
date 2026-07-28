@@ -4,7 +4,9 @@ export {
 
 export {
     CORS_HEADERS,
-    JSON_HEADERS
+    CORS_HEADERS_V2,
+    JSON_HEADERS,
+    JSON_HEADERS_V2,
 } from './api';
 
 export {
