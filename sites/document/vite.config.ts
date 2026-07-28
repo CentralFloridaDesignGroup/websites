@@ -20,6 +20,7 @@ export default defineConfig({
         __dirname,
         "../../packages/cfdg/scripts/src",
       ),
+      "cfdg/types": path.resolve(__dirname, "../../packages/cfdg/types/src"),
     },
   },
   build: {
