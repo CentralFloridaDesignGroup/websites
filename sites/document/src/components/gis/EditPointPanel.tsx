@@ -512,7 +512,7 @@ export function EditPointPanel({
             label={saving ? "Saving..." : "Save Changes"}
             style="primary"
             size="small"
-            properties={{ disabled: saving || deleting }}
+            properties={{ disabled: saving || deleting, type: "submit" }}
           />
         </div>
       </form>

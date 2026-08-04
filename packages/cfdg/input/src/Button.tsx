@@ -11,6 +11,8 @@ export interface ButtonProperties {
 
     title?: string;
     ariaLabel?: string;
+    /** Native HTML button behavior. Defaults to a non-submitting button. */
+    type?: 'button' | 'submit' | 'reset';
 }
 
 /**
@@ -42,7 +44,7 @@ export function Button({
 
     return (
         <button
-            type="button"
+            type={properties?.type ?? "button"}
             onClick={onClick}
             disabled={properties?.disabled}
             className={buttonClass({ variant: style, size, colorMode: resolvedColorMode, className: properties?.classNames })}

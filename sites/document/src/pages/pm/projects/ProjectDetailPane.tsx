@@ -1,10 +1,10 @@
 import { Button, Combobox, Textbox } from 'cfdg/input'
-import { type EntraUserAccount, type Invoice, type ProjectBillingProfile, type ProjectInvoiceDocument, type ProjectManager } from 'cfdg/types'
+import { type EntraUserAccount, type Invoice, type ProjectBillingProfile, type ProjectInvoiceDocument, type ProjectManager, type ProjectStatus } from 'cfdg/types'
 import { FileText, MoveRight, Save } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { type ProjectSummary } from '../../../api/projectManagement'
 import { ProjectDocumentsSection } from './ProjectDocumentsSection'
-import { formatProjectAddress } from './projectUtils'
+import { formatProjectAddress, projectStatusClassName } from './projectUtils'
 
 type ProjectDetailPaneProps = {
   selectedProject: ProjectSummary | null
@@ -23,8 +23,10 @@ type ProjectDetailPaneProps = {
   managersLoading: boolean
   saving: boolean
   billingSaving: boolean
+  projectStatusSaving: boolean
   editorName: string
   onEditProject: () => void
+  onProjectStatusChange: (status: ProjectStatus) => void
   onOpenMoveDialog: () => void
   onSelectManager: (userId: string) => void
   onSaveManager: () => void
@@ -64,8 +66,10 @@ export function ProjectDetailPane({
   managersLoading,
   saving,
   billingSaving,
+  projectStatusSaving,
   editorName,
   onEditProject,
+  onProjectStatusChange,
   onOpenMoveDialog,
   onSelectManager,
   onSaveManager,
@@ -83,7 +87,22 @@ export function ProjectDetailPane({
           <div className="space-y-4">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h2 className="text-xl font-bold">{selectedProject.displayName}</h2>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="text-xl font-bold">{selectedProject.displayName}</h2>
+                  <select
+                    aria-label="Project status"
+                    value={selectedProject.status}
+                    disabled={projectStatusSaving}
+                    onChange={(event) => onProjectStatusChange(event.target.value as ProjectStatus)}
+                    className={`rounded border-0 px-2 py-1 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 ${projectStatusClassName(selectedProject.status)}`}
+                  >
+                    <option value="proposal">Proposal</option>
+                    <option value="active">Active</option>
+                    <option value="hold">Hold</option>
+                    <option value="complete">Complete</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">{selectedProject.fullyQualifiedName}</p>
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">QBO Project ID: {selectedProject.id}</p>
               </div>
@@ -126,6 +145,8 @@ export function ProjectDetailPane({
               <div className="rounded-md border border-gray-200 bg-gray-50 p-3 text-sm dark:border-gray-700 dark:bg-gray-900 md:col-span-2">
                 <p className="text-xs font-semibold uppercase text-gray-500">Address</p>
                 <p className="mt-1 font-semibold">{formatProjectAddress(selectedProject) || 'No project address in QBO'}</p>
+                <p className="mt-2 text-xs font-semibold uppercase text-gray-500">Parcel ID</p>
+                <p className="mt-1 font-semibold">{selectedProject.parcelId || 'Not set'}</p>
               </div>
             </div>
 

@@ -70,6 +70,8 @@ const routePolicies: RoutePolicy[] = [
   { method: '*', route: '/api/clients', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
   // Allows multiple methods for handling QB client details.
   { method: '*', route: '/api/clients/:id', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  // Allows changing a QuickBooks client's active state.
+  { method: '*', route: '/api/clients/:id/status', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
   // Allows multiple methods for handling QB client contacts.
   { method: '*', route: '/api/clients/:id/contacts', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
   // Allows multiple methods for handling QB client contact details.
@@ -78,6 +80,8 @@ const routePolicies: RoutePolicy[] = [
   { method: '*', route: '/api/projects', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
   // Allows multiple methods for handling QB sub-customer / project details.
   { method: '*', route: '/api/projects/:id', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  // Allows changing Compass project lifecycle status.
+  { method: '*', route: '/api/projects/:id/status', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
   // Allows multiple methods for handling QB sub-customer / project billing details.
   { method: '*', route: '/api/projects/:id/billing', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
   // Allows multiple methods for handling QB sub-customer / project documents.

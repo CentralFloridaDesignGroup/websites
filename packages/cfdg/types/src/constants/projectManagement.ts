@@ -10,3 +10,9 @@ export const PROJECT_MANAGER_GROUP_ID = '51ad0458-eb18-4f00-a829-6e8b6d4636e6';
 
 /** Fallback Entra group display name used when PROJECT_MANAGER_GROUP_ID is not configured. */
 export const PROJECT_MANAGER_GROUP_DISPLAY_NAME = 'Project Manager';
+
+/** Valid Compass lifecycle statuses for QuickBooks-backed projects. */
+export const PROJECT_STATUSES = ['proposal', 'active', 'hold', 'complete', 'cancelled'] as const;
+
+/** Project statuses considered current work in Compass list views. */
+export const CURRENT_PROJECT_STATUSES = ['proposal', 'active', 'hold'] as const;

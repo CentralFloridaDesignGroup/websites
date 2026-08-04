@@ -593,6 +593,8 @@ function buildCachedCustomerPatch(
 ): QboCustomerResponse {
   const address = buildCustomerAddress(payload.address)
   const syncToken = normalizeString(qboCustomer.SyncToken || current.syncToken)
+  const email = 'email' in payload ? payload.email : ''
+  const phone = 'phone' in payload ? payload.phone : ''
   return {
     Id: current.id,
     ParentRef: parentId ? { value: parentId } : undefined,
@@ -601,8 +603,8 @@ function buildCachedCustomerPatch(
     CompanyName: normalizeString(qboCustomer.CompanyName || payload.name || current.companyName),
     GivenName: current.givenName,
     FamilyName: current.familyName,
-    PrimaryEmailAddr: payload.email ? { Address: normalizeString(payload.email).toLowerCase() } : current.primaryEmail ? { Address: current.primaryEmail } : undefined,
-    PrimaryPhone: payload.phone ? { FreeFormNumber: normalizeString(payload.phone) } : current.primaryPhone ? { FreeFormNumber: current.primaryPhone } : undefined,
+    PrimaryEmailAddr: email ? { Address: normalizeString(email).toLowerCase() } : current.primaryEmail ? { Address: current.primaryEmail } : undefined,
+    PrimaryPhone: phone ? { FreeFormNumber: normalizeString(phone) } : current.primaryPhone ? { FreeFormNumber: current.primaryPhone } : undefined,
     BillAddr: address,
     ShipAddr: parentId ? address : {
       Line1: current.shipAddrLine1,
@@ -671,6 +673,59 @@ export async function updateQboClientCustomer(db: D1Database, env: HonoEnv['Bind
   return cached
 }
 
+/** Updates a QuickBooks customer or project active state and refreshes its local cache record. */
+export async function updateQboCustomerActiveState(db: D1Database, env: HonoEnv['Bindings'], customer: QboCustomer, active: boolean): Promise<QboCustomer> {
+  await ensureQboSchemaReady(db)
+  const data = await qboFetch<{ Customer?: QboCustomerResponse }>(db, env, '/customer', {
+    method: 'POST',
+    body: JSON.stringify({
+      Id: customer.id,
+      SyncToken: customer.syncToken,
+      sparse: true,
+      Active: active,
+    }),
+  })
+  const updated = data.Customer
+  const qboCustomerId = normalizeString(updated?.Id)
+  if (!updated || !qboCustomerId) {
+    throw new Error('QuickBooks did not return the updated customer status')
+  }
+  await upsertQboCustomer(db, {
+    Id: customer.id,
+    ParentRef: customer.parentId ? { value: customer.parentId } : undefined,
+    DisplayName: customer.displayName,
+    FullyQualifiedName: customer.fullyQualifiedName,
+    CompanyName: customer.companyName,
+    GivenName: customer.givenName,
+    FamilyName: customer.familyName,
+    PrimaryEmailAddr: customer.primaryEmail ? { Address: customer.primaryEmail } : undefined,
+    PrimaryPhone: customer.primaryPhone ? { FreeFormNumber: customer.primaryPhone } : undefined,
+    BillAddr: {
+      Line1: customer.billAddrLine1,
+      Line2: customer.billAddrLine2,
+      City: customer.billAddrCity,
+      CountrySubDivisionCode: customer.billAddrState,
+      PostalCode: customer.billAddrPostalCode,
+    },
+    ShipAddr: {
+      Line1: customer.shipAddrLine1,
+      Line2: customer.shipAddrLine2,
+      City: customer.shipAddrCity,
+      CountrySubDivisionCode: customer.shipAddrState,
+      PostalCode: customer.shipAddrPostalCode,
+    },
+    Active: active,
+    SyncToken: normalizeString(updated.SyncToken || customer.syncToken),
+    Job: Boolean(customer.parentId),
+    MetaData: { LastUpdatedTime: normalizeString(updated.MetaData?.LastUpdatedTime || customer.qboUpdatedTime) },
+  }, nowIso())
+  const cached = await fetchCachedQboCustomer(db, qboCustomerId)
+  if (!cached) {
+    throw new Error('QuickBooks customer was not cached after status update')
+  }
+  return cached
+}
+
 export async function createQboProjectCustomer(db: D1Database, env: HonoEnv['Bindings'], payload: ProjectCreatePayload): Promise<QboCustomer> {
   await ensureQboSchemaReady(db)
   const name = normalizeString(payload.name)
@@ -684,7 +739,6 @@ export async function createQboProjectCustomer(db: D1Database, env: HonoEnv['Bin
       Job: true,
       BillAddr: buildCustomerAddress(payload.address),
       ShipAddr: buildCustomerAddress(payload.address),
-      ...buildCustomerContact(payload),
     }),
   })
   const customer = data.Customer
@@ -715,7 +769,6 @@ export async function updateQboProjectCustomer(db: D1Database, env: HonoEnv['Bin
       Job: true,
       BillAddr: buildCustomerAddress(payload.address),
       ShipAddr: buildCustomerAddress(payload.address),
-      ...buildCustomerContact(payload),
     }),
   })
   const customer = data.Customer

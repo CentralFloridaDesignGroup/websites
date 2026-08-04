@@ -1,7 +1,23 @@
 import type { Address } from './general';
 import { normalizeBoolean, normalizeNumber, normalizeString } from './helpers';
+import type { PROJECT_STATUSES } from '../constants/projectManagement';
 
 // #region Project Management Types
+
+/** Compass lifecycle status for a QuickBooks-backed project. */
+export type ProjectStatus = (typeof PROJECT_STATUSES)[number];
+
+/** Compass-managed lifecycle data associated with a QuickBooks project. */
+export type ProjectLifecycle = {
+  /** The QuickBooks Online project ID. */
+  qboProjectId: string;
+  /** The current Compass lifecycle status. */
+  status: ProjectStatus;
+  /** The date the lifecycle status was last updated. */
+  updatedDate: string;
+  /** The user who last updated the lifecycle status. */
+  updatedBy: string;
+};
 
 /** Project-level billing defaults used when creating and sending invoices. */
 export type ProjectBillingProfile = {
@@ -285,13 +301,21 @@ export type ClientCreatePayload = ClientPayload;
 /** Payload for updating a top-level QuickBooks customer/client. */
 export type ClientUpdatePayload = ClientPayload;
 
+/** Shared Compass project fields, excluding person-specific contact information. */
+export type ProjectPayload = Pick<ClientPayload, 'name' | 'address'> & {
+  /** Parcel identification number for the project property. */
+  parcelId: string;
+};
+
 /** Definition for creating a QuickBooks sub-customer/project. */
-export type ProjectCreatePayload = ClientPayload & {
+export type ProjectCreatePayload = ProjectPayload & {
   parentCustomerId: string;
 };
 
-/** Payload for updating a QuickBooks sub-customer/project without moving it. */
-export type ProjectUpdatePayload = ClientPayload;
+/** Payload for updating a QuickBooks sub-customer/project and its parent client. */
+export type ProjectUpdatePayload = ProjectPayload & {
+  parentCustomerId: string;
+};
 
 /** 
  * Payload for moving a QuickBooks sub-customer/project under a different client. The parentCustomerId specifies the new parent client.

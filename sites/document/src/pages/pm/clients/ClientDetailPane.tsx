@@ -1,8 +1,9 @@
-import { Button } from 'cfdg/input'
+import { Button, Combobox } from 'cfdg/input'
 import type { ClientContact, Invoice, QboCustomer } from 'cfdg/types'
 import { FileText, FolderOpen, Plus, Save, Trash2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { type ProjectSummary } from '../../../api/projectManagement'
+import { formatProjectStatus, projectStatusClassName } from '../projects/projectUtils'
 import { contactToForm } from './clientForms'
 import { type ContactForm } from './types'
 
@@ -14,7 +15,11 @@ type ClientDetailPaneProps = {
   relatedLoading: boolean
   saving: boolean
   clientSaving: boolean
+  clientStatus: 'active' | 'inactive'
+  clientStatusSaving: boolean
   onEditClient: () => void
+  onClientStatusChange: (status: 'active' | 'inactive') => void
+  onSaveClientStatus: () => void
   onShowNewContact: () => void
   onEditContact: (contact: ContactForm) => void
   onRemoveContact: (contact: ClientContact) => void
@@ -39,7 +44,11 @@ export function ClientDetailPane({
   relatedLoading,
   saving,
   clientSaving,
+  clientStatus,
+  clientStatusSaving,
   onEditClient,
+  onClientStatusChange,
+  onSaveClientStatus,
   onShowNewContact,
   onEditContact,
   onRemoveContact,
@@ -51,11 +60,31 @@ export function ClientDetailPane({
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h2 className="text-xl font-bold">{selectedClient.displayName}</h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400">{selectedClient.fullyQualifiedName || selectedClient.companyName}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm text-gray-600 dark:text-gray-400">{selectedClient.fullyQualifiedName || selectedClient.companyName}</p>
+                <span className={`rounded px-2 py-0.5 text-xs font-semibold ${selectedClient.active ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200' : 'bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200'}`}>{selectedClient.active ? 'Active' : 'Inactive'}</span>
+              </div>
             </div>
             <div className="flex flex-wrap gap-2">
               <Button label="Edit Client" size="small" style="secondary" icon={Save} onClick={onEditClient} properties={{ disabled: clientSaving }} />
               <Button label="New Contact" size="small" style="primary" icon={Plus} onClick={onShowNewContact} properties={{ disabled: saving }} />
+            </div>
+          </div>
+
+          <div className="rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+              <div className="min-w-48 flex-1">
+                <Combobox
+                  field="client-status"
+                  label="Client Status"
+                  colorMode="auto"
+                  value={clientStatus}
+                  selections={[{ key: 'Active', value: 'active' }, { key: 'Inactive', value: 'inactive' }]}
+                  onChange={(_, value) => onClientStatusChange(value as 'active' | 'inactive')}
+                  disabled={clientStatusSaving}
+                />
+              </div>
+              <Button label={clientStatusSaving ? 'Saving Status' : 'Save Status'} size="small" style="primary" icon={Save} onClick={onSaveClientStatus} properties={{ disabled: clientStatusSaving || clientStatus === (selectedClient.active ? 'active' : 'inactive') }} />
             </div>
           </div>
 
@@ -107,7 +136,10 @@ export function ClientDetailPane({
               <div className="space-y-2">
                 {relatedProjects.map((project) => (
                   <Link key={project.id} to={`/projects?projectId=${encodeURIComponent(project.id)}`} className="block rounded-md border border-gray-200 bg-white p-2 text-sm hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
-                    <p className="font-semibold">{project.displayName}</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-semibold">{project.displayName}</p>
+                      <span className={`rounded px-2 py-0.5 text-xs font-semibold ${projectStatusClassName(project.status)}`}>{formatProjectStatus(project.status)}</span>
+                    </div>
                     <p className="text-xs text-gray-500 dark:text-gray-400">{project.fullyQualifiedName || project.id}</p>
                   </Link>
                 ))}

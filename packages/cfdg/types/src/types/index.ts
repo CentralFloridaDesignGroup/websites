@@ -62,6 +62,8 @@ export type {
 export type {
     ProjectBillingProfile,
     ProjectBillingProfileRow,
+    ProjectStatus,
+    ProjectLifecycle,
     ProjectInvoiceDocument,
     ProjectInvoiceDocumentRow,
     EntraUserAccount,
@@ -72,6 +74,7 @@ export type {
     ClientPayload,
     ClientCreatePayload,
     ClientUpdatePayload,
+    ProjectPayload,
     ProjectCreatePayload,
     ProjectUpdatePayload,
     ProjectMovePayload

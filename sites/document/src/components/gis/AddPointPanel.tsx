@@ -346,7 +346,7 @@ export function AddPointPanel({
             label={saving ? "Saving..." : "Add Point"}
             style="primary"
             size="small"
-            properties={{ disabled: saving }}
+            properties={{ disabled: saving, type: "submit" }}
           />
         </div>
       </form>
