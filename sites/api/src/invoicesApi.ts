@@ -126,7 +126,13 @@ type StripePaymentIntent = {
   amount?: number
   amount_received?: number
   metadata?: Record<string, string>
+  payment_method?: string | StripePaymentMethod
   latest_charge?: string | { id?: string; balance_transaction?: string | StripeBalanceTransaction }
+}
+
+type StripePaymentMethod = {
+  id?: string
+  type?: string
 }
 
 type StripeCharge = {
@@ -146,6 +152,16 @@ type StripeBalanceTransaction = {
 type StripeListResponse<T> = {
   data?: T[]
   has_more?: boolean
+}
+
+type StripePaymentDetails = {
+  chargeId: string
+  balanceTransactionId: string
+  grossCents: number
+  feeCents: number
+  netCents: number
+  method: string
+  paymentMethodResolved: boolean
 }
 
 const invoiceSchemaReadyByDb = new WeakMap<D1Database, Promise<void>>()
@@ -1464,7 +1480,7 @@ async function notifyAccountingPaymentSubmitted(db: D1Database, env: HonoEnv['Bi
         stripePayoutId: payment.stripePayoutId,
         stripePayoutStatus: payment.stripePayoutStatus,
         stripePayoutReconciledDate: payment.stripePayoutReconciledDate,
-        stripeDetailsStatus: payment.method.toLowerCase() === 'stripe' ? (payment.stripeBalanceTransactionId ? 'complete' : 'details_pending') : '',
+        stripeDetailsStatus: payment.stripePaymentIntentId ? (payment.stripeBalanceTransactionId ? 'complete' : 'details_pending') : '',
         accountingNotificationSentDate: date,
       }),
       date,
@@ -1558,18 +1574,39 @@ function escapeHtml(value: unknown): string {
     .replace(/'/g, '&#39;')
 }
 
-async function getStripePaymentDetails(env: HonoEnv['Bindings'], paymentIntentId: string): Promise<{
-  chargeId: string
-  balanceTransactionId: string
-  grossCents: number
-  feeCents: number
-  netCents: number
-}> {
+function stripeLedgerMethod(paymentMethodType: unknown): Pick<StripePaymentDetails, 'method' | 'paymentMethodResolved'> {
+  switch (normalizeString(paymentMethodType).toLowerCase()) {
+    case 'card':
+      return { method: 'Credit Card', paymentMethodResolved: true }
+    case 'us_bank_account':
+      return { method: 'ACH', paymentMethodResolved: true }
+    case '':
+      return { method: 'Stripe Details Pending', paymentMethodResolved: false }
+    default:
+      return { method: 'Stripe Other Payment', paymentMethodResolved: true }
+  }
+}
+
+function pendingStripePaymentDetails(grossCents: number): StripePaymentDetails {
+  return {
+    chargeId: '',
+    balanceTransactionId: '',
+    grossCents,
+    feeCents: 0,
+    netCents: grossCents,
+    method: 'Stripe Details Pending',
+    paymentMethodResolved: false,
+  }
+}
+
+async function getStripePaymentDetails(env: HonoEnv['Bindings'], paymentIntentId: string): Promise<StripePaymentDetails> {
   if (!paymentIntentId) {
-    return { chargeId: '', balanceTransactionId: '', grossCents: 0, feeCents: 0, netCents: 0 }
+    return pendingStripePaymentDetails(0)
   }
 
-  const paymentIntent = await stripeFetch<StripePaymentIntent>(env, `/payment_intents/${encodeURIComponent(paymentIntentId)}?expand[]=latest_charge.balance_transaction`)
+  const paymentIntent = await stripeFetch<StripePaymentIntent>(env, `/payment_intents/${encodeURIComponent(paymentIntentId)}?expand[]=payment_method&expand[]=latest_charge.balance_transaction`)
+  const paymentMethod = paymentIntent?.payment_method
+  const paymentMethodType = paymentMethod && typeof paymentMethod === 'object' ? paymentMethod.type : ''
   const latestCharge = paymentIntent?.latest_charge
   const expandedCharge = latestCharge && typeof latestCharge === 'object' ? latestCharge as StripeCharge : null
   const chargeId = getExpandedId(latestCharge)
@@ -1594,6 +1631,7 @@ async function getStripePaymentDetails(env: HonoEnv['Bindings'], paymentIntentId
     grossCents: normalizeAmountCents(balanceTransaction?.amount),
     feeCents: normalizeAmountCents(balanceTransaction?.fee),
     netCents: Math.max(0, normalizeAmountCents(balanceTransaction?.net)),
+    ...stripeLedgerMethod(paymentMethodType),
   }
 }
 
@@ -1666,7 +1704,7 @@ async function upsertInvoicePayment(db: D1Database, payment: {
     ? await fetchInvoicePaymentByStripe(db, payment.stripeCheckoutSessionId || '', payment.stripePaymentIntentId || '')
     : null
   const date = nowIso()
-  const stripeDetailsStatus = payment.method.toLowerCase() === 'stripe' ? (payment.stripeBalanceTransactionId ? 'complete' : 'details_pending') : ''
+  const stripeDetailsStatus = payment.stripePaymentIntentId ? (payment.stripeBalanceTransactionId ? 'complete' : 'details_pending') : ''
   if (existing) {
     await db.prepare(
       `UPDATE invoice_payments
@@ -1941,19 +1979,15 @@ async function markInvoicePaidFromStripe(db: D1Database, env: HonoEnv['Bindings'
 
   if (invoiceId) {
     const invoice = await fetchInvoiceById(db, invoiceId)
-    const stripeDetails = await getStripePaymentDetails(env, paymentIntentId).catch(() => ({
-      chargeId: '',
-      balanceTransactionId: '',
-      grossCents: invoice?.totalCents || 0,
-      feeCents: 0,
-      netCents: invoice?.totalCents || 0,
-    }))
+    const stripeDetails = await getStripePaymentDetails(env, paymentIntentId)
+      .catch(() => pendingStripePaymentDetails(invoice?.totalCents || 0))
     const grossCents = stripeDetails.grossCents || invoice?.totalCents || 0
     const savedPayment = await upsertInvoicePayment(db, {
       invoiceId,
       kind: 'payment',
       status: 'succeeded',
-      method: 'Stripe',
+      method: stripeDetails.method,
+      referenceNumber: paymentIntentId,
       grossCents,
       feeCents: stripeDetails.feeCents,
       netCents: stripeDetails.netCents || Math.max(0, grossCents - stripeDetails.feeCents),
@@ -1978,7 +2012,9 @@ async function markInvoicePaidFromStripe(db: D1Database, env: HonoEnv['Bindings'
     const payment = await fetchInvoicePaymentByStripe(db, sessionId, paymentIntentId)
     if (syncedInvoice && payment) {
       await notifyAccountingPaymentSubmitted(db, env, syncedInvoice, savedPayment)
-      await trySyncInvoicePaymentToQbo(db, env, syncedInvoice, payment)
+      if (stripeDetails.paymentMethodResolved) {
+        await trySyncInvoicePaymentToQbo(db, env, syncedInvoice, payment)
+      }
     }
     return
   }
@@ -1986,19 +2022,15 @@ async function markInvoicePaidFromStripe(db: D1Database, env: HonoEnv['Bindings'
   if (sessionId) {
     const invoice = await fetchInvoiceByWhere(db, 'stripe_checkout_session_id', sessionId, true)
     if (invoice) {
-      const stripeDetails = await getStripePaymentDetails(env, paymentIntentId).catch(() => ({
-        chargeId: '',
-        balanceTransactionId: '',
-        grossCents: invoice.totalCents,
-        feeCents: 0,
-        netCents: invoice.totalCents,
-      }))
+      const stripeDetails = await getStripePaymentDetails(env, paymentIntentId)
+        .catch(() => pendingStripePaymentDetails(invoice.totalCents))
       const grossCents = stripeDetails.grossCents || invoice.totalCents
       const savedPayment = await upsertInvoicePayment(db, {
         invoiceId: invoice.id,
         kind: 'payment',
         status: 'succeeded',
-        method: 'Stripe',
+        method: stripeDetails.method,
+        referenceNumber: paymentIntentId,
         grossCents,
         feeCents: stripeDetails.feeCents,
         netCents: stripeDetails.netCents || Math.max(0, grossCents - stripeDetails.feeCents),
@@ -2022,7 +2054,9 @@ async function markInvoicePaidFromStripe(db: D1Database, env: HonoEnv['Bindings'
       const payment = await fetchInvoicePaymentByStripe(db, sessionId, paymentIntentId)
       if (syncedInvoice && payment) {
         await notifyAccountingPaymentSubmitted(db, env, syncedInvoice, savedPayment)
-        await trySyncInvoicePaymentToQbo(db, env, syncedInvoice, payment)
+        if (stripeDetails.paymentMethodResolved) {
+          await trySyncInvoicePaymentToQbo(db, env, syncedInvoice, payment)
+        }
       }
     }
   }
@@ -2039,19 +2073,15 @@ async function markInvoicePaidFromStripePaymentIntent(db: D1Database, env: HonoE
     : await fetchInvoiceByWhere(db, 'stripe_payment_intent_id', paymentIntentId, true)
   if (!invoice) return
 
-  const stripeDetails = await getStripePaymentDetails(env, paymentIntentId).catch(() => ({
-    chargeId: '',
-    balanceTransactionId: '',
-    grossCents: normalizeAmountCents(paymentIntent.amount_received || paymentIntent.amount) || invoice.totalCents,
-    feeCents: 0,
-    netCents: normalizeAmountCents(paymentIntent.amount_received || paymentIntent.amount) || invoice.totalCents,
-  }))
+  const stripeDetails = await getStripePaymentDetails(env, paymentIntentId)
+    .catch(() => pendingStripePaymentDetails(normalizeAmountCents(paymentIntent.amount_received || paymentIntent.amount) || invoice.totalCents))
   const grossCents = stripeDetails.grossCents || normalizeAmountCents(paymentIntent.amount_received || paymentIntent.amount) || invoice.totalCents
   const savedPayment = await upsertInvoicePayment(db, {
     invoiceId: invoice.id,
     kind: 'payment',
     status: 'succeeded',
-    method: 'Stripe',
+    method: stripeDetails.method,
+    referenceNumber: paymentIntentId,
     grossCents,
     feeCents: stripeDetails.feeCents,
     netCents: stripeDetails.netCents || Math.max(0, grossCents - stripeDetails.feeCents),
@@ -2074,7 +2104,9 @@ async function markInvoicePaidFromStripePaymentIntent(db: D1Database, env: HonoE
   const payment = await fetchInvoicePaymentByStripe(db, '', paymentIntentId)
   if (syncedInvoice && payment) {
     await notifyAccountingPaymentSubmitted(db, env, syncedInvoice, savedPayment)
-    await trySyncInvoicePaymentToQbo(db, env, syncedInvoice, payment)
+    if (stripeDetails.paymentMethodResolved) {
+      await trySyncInvoicePaymentToQbo(db, env, syncedInvoice, payment)
+    }
   }
 }
 
@@ -2570,10 +2602,11 @@ export function createInvoicesApi() {
         return badRequest('Void invoices cannot sync payments')
       }
 
-      const syncablePayments = invoice.payments.filter((payment) => payment.status === 'succeeded' && (
+      const syncablePayments = invoice.payments.filter((payment) => payment.status === 'succeeded' &&
+        !(payment.stripePaymentIntentId && payment.method === 'Stripe Details Pending') && (
         !payment.qboPaymentId ||
         payment.qboSyncStatus === 'error' ||
-        Boolean(payment.qboPaymentId && !payment.qboDepositId && !payment.stripeBalanceTransactionId && payment.method.toLowerCase() !== 'stripe')
+        Boolean(payment.qboPaymentId && !payment.qboDepositId && !payment.stripeBalanceTransactionId && !payment.stripePaymentIntentId)
       ))
       for (const payment of syncablePayments) {
         const currentInvoice = await fetchInvoiceById(context.env.DB, invoiceId)
@@ -2611,13 +2644,16 @@ export function createInvoicesApi() {
       const netCents = details.netCents || Math.max(0, grossCents - feeCents)
       await context.env.DB.prepare(
         `UPDATE invoice_payments
-         SET gross_cents = ?, fee_cents = ?, net_cents = ?,
+         SET method = ?, reference_number = COALESCE(NULLIF(?, ''), reference_number),
+             gross_cents = ?, fee_cents = ?, net_cents = ?,
              stripe_charge_id = COALESCE(NULLIF(?, ''), stripe_charge_id),
              stripe_balance_transaction_id = COALESCE(NULLIF(?, ''), stripe_balance_transaction_id),
              accounting_sync_state = json_patch(COALESCE(NULLIF(accounting_sync_state, ''), '{}'), ?),
              updated_date = ?, updated_by = ?
          WHERE id = ?`
       ).bind(
+        details.method,
+        paymentIntentId,
         grossCents,
         feeCents,
         netCents,
@@ -2644,6 +2680,11 @@ export function createInvoicesApi() {
         paymentId
       ).run()
       await refreshInvoicePaymentStatus(context.env.DB, invoiceId)
+      const refreshedInvoice = await fetchInvoiceById(context.env.DB, invoiceId)
+      const refreshedPayment = await fetchInvoicePaymentForInvoice(context.env.DB, invoiceId, paymentId)
+      if (details.paymentMethodResolved && refreshedInvoice && refreshedPayment) {
+        await trySyncInvoicePaymentToQbo(context.env.DB, context.env, refreshedInvoice, refreshedPayment)
+      }
       return jsonResponse({ invoice: await fetchInvoiceById(context.env.DB, invoiceId) })
     } catch (error: unknown) {
       console.error('Error retrying Stripe payment details:', error)
@@ -2666,6 +2707,9 @@ export function createInvoicesApi() {
       }
       if (invoice.status === 'void') {
         return badRequest('Void invoices cannot sync payments')
+      }
+      if (payment.stripePaymentIntentId && payment.method === 'Stripe Details Pending') {
+        return badRequest('Stripe payment details must be retrieved before syncing to QuickBooks')
       }
 
       await trySyncInvoicePaymentToQbo(context.env.DB, context.env, invoice, payment)

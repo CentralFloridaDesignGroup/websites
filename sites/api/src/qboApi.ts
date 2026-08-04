@@ -101,6 +101,12 @@ type QboItemResponse = {
   MetaData?: { LastUpdatedTime?: string }
 }
 
+type QboPaymentMethodResponse = {
+  Id?: string
+  Name?: string
+  Active?: boolean
+}
+
 const qboSchemaReadyByDb = new WeakMap<D1Database, Promise<void>>()
 
 function normalizeString(value: unknown): string {
@@ -997,6 +1003,41 @@ function paymentPrivateNote(payment: InvoicePayment): string {
   return payment.note ? `${payment.note} ${referenceDetail}.` : `${referenceDetail} synced from Compass.`
 }
 
+function paymentMethodNames(method: string): string[] {
+  const supportedMethods: Record<string, string[]> = {
+    ach: ['ACH'],
+    'ach / bank transfer': ['ACH'],
+    'credit card': ['Credit Card'],
+    check: ['Check'],
+    cash: ['Cash'],
+    'stripe other payment': ['Stripe Other Payment'],
+  }
+  return supportedMethods[normalizeString(method).toLowerCase()] || []
+}
+
+/** Finds the active QuickBooks payment method corresponding to a Compass payment method. */
+async function getQboPaymentMethodId(db: D1Database, env: HonoEnv['Bindings'], method: string): Promise<string> {
+  const names = paymentMethodNames(method).map((name) => name.toLowerCase())
+  if (names.length === 0 || !names[0]) return ''
+
+  const query = encodeURIComponent('SELECT * FROM PaymentMethod')
+  const data = await qboFetch<{ QueryResponse?: { PaymentMethod?: QboPaymentMethodResponse[] } }>(db, env, `/query?query=${query}`)
+  const paymentMethods = data.QueryResponse?.PaymentMethod || []
+  const matchedMethod = paymentMethods.find((paymentMethod) => (
+    paymentMethod.Active !== false && names.includes(normalizeString(paymentMethod.Name).toLowerCase())
+  ))
+  return normalizeString(matchedMethod?.Id)
+}
+
+async function buildQboPaymentFields(db: D1Database, env: HonoEnv['Bindings'], payment: InvoicePayment): Promise<Record<string, unknown>> {
+  const referenceNumber = normalizeString(payment.referenceNumber)
+  const paymentMethodId = await getQboPaymentMethodId(db, env, payment.method)
+  return {
+    ...(referenceNumber ? { PaymentRefNum: referenceNumber } : {}),
+    ...(paymentMethodId ? { PaymentMethodRef: { value: paymentMethodId } } : {}),
+  }
+}
+
 export async function syncInvoiceToQbo(db: D1Database, env: HonoEnv['Bindings'], invoice: Invoice): Promise<string> {
   await ensureQboSchemaReady(db)
   const customerRef = normalizeString(invoice.qboProjectId || invoice.qboCustomerId)
@@ -1085,6 +1126,7 @@ export async function syncPaymentToQbo(db: D1Database, env: HonoEnv['Bindings'],
 export async function syncInvoicePaymentToQbo(db: D1Database, env: HonoEnv['Bindings'], invoice: Invoice, payment: InvoicePayment): Promise<void> {
   await ensureQboSchemaReady(db)
   if (payment.status !== 'succeeded' || payment.grossCents <= 0) return
+  if (payment.stripePaymentIntentId && payment.method === 'Stripe Details Pending') return
   const customerRef = normalizeString(invoice.qboProjectId || invoice.qboCustomerId)
   if (!customerRef) return
   const qboInvoiceId = invoice.qboInvoiceId || await syncInvoiceToQbo(db, env, invoice)
@@ -1094,6 +1136,7 @@ export async function syncInvoicePaymentToQbo(db: D1Database, env: HonoEnv['Bind
 
   let paymentId = payment.qboPaymentId
   if (!paymentId) {
+    const qboPaymentFields = await buildQboPaymentFields(db, env, payment)
     const data = await qboFetch<QboInvoiceResponse>(db, env, '/payment', {
       method: 'POST',
       body: JSON.stringify({
@@ -1101,6 +1144,7 @@ export async function syncInvoicePaymentToQbo(db: D1Database, env: HonoEnv['Bind
         TotalAmt: qboAmount(payment.grossCents),
         TxnDate: (payment.paidDate || nowIso()).slice(0, 10),
         PrivateNote: paymentPrivateNote(payment),
+        ...qboPaymentFields,
         Line: [
           {
             Amount: qboAmount(payment.grossCents),
@@ -1137,7 +1181,7 @@ export async function syncInvoicePaymentToQbo(db: D1Database, env: HonoEnv['Bind
     }), invoice.id).run()
 
     const { depositAccountId, feeExpenseAccountId } = await getPaymentDepositSettings(db)
-    const shouldCreateImmediateDeposit = !payment.stripeBalanceTransactionId && payment.method.toLowerCase() !== 'stripe'
+    const shouldCreateImmediateDeposit = !payment.stripeBalanceTransactionId && !payment.stripePaymentIntentId
     if (shouldCreateImmediateDeposit && depositAccountId && !payment.qboDepositId) {
       if (payment.feeCents > 0 && !feeExpenseAccountId) {
         throw new Error('QuickBooks Stripe fee expense account is not selected')

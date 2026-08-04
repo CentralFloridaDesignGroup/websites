@@ -642,8 +642,9 @@ export function InvoicesManager() {
     if (!selectedInvoice || payment.status !== 'succeeded') return null
     const isStripe = payment.method.toLowerCase() === 'stripe' || Boolean(payment.stripePaymentIntentId)
     const missingStripeDetails = isStripe && payment.stripePaymentIntentId && !payment.stripeBalanceTransactionId
-    const missingQboPayment = !payment.qboPaymentId || payment.qboSyncStatus === 'error'
-    const missingManualDeposit = Boolean(payment.qboPaymentId && !payment.qboDepositId && !payment.stripeBalanceTransactionId && payment.method.toLowerCase() !== 'stripe')
+    const pendingStripeMethod = isStripe && payment.method === 'Stripe Details Pending'
+    const missingQboPayment = !pendingStripeMethod && (!payment.qboPaymentId || payment.qboSyncStatus === 'error')
+    const missingManualDeposit = Boolean(payment.qboPaymentId && !payment.qboDepositId && !payment.stripeBalanceTransactionId && !payment.stripePaymentIntentId)
     const missingPayoutDeposit = Boolean(payment.stripePayoutId && payment.qboPaymentId && !payment.qboDepositId)
 
     if (!missingStripeDetails && !missingQboPayment && !missingManualDeposit && !missingPayoutDeposit) return null
