@@ -8,8 +8,6 @@ import { deleteCommentById, deleteReviewPackageById, getCommentIdsByReviewPackag
 
 /**
  * Registers the routes for the Comments API.
- * @param {any} router - The router object to register the routes on.
- * @param {Record<string, string>} jsonHeaders - The headers to include in the responses.
  */
 export function createCommentsApi() {
   const app = new Hono<HonoEnv>()

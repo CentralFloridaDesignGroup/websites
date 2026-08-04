@@ -1,6 +1,6 @@
 import type { Context } from 'hono'
 import type { AuthContext, AuthMode, BaseApiEnv } from 'cfdg/types'
-import { JSON_HEADERS } from 'cfdg/types/constants'
+import { JSON_HEADERS_V2 } from 'cfdg/types/constants'
 
 // The following types are used in the API context and environment, and are 
 // not exported from the package due to site-specific requirements. They are 
@@ -42,7 +42,7 @@ export function jsonResponse(body: unknown, init: ResponseInit = {}): Response {
   return new Response(JSON.stringify(body), {
     ...init,
     headers: {
-      ...JSON_HEADERS,
+      ...JSON_HEADERS_V2,
       ...(init.headers ? Object.fromEntries(new Headers(init.headers).entries()) : {}),
     },
   })
@@ -71,7 +71,7 @@ export function serverError(message: string): Response {
  * @returns A Response object with a 204 status code and no content.
  */
 export function noContent(): Response {
-  return new Response(null, { status: 204, headers: JSON_HEADERS })
+  return new Response(null, { status: 204, headers: JSON_HEADERS_V2 })
 }
 
 /** 

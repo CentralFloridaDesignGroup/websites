@@ -13,6 +13,8 @@ import { createProjectManagementApi } from './projectManagementApi'
 
 const app = new Hono<HonoEnv>()
 
+// For reference, the base URL is 'https://api.whitepointsurvey.com'. You do not need to include 'api' in the route.
+
 // V1 original routes. To be deprecated.
 app.use(
   '/api/*',
@@ -23,6 +25,7 @@ app.use(
   })
 )
 
+// V2 routes. New routes should be added here.
 app.use(
   '/api/v2/*',
   cors({
@@ -32,14 +35,25 @@ app.use(
   })
 )
 
+// Auth middleware for all routes
 app.use('*', createAuthMiddleware())
 
+// Health check endpoint for V1 (and technically V2 as well)
 app.get('/api/health', () => {
   return new Response(JSON.stringify({ status: 'ok' }), {
     headers: JSON_HEADERS,
   })
-})
+});
 
+// Health check endpoint for V2
+app.get('/v2/health', () => {
+  return new Response(JSON.stringify({ status: 'ok' }), {
+    headers: JSON_HEADERS_V2,
+  })
+});
+
+
+// V1 API routes
 app.route('/', createCommentsApi())
 app.route('/', createGisPointsApi())
 app.route('/', createInvoicesApi())
@@ -51,10 +65,12 @@ app.post('/api/email/transactionEmail', async (context) => {
   return handleTransactionEmail(context.req.raw, context.env)
 })
 
+// Catch-all for 404 Not Found - updated to V2 response headers
 app.notFound(() => {
-  return new Response('Not Found', { status: 404, headers: JSON_HEADERS })
+  return new Response('Not Found', { status: 404, headers: JSON_HEADERS_V2 })
 })
 
+// Catch-all for unhandled errors - updated to V2 response headers
 app.onError((error) => {
   console.error('Unhandled API error:', error)
   return serverError(String(error?.message || error));
