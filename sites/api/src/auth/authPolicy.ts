@@ -1,7 +1,7 @@
 import type { MiddlewareHandler } from 'hono'
 import { createRemoteJWKSet, jwtVerify, type JWTPayload } from 'jose'
 import { JSON_HEADERS, PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS } from 'cfdg/types/constants'
-import type { ApiKeyName, AuthContext, AuthEnv, BaseApiEnv, RoutePolicy } from 'cfdg/types'
+import type { AuthContext, AuthEnv, BaseApiEnv, RoutePolicy } from 'cfdg/types'
 import { getRequestAuthContext, setRequestAuthContext, unauthorizedResponse } from './authContext'
 import type { HonoEnv } from '../apiTypes'
 import { normalizeString } from 'cfdg/scripts'
@@ -13,7 +13,7 @@ import { normalizeString } from 'cfdg/scripts'
 const routePolicies: RoutePolicy[] = [
   { method: 'GET', route: '/api/health', mode: 'public' }, // Health check endpoint. Returns 200 if the service is running.
 
-  { method: 'POST', route: '/api/email/transactionEmail', mode: 'key', apiKeyName: 'transactionEmail' }, // Send an email using the Transaction Email API.
+  { method: 'POST', route: '/api/email/transactionEmail', mode: 'key' }, // Send an email using the Transaction Email API.
   { method: 'GET', route: '/api/invoices/public/:token', mode: 'public' }, // Get invoice details for a public invoice link.
   { method: 'POST', route: '/api/invoices/public/:token/checkout', mode: 'public' }, // Checkout a public invoice link. Creates a payment intent and returns the client secret.
   { method: 'POST', route: '/api/stripe/webhook', mode: 'public' }, // Stripe webhook endpoint. Receives events from Stripe and processes them.
@@ -108,12 +108,12 @@ const routePolicies: RoutePolicy[] = [
   { method: '*', route: '/api/comments/:id', mode: 'microsoft' },
 
   // GIS
-  // Gets all points from the GIS database. Key ensures that only authorized sites can access this data.
-  { method: 'GET', route: '/api/gis/points', mode: 'key', apiKeyName: 'gis' },
+  // Gets all points from the GIS database. The API key ensures that only authorized sites can access this data.
+  { method: 'GET', route: '/api/gis/points', mode: 'key' },
   // Create a group of new points in the GIS database. Microsoft mode ensures that only authorized users can create new points.
   { method: 'POST', route: '/api/gis/points/import', mode: 'microsoft' },
-  // Gets a specific point from the GIS database by ID. Key ensures that only authorized sites can access this data.
-  { method: 'GET', route: '/api/gis/points/:id', mode: 'key', apiKeyName: 'gis' },
+  // Gets a specific point from the GIS database by ID. The API key ensures that only authorized sites can access this data.
+  { method: 'GET', route: '/api/gis/points/:id', mode: 'key' },
   // Create or update a specific point in the GIS database by ID. Microsoft mode ensures that only authorized users can create or update points.
   { method: 'POST', route: '/api/gis/points', mode: 'microsoft' },
   // Delete a specific point from the GIS database by ID. Microsoft mode ensures that only authorized users can delete points.
@@ -202,35 +202,6 @@ function findRoutePolicy(method: string, route: string): RoutePolicy | null {
   }
 
   return null
-}
-
-/** 
- * Generates a list of candidate API keys based on the provided environment variables and the specified key names.
- * @param env - The environment variables containing the API keys.
- * @param keyNames - An array of key names to look for in the environment variables.
- * @returns An array of candidate API keys.
- * @deprecated This function is deprecated and may be removed in future versions. Use different environment files or configuration management strategies to handle API keys securely.
- */
-function getApiKeyCandidates(env: BaseApiEnv, keyName: ApiKeyName): string[] {
-  const candidates: string[] = []
-  const addCandidate = (value: unknown) => {
-    const normalized = normalizeString(value)
-    if (normalized && !candidates.includes(normalized)) {
-      candidates.push(normalized)
-    }
-  }
-
-  if (keyName === 'comments') {
-    addCandidate(env.COMMENTS_API_KEY)
-  }
-  if (keyName === 'gis') {
-    addCandidate(env.GIS_API_KEY)
-  }
-  if (keyName === 'transactionEmail') {
-    addCandidate(env.TRANSACTION_EMAIL_API_KEY)
-  }
-
-  return candidates
 }
 
 /**
@@ -457,9 +428,9 @@ export async function authorizeApiRequest(
 
   if (policy.mode === 'key') {
     const inboundApiKey = normalizeString(request.headers.get('X-Api-Key'))
-    const expectedApiKeys = getApiKeyCandidates(env, policy.apiKeyName as ApiKeyName) //Have to force the type here because the policy is guaranteed to have an apiKeyName when mode is 'key'
+    const expectedApiKey = normalizeString(env.API_KEY)
 
-    if (!inboundApiKey || expectedApiKeys.length === 0 || !expectedApiKeys.includes(inboundApiKey)) {
+    if (!inboundApiKey || !expectedApiKey || inboundApiKey !== expectedApiKey) {
       console.warn(`${buildRequestLogContext(request)} unauthorized key request`)
       return unauthorizedResponse(jsonHeaders)
     }

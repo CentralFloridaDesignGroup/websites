@@ -7,7 +7,7 @@
     "dev": "wrangler dev --env preview --port 8787",
     "typecheck": "tsc --noEmit",
     "d1:migrate:local": "wrangler d1 migrations apply compass --local",
-    "d1:migrate:remote": "wrangler d1 migrations apply compass --remote",
+    "d1:migrate:remote": "wrangler d1 migrations apply compass --remote --env production",
     "build": "tsc && wrangler deploy --dry-run",
     "deploy": "tsc && wrangler deploy --env production"
   },

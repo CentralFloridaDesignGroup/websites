@@ -8,14 +8,6 @@
  */
 export type AuthMode = 'public' | 'key' | 'microsoft'
 
-/**
- * Represents the names of the API keys used for authentication.
- * - `comments`: API key for comments service.
- * - `gis`: API key for GIS service.
- * - `transactionEmail`: API key for transaction email service.
- */
-export type ApiKeyName = 'comments' | 'gis' | 'transactionEmail'
-
 /** Represents the authentication context for a request. */
 export type AuthContext = {
     /** The authentication mode for the request. */
@@ -45,7 +37,7 @@ export type AuthContext = {
  */
 export type RouteMethod = '*' | 'GET' | 'POST' | 'PUT' | 'DELETE'
 
-/** Represents the policy for a route, including the HTTP method, authentication mode, and any required API keys or allowed groups. */
+/** Represents the policy for a route, including the HTTP method, authentication mode, and allowed groups. */
 export type RoutePolicy = {
     /** The HTTP method for the route. */
     method: RouteMethod
@@ -55,8 +47,6 @@ export type RoutePolicy = {
     mode: AuthMode
     /** The groups allowed to access the route. */
     allowedGroupIds?: string[]
-    /** The API key required for the route, if any. */
-    apiKeyName?: ApiKeyName
 }
 
 // #endregion
@@ -68,12 +58,8 @@ export type RoutePolicy = {
  * @version  `Version 2`: Simplified and consolidated environment variables for API authentication. 
  */
 export type AuthEnv = {
-    /** API Key for comments interaction */
-    COMMENTS_API_KEY?: string
-    /** API Key for GIS services */
-    GIS_API_KEY?: string
-    /** API Key for transaction email services */
-    TRANSACTION_EMAIL_API_KEY?: string
+    /** Internal API key for the application */
+    API_KEY?: string
     /** Microsoft Tenant ID for authentication */
     MICROSOFT_TENANT_ID?: string
     /** Microsoft Client ID for authentication */

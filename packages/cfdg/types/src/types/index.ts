@@ -9,7 +9,6 @@ export type {
 // Auth Exports
 export type {
     AuthMode,
-    ApiKeyName,
     AuthContext,
     RouteMethod,
     RoutePolicy,

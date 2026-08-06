@@ -1,11 +1,10 @@
 import { normalizeString } from "cfdg/scripts";
 import { acquireApiAccessToken } from "./microsoftAuth";
-import { ApiKeyName, AuthMode } from "cfdg/types";
+import { AuthMode } from "cfdg/types";
 
 type ApiRequestOptions = Omit<RequestInit, "headers"> & {
   authMode: AuthMode;
   headers?: Record<string, string>;
-  apiKeyName?: ApiKeyName;
 };
 
 function isAbsoluteUrl(pathOrUrl: string): boolean {
@@ -26,30 +25,17 @@ function getApiUrl(pathOrUrl: string): string {
 }
 
 
-function getApiKey(preference: ApiKeyName): string {
-
-  if (preference === "comments") {
-    const comments = normalizeString(import.meta.env.VITE_COMMENTS_API_KEY);
-    if (comments) {
-      return comments || ""; // Return comments key if available, otherwise empty string
-    }
-    throw new Error("Missing API key configuration for comments key-authenticated API route.");
+function getApiKey(): string {
+  const apiKey = normalizeString(import.meta.env.VITE_API_KEY);
+  if (!apiKey) {
+    throw new Error("Missing VITE_API_KEY configuration for key-authenticated API route.");
   }
 
-  if (preference === "gis") {
-    const gis = normalizeString(import.meta.env.VITE_GIS_API_KEY);
-    if (gis) {
-      return gis || ""; // Return GIS key if available, otherwise empty string
-    }
-    throw new Error("Missing API key configuration for gis key-authenticated API route.");
-  }
-
-  throw new Error(`Unknown API key preference: ${preference}`);
+  return apiKey;
 }
 
 async function buildAuthHeaders(
   authMode: AuthMode,
-  apiKeyPreference?: ApiKeyName,
 ): Promise<Record<string, string>> {
   if (authMode === "public") {
     return {};
@@ -57,7 +43,7 @@ async function buildAuthHeaders(
 
   if (authMode === "key") {
     return {
-      "X-Api-Key": getApiKey(apiKeyPreference as ApiKeyName),
+      "X-Api-Key": getApiKey(),
     };
   }
 
@@ -82,11 +68,10 @@ export async function requestJson<T>(
   const {
     authMode,
     headers,
-    apiKeyName: apiKeyPreference,
     ...init
   } = options;
 
-  const authHeaders = await buildAuthHeaders(authMode, apiKeyPreference);
+  const authHeaders = await buildAuthHeaders(authMode);
   const outboundHeaders: Record<string, string> = {
     ...authHeaders,
     ...(shouldAttachJsonHeader(init.body)
@@ -121,10 +106,9 @@ export async function requestBlob(
   const {
     authMode,
     headers,
-    apiKeyName: apiKeyPreference,
     ...init
   } = options;
-  const authHeaders = await buildAuthHeaders(authMode, apiKeyPreference);
+  const authHeaders = await buildAuthHeaders(authMode);
   const response = await fetch(getApiUrl(pathOrUrl), {
     ...init,
     headers: {

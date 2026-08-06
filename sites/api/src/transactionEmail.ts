@@ -42,10 +42,10 @@ export async function handleTransactionEmail(request: Request, env: ApiEnv): Pro
             });
         }
 
-        const expectedApiKey = String(env.TRANSACTION_EMAIL_API_KEY ?? "").trim();
+        const expectedApiKey = String(env.API_KEY ?? "").trim();
         if (!expectedApiKey) {
-            console.error(`${logPrefix(request, company, "missing")}: missing TRANSACTION_EMAIL_API_KEY configuration`);
-            return new Response("Server configuration error: Missing TRANSACTION_EMAIL_API_KEY", {
+            console.error(`${logPrefix(request, company, "missing")}: missing API_KEY configuration`);
+            return new Response("Server configuration error: Missing API_KEY", {
                 status: 500,
                 headers: corsHeaders,
             });

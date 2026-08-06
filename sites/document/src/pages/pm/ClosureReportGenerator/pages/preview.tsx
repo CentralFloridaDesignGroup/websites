@@ -5,6 +5,58 @@ import Docxtemplater from 'docxtemplater'
 import PizZip from 'pizzip'
 import { saveAs } from 'file-saver'
 
+interface ClosureReportSection {
+    name: string
+    body: string
+}
+
+function formatClosureLine(line: string): string {
+    return line.replace(
+        /^(\s*Error Closure:\s*\S.*?)[\t ]+(Course:\s*)/i,
+        '$1\n$2',
+    )
+}
+
+/**
+ * Separates Mapcheck output into the individual lot and tract reports used by
+ * the Word template. The title is rendered with the template's indexed
+ * heading style, while the remaining closure data remains body text.
+ */
+function splitClosureReport(report: string): ClosureReportSection[] {
+    const sections: ClosureReportSection[] = []
+    let currentSection: ClosureReportSection | undefined
+
+    for (const line of report.split(/\r?\n/)) {
+        const title = line.trim()
+
+        if (/^=+$/.test(title)) {
+            continue
+        }
+
+        if (/^(LOT\s+\d+|TRACT\s+[A-Z0-9]+)$/i.test(title)) {
+            if (currentSection) {
+                currentSection.body = currentSection.body.replace(/\s+$/, '')
+                sections.push(currentSection)
+            }
+
+            currentSection = { name: title, body: '' }
+            continue
+        }
+
+        if (currentSection) {
+            const formattedLine = formatClosureLine(line)
+            currentSection.body += currentSection.body ? `\n${formattedLine}` : formattedLine
+        }
+    }
+
+    if (currentSection) {
+        currentSection.body = currentSection.body.replace(/\s+$/, '')
+        sections.push(currentSection)
+    }
+
+    return sections
+}
+
 export function Preview({
     onBack,
     projectData
@@ -35,7 +87,11 @@ export function Preview({
                 throw new Error('Missing report data.');
             }
 
-            reportData.submittalDate = scripts.Dates.formatDate(reportData.submittalDate, "MM.dd.yyyy");
+            const templateData = {
+                ...reportData,
+                submittalDate: scripts.Dates.formatDate(reportData.submittalDate, "MM.dd.yyyy"),
+                closures: splitClosureReport(reportData.report),
+            };
 
             const basePath = (import.meta as any).env.BASE_URL || '/';
             const baseUrl = new URL(basePath, window.location.origin);
@@ -49,7 +105,7 @@ export function Preview({
                 nullGetter: (part: any) => part.value ?? '',
             });
 
-            doc.render(reportData);
+            doc.render(templateData);
 
             const blob = doc.getZip().generate({
                 type: 'blob',
