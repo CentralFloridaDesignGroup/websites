@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import type { ReviewPackage, CommentRecord } from 'cfdg/types'
 import { badRequest, jsonResponse, noContent, requireAuthMode, serverError, type HonoEnv } from '../apiTypes'
 import { normalizeString, parseJsonBody } from 'cfdg/scripts'
-import { deleteCommentById, deleteReviewPackageById, getCommentIdsByReviewPackageId, getCommentsByReviewPackageId, getReviewPackageById, getReviewPackages, upsertComment, upsertReviewPackage } from './methods'
+import { createComment, createReviewPackage, deleteCommentById, deleteReviewPackageById, getCommentById, getCommentsByReviewPackageId, getReviewPackageById, getReviewPackages, upsertComment, upsertReviewPackage } from './methods'
 
 
 
@@ -40,13 +40,16 @@ export function createCommentsApi() {
       const id = normalizeString(context.req.param('id'))
       if (!id || isNaN(Number(id))) return badRequest('id is required')
 
-      const comments = await getCommentsByReviewPackageId(env.DB, parseInt(id));
+      const [reviewPackage, comments] = await Promise.all([
+        getReviewPackageById(env.DB, parseInt(id)),
+        getCommentsByReviewPackageId(env.DB, parseInt(id)),
+      ])
 
-      if (!comments) {
-        return serverError('Failed to fetch comments for the review package.')
+      if (!reviewPackage) {
+        return badRequest('Review package not found')
       }
 
-      return jsonResponse({ comments })
+      return jsonResponse({ package: reviewPackage, comments })
     } catch (error: any) {
       console.error('Error fetching comments for package:', error)
       return serverError(String(error?.message || error))
@@ -63,19 +66,40 @@ export function createCommentsApi() {
       const body = await parseJsonBody(context.req.raw)
       if (!body) return badRequest('Request body is required')
 
-      const reviewPackage = body.package as ReviewPackage;
-      if (!reviewPackage) return badRequest('package is required in the request body')
+      const requestPackage = body.package as Partial<ReviewPackage>
+      if (!requestPackage) return badRequest('package is required in the request body')
+
+      const now = new Date().toISOString()
+      const id = normalizeString(requestPackage.id)
+      const existingPackage = id && !isNaN(Number(id))
+        ? await getReviewPackageById(env.DB, parseInt(id))
+        : null
+      const reviewPackage = {
+        id,
+        createdDate: existingPackage?.createdDate || now,
+        updatedDate: now,
+        createdBy: existingPackage?.createdBy || normalizeString(requestPackage.createdBy),
+        updatedBy: normalizeString(requestPackage.updatedBy) || normalizeString(requestPackage.createdBy),
+        completedBy: normalizeString(requestPackage.completedBy),
+        projectNumber: normalizeString(requestPackage.projectNumber),
+        municipalNumber: normalizeString(requestPackage.municipalNumber),
+        reviewNumber: normalizeString(requestPackage.reviewNumber),
+        reviewDate: normalizeString(requestPackage.reviewDate),
+        projectName: normalizeString(requestPackage.projectName),
+        comment: normalizeString(requestPackage.comment),
+        status: requestPackage.status || 'open',
+      }
       
         // Validate required fields for creating or updating a review package
-      const {id, projectNumber, reviewNumber, createdDate, createdBy} = reviewPackage;
-      if (!id) return badRequest('id is required in the review package.')
+      const { projectNumber, reviewNumber, createdDate, createdBy } = reviewPackage;
       if (!projectNumber) return badRequest('projectNumber is required in the review package.')
       if (!reviewNumber) return badRequest('reviewNumber is required in the review package.')
       if (!createdDate) return badRequest('createdDate is required in the review package.')
       if (!createdBy) return badRequest('createdBy is required in the review package.')
 
-      await upsertReviewPackage(env.DB, reviewPackage);
-      const updatedPackage = await getReviewPackageById(env.DB, parseInt(id)); //easier to get the updated package after upsert
+      const updatedPackage = existingPackage
+        ? (await upsertReviewPackage(env.DB, reviewPackage), reviewPackage)
+        : await createReviewPackage(env.DB, reviewPackage)
 
       return jsonResponse({ package: updatedPackage })
 
@@ -95,41 +119,35 @@ export function createCommentsApi() {
       const body = await parseJsonBody(context.req.raw)
       if (!body) return badRequest('Request body is required')
 
-      const comments = body.comments as CommentRecord[];
-      if (!comments || !Array.isArray(comments)) return badRequest('comments array is required in the request body')
+      const requestComment = body as Partial<CommentRecord>
+      const id = normalizeString(requestComment.id)
+      const packageId = normalizeString(requestComment.packageId)
+      if (!packageId || isNaN(Number(packageId))) return badRequest('packageId is required')
 
-      const id = normalizeString(context.req.param('id'))
-      if (!id) return badRequest('id is required')
-
-
-        // Get the current list of comments for the review package to determine which comments need to be deleted
-      const existingCommentIds = await getCommentIdsByReviewPackageId(env.DB, parseInt(id));
-      const incomingCommentIds = comments.map(comment => comment.commentId);
-
-      // Determine which comments need to be deleted
-      const commentIdsToDelete = existingCommentIds.filter(id => !incomingCommentIds.includes(id));
-
-      // Delete comments that are no longer present in the incoming request
-      for (const commentId of commentIdsToDelete) {
-        try {
-          await deleteCommentById(env.DB, commentId);
-        } catch (error: any) {
-          return serverError(`Failed to delete comment with ID ${commentId}: ${error?.message || error}`);
-        }
+      const existingComment = id && !isNaN(Number(id))
+        ? await getCommentById(env.DB, parseInt(id))
+        : null
+      const now = new Date().toISOString()
+      const comment = {
+        id,
+        packageId,
+        createdDate: existingComment?.createdDate || now,
+        updatedDate: now,
+        createdBy: existingComment?.createdBy || normalizeString(requestComment.createdBy) || normalizeString(requestComment.updatedBy),
+        updatedBy: normalizeString(requestComment.updatedBy) || normalizeString(requestComment.createdBy),
+        commentId: normalizeString(requestComment.commentId),
+        comment: normalizeString(requestComment.comment),
+        response: normalizeString(requestComment.response),
+        department: normalizeString(requestComment.department),
+        status: requestComment.status || 'open',
       }
+      if (!comment.comment) return badRequest('comment is required')
+      if (!comment.createdBy) return badRequest('createdBy is required')
 
-      // Upsert the incoming comments
-      for (const comment of comments) {
-        try {
-          await upsertComment(env.DB, comment);
-        } catch (error: any) {
-          return serverError(`Failed to upsert comment with ID ${comment.commentId}: ${error?.message || error}`);
-        }
-      }
-
-      // Fetch the updated list of comments for the review package after upserting
-      const updatedComments = await getCommentsByReviewPackageId(env.DB, parseInt(id));
-      return jsonResponse({ comments: updatedComments });
+      const savedComment = existingComment
+        ? (await upsertComment(env.DB, comment), comment)
+        : await createComment(env.DB, comment)
+      return jsonResponse({ comment: savedComment })
     } catch (error: any) {
       console.error('Error saving comment:', error)
       return serverError(String(error?.message || error))

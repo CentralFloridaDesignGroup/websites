@@ -6,6 +6,7 @@ import {
 } from "cfdg/types";
 import {
   mapCommentRecord,
+  mapCommentRecordRow,
   mapReviewPackage,
   mapReviewPackageRow,
 } from "cfdg/types/mappers";
@@ -116,6 +117,26 @@ export async function upsertReviewPackage(
   }
 }
 
+/** Creates a review package and returns its D1-generated identifier. */
+export async function createReviewPackage(
+  db: D1Database,
+  reviewPackage: ReviewPackage,
+): Promise<ReviewPackage> {
+  const dbRow = mapReviewPackage(reviewPackage);
+  const result = await db
+    .prepare(
+      "INSERT INTO review_package (created_date, updated_date, created_by, updated_by, project_number, municipal_number, review_number, review_date, project_name, status, comment, completed_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    )
+    .bind(dbRow.created_date, dbRow.updated_date, dbRow.created_by, dbRow.updated_by, dbRow.project_number, dbRow.municipal_number, dbRow.review_number, dbRow.review_date, dbRow.project_name, dbRow.status, dbRow.comment, dbRow.completed_by)
+    .run();
+
+  if (!result.success || !result.meta.last_row_id) {
+    throw new Error('Failed to create review package.')
+  }
+
+  return { ...reviewPackage, id: String(result.meta.last_row_id) }
+}
+
 /**
  * Either inserts a new comment or updates an existing comment in the database based on the provided CommentRecord array.
  * @param db - The D1 database connection.
@@ -153,6 +174,33 @@ export async function upsertComment(
       `Failed to upsert comment with ID ${comment.id} in the database.`,
     );
   }
+}
+
+/** Fetches a comment record by its D1 identifier. */
+export async function getCommentById(db: D1Database, id: number): Promise<CommentRecord | null> {
+  const result = await db
+    .prepare("SELECT id, package, created_date, updated_date, created_by, updated_by, comment_id, comment_text, response_text, department, status FROM comments WHERE id = ?")
+    .bind(id)
+    .first<CommentRecordRow>()
+  return result ? mapCommentRecordRow(result) : null
+}
+
+/** Creates a comment and returns its D1-generated identifier. */
+export async function createComment(
+  db: D1Database,
+  comment: CommentRecord,
+): Promise<CommentRecord> {
+  const dbRow = mapCommentRecord(comment)
+  const result = await db
+    .prepare("INSERT INTO comments (package, created_date, updated_date, created_by, updated_by, comment_id, comment_text, response_text, department, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+    .bind(dbRow.package, dbRow.created_date, dbRow.updated_date, dbRow.created_by, dbRow.updated_by, dbRow.comment_id, dbRow.comment_text, dbRow.response_text, dbRow.department, dbRow.status)
+    .run()
+
+  if (!result.success || !result.meta.last_row_id) {
+    throw new Error('Failed to create comment.')
+  }
+
+  return { ...comment, id: String(result.meta.last_row_id) }
 }
 
 /**

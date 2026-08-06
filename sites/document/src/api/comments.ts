@@ -109,7 +109,7 @@ export async function createReviewPackage(payload: {
   const data = await requestJson<{ package?: unknown }>("/api/reviews", {
     method: "POST",
     authMode: "microsoft",
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ package: payload }),
   });
 
   return normalizeReviewPackage(data.package);
