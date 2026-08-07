@@ -8,6 +8,8 @@
     "typecheck": "tsc --noEmit",
     "d1:migrate:local": "wrangler d1 migrations apply compass --local --env production",
     "d1:migrate:remote": "wrangler d1 migrations apply compass --remote --env production",
+    "d1:migrate:v2:local": "wrangler d1 migrations apply northstar --local --env production --config wrangler.v2.toml",
+    "d1:migrate:v2:remote": "wrangler d1 migrations apply northstar --remote --env production --config wrangler.v2.toml",
     "build": "tsc && wrangler deploy --dry-run",
     "deploy": "tsc && wrangler deploy --env production"
   },

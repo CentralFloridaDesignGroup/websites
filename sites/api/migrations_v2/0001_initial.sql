@@ -1,0 +1,2 @@
+-- breakout migrations_v2 stream
+-- this migration is intentionally minimal to establish a separate migration timeline
