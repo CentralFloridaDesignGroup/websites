@@ -1,6 +1,8 @@
-import { Combobox, Textarea, Textbox } from '@wps/input';
+import { Combobox, Textarea, Textbox } from 'cfdg/input';
 import { X, Plus } from 'lucide-react';
-import { COMMENT_STATUSES, type CommentStatus } from '@wps/scripts';
+import { COMMENT_STATUSES } from 'cfdg/types/constants';
+import { type CommentStatus } from 'cfdg/types';
+import { useMemo } from 'react';
 
 type CommentForm = {
     id?: string;
@@ -36,10 +38,10 @@ export default function CommentEditor({ form, onChange, onEdited, onAdd, onDelet
         'not a comment': 'bg-primary-100',
     };
 
-    const statusSelections = COMMENT_STATUSES.map((status) => ({
+    const statusSelections = useMemo(() => COMMENT_STATUSES.map((status) => ({
         key: statusLabels[status],
         value: status,
-    }));
+    })), [COMMENT_STATUSES]);
     const statusDefaultIndex = COMMENT_STATUSES.findIndex((status) => status === form.status);
 
     return (

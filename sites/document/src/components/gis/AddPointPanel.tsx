@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Button, Combobox, Textarea, Textbox } from "@wps/input";
-import { Geodesy } from "@wps/scripts";
+import { Button, Combobox, Textarea, Textbox } from "cfdg/input";
+import { Geodesy } from "cfdg/scripts";
 import {
   defaultPointMaterial,
   getDatumFromProjection,
@@ -15,6 +15,7 @@ import type {
   PointMaterial,
 } from "./types";
 import { X } from "lucide-react";
+import { KnownStatePlaneProjection, Wgs84Input } from "cfdg/types";
 
 type AddPointPanelProps = {
   isOpen: boolean;
@@ -57,7 +58,7 @@ export function AddPointPanel({
   const [additionalInfo, setAdditionalInfo] =
     useState<AdditionalGisRecordFields>({});
   const [statePlaneProjection, setStatePlaneProjection] =
-    useState<Geodesy.KnownStatePlaneProjection>("EPSG:2236");
+    useState<KnownStatePlaneProjection>("EPSG:2236");
   const sourceDatum = getDatumFromProjection(statePlaneProjection);
   const [errorMessage, setErrorMessage] = useState("");
   const [saving, setSaving] = useState(false);
@@ -81,7 +82,7 @@ export function AddPointPanel({
       return;
     }
 
-    let convertedCoordinates: Geodesy.Wgs84Coordinates;
+    let convertedCoordinates: Wgs84Input;
     if (statePlaneProjection === "EPSG:4326") {
       convertedCoordinates = {
         latitude: parsedNorthing,
@@ -225,7 +226,7 @@ export function AddPointPanel({
             )}
             onValidChange={(_, value) =>
               setStatePlaneProjection(
-                value as Geodesy.KnownStatePlaneProjection,
+                value as KnownStatePlaneProjection,
               )
             }
           />
@@ -345,7 +346,7 @@ export function AddPointPanel({
             label={saving ? "Saving..." : "Add Point"}
             style="primary"
             size="small"
-            properties={{ disabled: saving }}
+            properties={{ disabled: saving, type: "submit" }}
           />
         </div>
       </form>

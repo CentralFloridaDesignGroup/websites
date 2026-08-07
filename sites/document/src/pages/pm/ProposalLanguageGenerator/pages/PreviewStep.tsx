@@ -1,24 +1,82 @@
 import { useState } from 'react';
-import { Button } from '@wps/input';
-import { Download } from 'lucide-react';
-import { showNotification } from '@wps/layout';
+import { Link } from 'react-router-dom';
+import { Button } from 'cfdg/input';
+import { showNotification } from 'cfdg/layout';
 import { generateWordDocument } from '../utils/documentGenerator';
 import type { ClientInfo, ServiceEntry } from '../types/proposalTypes';
 import { formatProposalDate, Proposal } from '../types/proposalTypes';
+import type { EntraUserAccount } from 'cfdg/types';
+import { createProject, fetchNextProjectNumber, saveProjectManager } from '../../../../api/projectManagement';
+import { fetchProjectTasks } from '../../../../api/projectManagement';
+import { createInvoice } from '../../../../api/invoices';
 
 interface PreviewStepProps {
     clientInfo: ClientInfo;
     services: ServiceEntry[];
     onBack: () => void;
+    clientId: string;
+    contactId: string;
+    manager: EntraUserAccount | null;
+    createdProjectId: string;
+    onProjectCreated: (projectId: string) => void;
+    createdRetainerInvoiceId: string;
+    onRetainerInvoiceCreated: (invoiceId: string) => void;
 }
 
-export function PreviewStep({ clientInfo, services, onBack }: PreviewStepProps) {
+export function PreviewStep({ clientInfo, services, onBack, clientId, contactId, manager, createdProjectId, onProjectCreated, createdRetainerInvoiceId, onRetainerInvoiceCreated }: PreviewStepProps) {
     const [generatingWord, setGeneratingWord] = useState(false);
     const submittalPackage = new Proposal(clientInfo, services);
 
     const handleDownloadWord = async () => {
         setGeneratingWord(true);
         try {
+            let projectId = createdProjectId;
+            if (!projectId) {
+                if (!clientId || !manager) throw new Error('Client and internal project manager are required.');
+                const buildPayload = (projectNumber: string) => ({ parentCustomerId: clientId, name: `${projectNumber} - ${clientInfo.projectName}`, address: { line1: clientInfo.address, line2: '', city: clientInfo.jurisdiction, state: clientInfo.state as 'FL', postalCode: clientInfo.zipCode }, parcelId: clientInfo.parcelIdList, tasks: services.map((service, index) => ({ name: service.serviceName, scopeOfWork: service.scopeOfWork, contractAmountCents: Math.round((Number(service.serviceCost) || 0) * 100), retainerCents: Math.round((Number(service.serviceRetainer) || 0) * 100), priceType: service.serviceType, sortOrder: index, active: true })) });
+                let created;
+                try { created = await createProject(buildPayload(clientInfo.projectNumber)); } catch (error) {
+                    if (!String(error).includes('already in use')) throw error;
+                    const next = await fetchNextProjectNumber(clientInfo.proposalDate.slice(2, 4));
+                    clientInfo.projectNumber = next;
+                    created = await createProject(buildPayload(next));
+                }
+                projectId = created.id;
+                onProjectCreated(projectId);
+            }
+            if (!manager) throw new Error('An internal project manager is required.');
+            await saveProjectManager(projectId, manager.displayName, manager.mail || manager.userPrincipalName);
+            if (!createdRetainerInvoiceId) {
+                const tasks = await fetchProjectTasks(projectId);
+                const retainerTasks = tasks.filter((task) => task.retainerCents > 0);
+                if (retainerTasks.length > 0) {
+                    const invoice = await createInvoice({
+                        qboCustomerId: clientId,
+                        qboProjectId: projectId,
+                        contactIds: contactId ? [contactId] : [],
+                        clientName: clientInfo.clientName,
+                        clientEmail: clientInfo.email,
+                        poNumber: '',
+                        projectReference: `${clientInfo.projectNumber} - ${clientInfo.projectName}`,
+                        issueDate: clientInfo.proposalDate,
+                        dueDate: '',
+                        notes: 'Proposal retainer invoice.',
+                        internalNote: 'Automatically created from the proposal retainer.',
+                        previouslyBilledCents: 0,
+                        lineItems: retainerTasks.map((task) => {
+                            const contractAmountCents = Math.max(task.contractAmountCents, task.retainerCents);
+                            return { projectTaskId: task.id, description: `${task.name} Retainer`, quantity: (task.retainerCents / contractAmountCents) * 100, unitAmountCents: contractAmountCents, contractAmountCents, percentComplete: (task.retainerCents / contractAmountCents) * 100, billInFull: false };
+                        }),
+                    });
+                    onRetainerInvoiceCreated(invoice.id);
+                    showNotification({
+                        title: 'Retainer Draft Created',
+                        body: <span>{invoice.invoiceNumber} is ready. <Link to={`/invoices?invoiceId=${encodeURIComponent(invoice.id)}`} className="font-semibold text-primary underline">Open invoice</Link></span>,
+                        style: 'success',
+                        duration: 10,
+                    });
+                }
+            }
             await generateWordDocument(submittalPackage.generateDocXJson());
             showNotification({ title: 'Word Document Downloaded', body: 'The proposal has been saved as a .docx file.', style: 'success' });
         } catch (err) {
@@ -41,16 +99,15 @@ export function PreviewStep({ clientInfo, services, onBack }: PreviewStepProps) 
             {/* top nav */}
             <div className="flex justify-between mb-6">
                 <Button colorMode="auto" label="Back" style="secondary" onClick={onBack} />
-                <div className="flex gap-2">
-                    <button
+                <Button colorMode="auto" label="Save and Download" style="primary" onClick={handleDownloadWord} properties={{disabled: generatingWord}} />
+                    {/*<button
                         onClick={handleDownloadWord}
                         disabled={generatingWord}
                         className="flex items-center gap-2 px-4 py-2 bg-[#1e3a5a] text-white text-sm font-medium rounded hover:bg-[#16304e] disabled:opacity-50 transition-colors"
                     >
                         <Download size={16} />
                         {generatingWord ? 'Generating...' : 'Download .docx'}
-                    </button>
-                </div>
+                    </button>*/}
             </div>
 
             {/* Document preview, mimicking the paper with final layout. */}

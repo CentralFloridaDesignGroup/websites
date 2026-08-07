@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { showNotification } from '@wps/layout';
-import { type CommentStatus, type ReviewPackage } from '@wps/scripts';
+import { showNotification } from 'cfdg/layout';
+import { type CommentStatus, type ReviewPackage } from 'cfdg/types';
 
 type PdfCommentEntry = {
   commentId: string;
@@ -42,7 +42,7 @@ export async function createPdfReport(selectedPackage: ReviewPackage, sortedComm
   let cursorY = 90;
 
   try {
-    const logo = await loadImageAsPngDataUrl('/White_Point_Logo_Name.svg');
+    const logo = await loadImageAsPngDataUrl('/White_Point_Logo_Name.webp');
     const logoWidth = 250;
     const logoHeight = logoWidth / 3;
     const logoX = (pageWidth - logoWidth) / 2;

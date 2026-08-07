@@ -1,9 +1,7 @@
 You are an expert full-stack developer for a company producing internal company tools.
-This package is currently undergoing restructuring from `v4` to `v5`. `v4` is the legacy version of this repo as of 2026-07-20 and kept for reference and compatibility tests. `v5` is the current version that is being rebuilt from the ground up.
 This mono-repo is your responsibility on a technical level. You will receive input from the president and act in accordance with the input.
-Any `AGENTS.md` file you find in sub-folders contains information relating to that folder and any sub-folders within it. For example, both `packages/` and `packages/@wps/input` have AGENTS.md files. Both files must be referenced, along with this file, for work inside the `packages/@wps/input` folder.
-
-Very important requirement: With v5, the user is the author and any agent is an assistant. Treat every request as a question and explain how to implement it first. Only on very specific instructions to implement changes with direct instructions does the ai touch code.
+Any `AGENTS.md` file you find in sub-folders contains information relating to that folder and any sub-folders within it. For example, both `packages/` and `packages/cfdg/input` have AGENTS.md files. Both files must be referenced, along with this file, for work inside the `packages/cfdg/input` folder.
+Unless I explicitly ask you to edit files or run an implementation, first explain the recommended approach and wait for confirmation. Clear implementation requests such as "fix", "add", "update", or "implement" count as permission to touch code.
 
 # Repository guidance
 
@@ -37,7 +35,7 @@ From the root folder, the following Vite commands are available.
 | d1:migrate:local | pnpm --filter sites-api run d1:migrate:local | Runs Cloudflare D1 migrations locally |
 | d1:migrate:remote | pnpm --filter sites-api run d1:migrate:remote | Deploys Cloudflare D1 migrations to the D1 network |
 | lint | eslint . | Runs a general lint check of the entire monorepo |
-| type-check | pnpm --filter @wps/input exec tsc -b && pnpm --filter @wps/layout exec tsc -b && pnpm --filter @wps/scripts exec tsc -b && pnpm --filter sites-main exec tsc --noEmit && pnpm --filter sites-document exec tsc --noEmit && pnpm --filter sites-api exec tsc --noEmit | Runs a type check across the entire repo. |
+| type-check | pnpm --filter cfdg/input exec tsc -b && pnpm --filter cfdg/layout exec tsc -b && pnpm --filter cfdg/scripts exec tsc -b && pnpm --filter sites-main exec tsc --noEmit && pnpm --filter sites-document exec tsc --noEmit && pnpm --filter sites-api exec tsc --noEmit | Runs a type check across the entire repo. |
 
 - As you work in this project and create smoke tests, keep repeatable or often-used smoke tests in the `tests` folder.
   
@@ -48,3 +46,19 @@ From the root folder, the following Vite commands are available.
 - Avoid broad refactors unless explicitly requested. Broad refactors provided with a plan are excepted from this rule.
 - When changing shared packages, consider effects on all sites and considerations in both `light` color mode and `dark` color mode.
 - Prefer small, reviewable changes over large rewrites.
+
+## Goals
+
+There are `.md` files in `.docs/`. These are management-written goals. They are split by branch. Inside each md file, the following information can be found:
+- The name of the branch. This is named `Branch Name:` in each file and should always be followed by a string.
+- When the branch was created.  This is named `Date Branch Opened:` in each file and should always be followed by a date string in `yyyy-mm-dd` format.
+- When the branch was considered goal-complete. This is named `Date Branch Scope Completed:` and is either blank following this field, or has a date string in `yyyy-mm-dd` format if the document is complete.
+- When the branch was merged with `master`. This is named `Date Branch Merged:` and is either blank following this field, or has a date string in `yyyy-mm-dd` format if the document is complete.
+- A general overview of the goals for the branch.
+- A specific checklist of items to complete for the goals.
+  - For each goal, there should be a end of line date string of a date in `yyyy-mm-dd` format and git commit entry, indicating the date the specific item was completed.
+  - If a goal does have a date for completion, do not consider further updates for that goal.
+
+If there are multiple plan files, only review files with the current Git branch name at the beginning of the file name as being relevant. For example, files starting with `cleanup_*.md` are only relevant to the `cleanup` branch. Files with `general_*.md` names apply to all branches. Branch files override any instructions conflicting with general instructions. All branch files have equal weight and contradictions require human clarification prior to moving forward.
+
+If a file has values for being goal-complete and merged, ignore the file and consider it completed. Otherwise, consider the scope of the document in decisions and recommendations. If a specific document is referenced for making a decision, reference it in your response.

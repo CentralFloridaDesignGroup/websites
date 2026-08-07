@@ -1,5 +1,5 @@
 import { ServiceEntry, ServicePriceType } from "../types/proposalTypes";
-import { Combobox, Textarea, Textbox } from "@wps/input";
+import { Combobox, Textarea, Textbox } from "cfdg/input";
 import { ArrowDown, ArrowUp, Import, X } from "lucide-react";
 
 const EMPTY_SERVICE: ServiceEntry = {

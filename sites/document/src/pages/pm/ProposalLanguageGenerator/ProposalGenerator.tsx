@@ -1,24 +1,35 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ClientInfo, ServiceEntry } from './types/proposalTypes';
 import { ClientInfoStep, LanguageStep, PreviewStep, ProjectInfoSetup } from './pages';
 import { useOutletContext } from 'react-router-dom';
 import { OutletContext, SidebarProgressGroup } from '../../../contexts/outletContext';
 import { File, Folder, List, User } from 'lucide-react';
+import type { EntraUserAccount } from 'cfdg/types';
 
-type Stage = 'project' | 'client' | 'language' | 'preview';
+type Stage = 'client' | 'project' | 'language' | 'preview';
 
 const STAGES: { key: Stage; label: string; icon?: React.ReactNode }[] = [
-    { key: 'project', label: 'Project Information', icon: <Folder /> },
-    { key: 'client', label: 'Client Information', icon: <User /> },
-    { key: 'language', label: 'Select Services', icon: <List /> },
+    { key: 'client', label: 'Client & Contact', icon: <User /> },
+    { key: 'project', label: 'Project Details', icon: <Folder /> },
+    { key: 'language', label: 'Contract Scope', icon: <List /> },
     { key: 'preview', label: 'Preview & Download', icon: <File /> },
 ];
 
 export function ProposalGenerator() {
-    const [stage, setStage] = useState<Stage>('project');
+    const [stage, setStage] = useState<Stage>('client');
     const [clientInfo, setClientInfo] = useState<ClientInfo | undefined>();
     const [services, setServices] = useState<ServiceEntry[]>([]);
+    const [clientId, setClientId] = useState('');
+    const [contactId, setContactId] = useState('');
+    const [manager, setManager] = useState<EntraUserAccount | null>(null);
+    const [createdProjectId, setCreatedProjectId] = useState('');
+    const [createdRetainerInvoiceId, setCreatedRetainerInvoiceId] = useState('');
     const { setSidebarItems } = useOutletContext<OutletContext>();
+    const setSidebarItemsRef = useRef(setSidebarItems);
+
+    useEffect(() => {
+        setSidebarItemsRef.current = setSidebarItems;
+    }, [setSidebarItems]);
 
 
     // Set sidebar items based on current stage
@@ -37,32 +48,23 @@ export function ProposalGenerator() {
             label: 'Proposal Generation',
             items: items,
         };
-        setSidebarItems([progressGroup]);
-    }, [stage, setSidebarItems]);
-
-    useEffect(() => {
-        console.log('Form state updated:', clientInfo, services);
-    }, [clientInfo, services]);
+        setSidebarItemsRef.current([progressGroup]);
+    }, [stage]);
 
 
     return (
         <div className="flex flex-col h-full">
 
             <>
+                {stage === 'client' && (
+                    <ClientInfoStep initialValues={clientInfo} onNext={(info, selectedClientId, selectedContactId) => { setClientInfo(info); setClientId(selectedClientId); setContactId(selectedContactId); setStage('project'); }} />
+                )}
                 {stage === 'project' && (
                     <ProjectInfoSetup
                         initialValues={clientInfo}
-                        onNext={(info) => {
+                        onNext={(info, selectedManager) => {
                             setClientInfo(info);
-                            setStage('client');
-                        }}
-                    />
-                )}
-                {stage === 'client' && (
-                    <ClientInfoStep
-                        initialValues={clientInfo}
-                        onNext={info => {
-                            setClientInfo(info);
+                            setManager(selectedManager);
                             setStage('language');
                         }}
                     />
@@ -72,7 +74,7 @@ export function ProposalGenerator() {
                     <LanguageStep
                         clientInfo={clientInfo!}
                         services={services}
-                        onBack={() => setStage('client')}
+                        onBack={() => setStage('project')}
                         onNext={(info, phases) => {
                             setClientInfo(info);
                             setServices(phases);
@@ -86,6 +88,13 @@ export function ProposalGenerator() {
                         clientInfo={clientInfo}
                         services={services}
                         onBack={() => setStage('language')}
+                        clientId={clientId}
+                        contactId={contactId}
+                        manager={manager}
+                        createdProjectId={createdProjectId}
+                        onProjectCreated={setCreatedProjectId}
+                        createdRetainerInvoiceId={createdRetainerInvoiceId}
+                        onRetainerInvoiceCreated={setCreatedRetainerInvoiceId}
                     />
                 )}
             </>

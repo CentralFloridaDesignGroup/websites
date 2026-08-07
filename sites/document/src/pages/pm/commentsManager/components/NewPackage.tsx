@@ -1,4 +1,4 @@
-import { Button, Textarea, Textbox } from '@wps/input';
+import { Button, Textarea, Textbox } from 'cfdg/input';
 
 type ReviewPackageForm = {
     projectNumber: string;

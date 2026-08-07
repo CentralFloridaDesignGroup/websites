@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useMsal } from '@azure/msal-react'
 import { useSearchParams } from 'react-router-dom'
-import { Button, Combobox, Textbox } from '@wps/input'
-import { Modal, showNotification } from '@wps/layout'
-import { type EntraUserAccount, type Invoice, type ProjectBillingProfile, type ProjectInvoiceDocument, type ProjectManager, type QboCustomer } from '@wps/scripts'
+import { Button, Combobox, Textbox } from 'cfdg/input'
+import { Modal, showNotification } from 'cfdg/layout'
+import { State, type EntraUserAccount, type Invoice, type ProjectBillingProfile, type ProjectInvoiceDocument, type ProjectManager, type ProjectStatus, type ProjectTask, type QboCustomer } from 'cfdg/types'
 import { ArrowLeft, Plus, RefreshCw } from 'lucide-react'
 import { fetchEligibleProjectManagers } from '../../../api/entra'
 import { fetchInvoices } from '../../../api/invoices'
 import {
   createProject,
+  createProjectTask,
   deleteProjectInvoiceDocument,
   downloadProjectInvoiceDocument,
   fetchClients,
@@ -18,6 +19,8 @@ import {
   saveProjectManager,
   saveProjectBillingProfile,
   updateProject,
+  updateProjectTask,
+  updateProjectStatus,
   uploadProjectInvoiceDocument,
   type ProjectCreatePayload,
   type ProjectUpdatePayload,
@@ -34,8 +37,7 @@ type ProjectForm = {
   projectNumber: string
   projectName: string
   address: ProjectCreatePayload['address']
-  phone: string
-  email: string
+  parcelId: string
 }
 
 const emptyProject: ProjectForm = {
@@ -46,11 +48,10 @@ const emptyProject: ProjectForm = {
     line1: '',
     line2: '',
     city: '',
-    state: '',
+    state: 'FL',
     postalCode: '',
   },
-  phone: '',
-  email: '',
+  parcelId: '',
 }
 
 function splitProjectDisplayName(displayName: string): Pick<ProjectForm, 'projectNumber' | 'projectName'> {
@@ -87,6 +88,7 @@ export function ProjectsManager() {
   const [selectedProjectId, setSelectedProjectId] = useState('')
   const [mode, setMode] = useState<'overview' | 'detail'>(() => searchParams.get('projectId') ? 'detail' : 'overview')
   const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState<ProjectStatus | 'current' | 'all'>('current')
   const [loading, setLoading] = useState(false)
   const [relatedLoading, setRelatedLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -97,6 +99,7 @@ export function ProjectsManager() {
   const [billingPoNumber, setBillingPoNumber] = useState('')
   const [billingDocumentNote, setBillingDocumentNote] = useState('')
   const [invoiceDocuments, setInvoiceDocuments] = useState<ProjectInvoiceDocument[]>([])
+  const [tasks, setTasks] = useState<ProjectTask[]>([])
   const [billingSaving, setBillingSaving] = useState(false)
   const [documentBusy, setDocumentBusy] = useState(false)
   const [eligibleManagers, setEligibleManagers] = useState<EntraUserAccount[]>([])
@@ -105,6 +108,7 @@ export function ProjectsManager() {
   const [projectDialogOpen, setProjectDialogOpen] = useState(false)
   const [editingProjectId, setEditingProjectId] = useState('')
   const [projectSaving, setProjectSaving] = useState(false)
+  const [projectStatusSaving, setProjectStatusSaving] = useState(false)
   const [projectForm, setProjectForm] = useState<ProjectForm>(emptyProject)
   const [moveDialogOpen, setMoveDialogOpen] = useState(false)
   const [moveSaving, setMoveSaving] = useState(false)
@@ -117,7 +121,7 @@ export function ProjectsManager() {
   const loadProjects = useCallback(async () => {
     setLoading(true)
     try {
-      const data = await fetchProjects(searchTerm)
+      const data = await fetchProjects({ search: searchTerm, status: statusFilter })
       setProjects(data)
       const projectIdParam = searchParams.get('projectId') || ''
       setSelectedProjectId((previous) => previous || projectIdParam)
@@ -126,7 +130,7 @@ export function ProjectsManager() {
     } finally {
       setLoading(false)
     }
-  }, [searchParams, searchTerm])
+  }, [searchParams, searchTerm, statusFilter])
 
   const loadProjectDetails = useCallback(async () => {
     if (!selectedProjectId) {
@@ -137,10 +141,12 @@ export function ProjectsManager() {
       setBillingPoNumber('')
       setBillingDocumentNote('')
       setInvoiceDocuments([])
+      setTasks([])
       return
     }
     try {
       const data = await fetchProjectDetails(selectedProjectId)
+      setProjects((previous) => [data.project, ...previous.filter((project) => project.id !== data.project.id)].sort((a, b) => a.displayName.localeCompare(b.displayName)))
       setManager(data.manager)
       setManagerName(data.manager?.managerName || '')
       setManagerEmail(data.manager?.managerEmail || '')
@@ -148,6 +154,7 @@ export function ProjectsManager() {
       setBillingPoNumber(data.billingProfile.poNumber)
       setBillingDocumentNote(data.billingProfile.invoiceDocumentNote)
       setInvoiceDocuments(data.invoiceDocuments)
+      setTasks(data.tasks)
       setSelectedManagerId('')
     } catch (error) {
       showNotification({ title: 'Project Details Failed To Load', body: String(error), style: 'warning' })
@@ -364,11 +371,10 @@ export function ProjectsManager() {
         line1: selectedProject.shipAddrLine1 || selectedProject.billAddrLine1,
         line2: selectedProject.shipAddrLine2 || selectedProject.billAddrLine2,
         city: selectedProject.shipAddrCity || selectedProject.billAddrCity,
-        state: selectedProject.shipAddrState || selectedProject.billAddrState,
+        state: selectedProject.shipAddrState as State || selectedProject.billAddrState as State,
         postalCode: selectedProject.shipAddrPostalCode || selectedProject.billAddrPostalCode,
       },
-      phone: selectedProject.primaryPhone,
-      email: selectedProject.primaryEmail,
+      parcelId: selectedProject.parcelId,
     })
     setProjectDialogOpen(true)
   }
@@ -378,20 +384,20 @@ export function ProjectsManager() {
     setProjectSaving(true)
     try {
       const projectPayload: ProjectUpdatePayload = {
+        parentCustomerId: projectForm.parentCustomerId,
         name: buildProjectDisplayName(projectForm),
         address: {
           line1: projectForm.address.line1.trim(),
           line2: projectForm.address.line2.trim(),
           city: projectForm.address.city.trim(),
-          state: projectForm.address.state.trim(),
+          state: projectForm.address.state.trim() as State,
           postalCode: projectForm.address.postalCode.trim(),
         },
-        phone: projectForm.phone.trim(),
-        email: projectForm.email.trim(),
+        parcelId: projectForm.parcelId.trim(),
       }
       const saved = editingProjectId
         ? await updateProject(editingProjectId, projectPayload)
-        : await createProject({ parentCustomerId: projectForm.parentCustomerId, ...projectPayload })
+        : await createProject(projectPayload)
       setProjects((previous) => [saved, ...previous.filter((project) => project.id !== saved.id)].sort((a, b) => a.displayName.localeCompare(b.displayName)))
       setSelectedProjectId(saved.id)
       setMode('detail')
@@ -404,6 +410,31 @@ export function ProjectsManager() {
       showNotification({ title: editingProjectId ? 'Project Update Failed' : 'Project Create Failed', body: String(error), style: 'danger' })
     } finally {
       setProjectSaving(false)
+    }
+  }
+
+  async function saveTask(task: ProjectTask) {
+    if (!selectedProjectId) return
+    setSaving(true)
+    try {
+      const payload = { name: task.name, scopeOfWork: task.scopeOfWork, contractAmountCents: task.contractAmountCents, retainerCents: task.retainerCents, priceType: task.priceType, sortOrder: task.sortOrder, active: task.active }
+      const saved = task.id ? await updateProjectTask(selectedProjectId, task.id, payload) : await createProjectTask(selectedProjectId, payload)
+      setTasks((current) => [...current.filter((entry) => entry.id !== saved.id), saved].sort((a, b) => a.sortOrder - b.sortOrder))
+      showNotification({ title: 'Task Saved', body: saved.name, style: 'success' })
+    } catch (error) { showNotification({ title: 'Task Save Failed', body: String(error), style: 'danger' }) } finally { setSaving(false) }
+  }
+
+  async function saveProjectStatus(status: ProjectStatus) {
+    if (!selectedProject) return
+    setProjectStatusSaving(true)
+    try {
+      const saved = await updateProjectStatus(selectedProject.id, status)
+      setProjects((previous) => previous.map((project) => project.id === saved.id ? saved : project))
+      showNotification({ title: 'Project Status Saved', body: `${saved.displayName} is now ${saved.status}.`, style: 'success' })
+    } catch (error) {
+      showNotification({ title: 'Project Status Save Failed', body: String(error), style: 'danger' })
+    } finally {
+      setProjectStatusSaving(false)
     }
   }
 
@@ -436,7 +467,7 @@ export function ProjectsManager() {
           {mode === 'detail' && <Button label="Back" style="textonly" icon={ArrowLeft} onClick={returnToOverview} colorMode="auto" />}
           <div>
             <h1 className="text-2xl font-bold">{mode === 'detail' && selectedProject ? selectedProject.displayName : 'Projects'}</h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400">QuickBooks sub-customers with internal project email ownership.</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">QuickBooks sub-customers with Compass property details.</p>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -467,7 +498,7 @@ export function ProjectsManager() {
               selections={clients.map((client) => ({ key: client.displayName, value: client.id }))}
               value={projectForm.parentCustomerId}
               placeholder={clients.length > 0 ? 'Select client' : 'No clients loaded'}
-              disabled={clients.length === 0 || Boolean(editingProjectId)}
+              disabled={clients.length === 0}
               onChange={(_, value) => updateProjectField('parentCustomerId', value)}
             />
           </div>
@@ -478,6 +509,7 @@ export function ProjectsManager() {
             )}
           </div>
           <Textbox field="new-project-name" label="Project Name" colorMode="auto" value={projectForm.projectName} onChange={(event) => updateProjectField('projectName', event.target.value)} placeholder="Project Name" required />
+          <Textbox field="new-project-parcel-id" label="Parcel ID" colorMode="auto" value={projectForm.parcelId} onChange={(event) => updateProjectField('parcelId', event.target.value)} placeholder="Parcel ID number" />
           <div className="md:col-span-2 rounded-md border border-gray-200 bg-gray-50 p-2 text-sm dark:border-gray-700 dark:bg-gray-900">
             <span className="text-gray-500 dark:text-gray-400">QuickBooks name: </span>
             <span className="font-semibold">{projectForm.projectNumber.trim() || 'YY-####'} - {projectForm.projectName.trim() || 'Project Name'}</span>
@@ -491,10 +523,6 @@ export function ProjectsManager() {
           <Textbox field="new-project-city" label="City" colorMode="auto" value={projectForm.address.city} onChange={(event) => updateProjectAddressField('city', event.target.value)} required />
           <Textbox field="new-project-state" label="State" colorMode="auto" value={projectForm.address.state} onChange={(event) => updateProjectAddressField('state', event.target.value)} required />
           <Textbox field="new-project-postal-code" label="Postal Code" colorMode="auto" value={projectForm.address.postalCode} onChange={(event) => updateProjectAddressField('postalCode', event.target.value)} required />
-          <Textbox field="new-project-phone" label="Phone" colorMode="auto" value={projectForm.phone} onChange={(event) => updateProjectField('phone', event.target.value)} />
-          <div className="md:col-span-2">
-            <Textbox field="new-project-email" label="Email" colorMode="auto" type="email" value={projectForm.email} onChange={(event) => updateProjectField('email', event.target.value)} />
-          </div>
         </div>
       </Modal>
 
@@ -532,8 +560,10 @@ export function ProjectsManager() {
           projects={projects}
           loading={loading}
           searchTerm={searchTerm}
+          statusFilter={statusFilter}
           selectedProjectId={selectedProjectId}
           onSearchTermChange={setSearchTerm}
+          onStatusFilterChange={setStatusFilter}
           onSelectProject={selectProject}
         />
       ) : (
@@ -546,6 +576,7 @@ export function ProjectsManager() {
           billingPoNumber={billingPoNumber}
           billingDocumentNote={billingDocumentNote}
           invoiceDocuments={invoiceDocuments}
+          tasks={tasks}
           relatedInvoices={relatedInvoices}
           relatedLoading={relatedLoading}
           documentBusy={documentBusy}
@@ -554,8 +585,10 @@ export function ProjectsManager() {
           managersLoading={managersLoading}
           saving={saving}
           billingSaving={billingSaving}
+          projectStatusSaving={projectStatusSaving}
           editorName={editorName}
           onEditProject={openEditProjectDialog}
+          onProjectStatusChange={(status) => void saveProjectStatus(status)}
           onOpenMoveDialog={openMoveDialog}
           onSelectManager={selectManager}
           onSaveManager={() => void saveManager()}
@@ -565,6 +598,7 @@ export function ProjectsManager() {
           onUploadDocument={(file) => void uploadBillingDocument(file)}
           onDownloadDocument={(document) => void downloadBillingDocument(document)}
           onRemoveDocument={(document) => void removeBillingDocument(document)}
+          onSaveTask={(task) => void saveTask(task)}
         />
       )}
     </div>

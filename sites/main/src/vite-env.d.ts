@@ -2,10 +2,7 @@
 
 interface ImportMetaEnv {
   readonly VITE_API_BASE_URL?: string;
-  readonly VITE_API_KEY_TARGET?: 'local' | 'prod';
-  readonly VITE_TRANSACTION_EMAIL_API_KEY?: string;
-  readonly VITE_TRANSACTION_EMAIL_API_KEY_LOCAL?: string;
-  readonly VITE_TRANSACTION_EMAIL_API_KEY_PROD?: string;
+  readonly VITE_API_KEY?: string;
 }
 
 interface ImportMeta {

@@ -1,74 +1,47 @@
-/** QuickBooks identifiers and status mirrored from the legacy sync columns. */
-export type QboSyncState = {
-  invoiceId?: string
-  invoiceSyncToken?: string
-  paymentId?: string
-  depositId?: string
-  status?: string
-  message?: string
-  lastSyncDate?: string
+import { compactRecord, normalizeString } from "cfdg/scripts";
+import type { AccountingSyncState } from "cfdg/types";
+
+/**
+ * Serializes accounting sync state after removing empty branches and values. Used for storing the state in a compact JSON format in D1.
+ * @param state - The accounting sync state to serialize.
+ * @returns A JSON string representation of the compacted accounting sync state.
+ * @example
+ * ```ts
+ * const state: AccountingSyncState = {
+ *  qbo: { invoiceId: '123', status: 'synced' },
+ *  stripe: { checkoutSessionId: 'abc', payoutStatus: 'pending' },
+ *  notifications: { accountingPaymentSentDate: '2024-01-01T00:00:00Z' }
+ * }
+ * const serializedState = serializeAccountingSyncState(state)
+ * // serializedState will be a JSON string with only the non-empty branches and values
+ * ```
+ */
+export function serializeAccountingSyncState(
+  state: AccountingSyncState,
+): string {
+  const compacted: AccountingSyncState = {};
+  const qbo = compactRecord(state.qbo || {});
+  const stripe = compactRecord(state.stripe || {});
+  const notifications = compactRecord(state.notifications || {});
+  if (Object.keys(qbo).length > 0) compacted.qbo = qbo;
+  if (Object.keys(stripe).length > 0) compacted.stripe = stripe;
+  if (Object.keys(notifications).length > 0)
+    compacted.notifications = notifications;
+  return JSON.stringify(compacted);
 }
 
-/** Stripe identifiers and status used to repair payments or payout reconciliation. */
-export type StripeSyncState = {
-  checkoutSessionId?: string
-  paymentIntentId?: string
-  chargeId?: string
-  balanceTransactionId?: string
-  payoutId?: string
-  payoutStatus?: string
-  payoutReconciledDate?: string
-  detailsStatus?: string
-}
-
-/** Notification send markers that must stay idempotent across webhook replays. */
-export type NotificationSyncState = {
-  accountingPaymentSentDate?: string
-  payoutEmailSentDate?: string
-}
-
-export type AccountingSyncState = {
-  qbo?: QboSyncState
-  stripe?: StripeSyncState
-  notifications?: NotificationSyncState
-}
-
-function normalizeString(value: unknown): string {
-  return String(value ?? '').trim()
-}
-
-function compactRecord<T extends Record<string, unknown>>(record: T): Partial<T> {
-  const compacted: Partial<T> = {}
-  for (const [key, value] of Object.entries(record)) {
-    if (value !== undefined && value !== null && value !== '') {
-      compacted[key as keyof T] = value as T[keyof T]
-    }
-  }
-  return compacted
-}
-
-/** Serializes accounting sync state after removing empty branches and values. */
-export function serializeAccountingSyncState(state: AccountingSyncState): string {
-  const compacted: AccountingSyncState = {}
-  const qbo = compactRecord(state.qbo || {})
-  const stripe = compactRecord(state.stripe || {})
-  const notifications = compactRecord(state.notifications || {})
-  if (Object.keys(qbo).length > 0) compacted.qbo = qbo
-  if (Object.keys(stripe).length > 0) compacted.stripe = stripe
-  if (Object.keys(notifications).length > 0) compacted.notifications = notifications
-  return JSON.stringify(compacted)
-}
-
-/** Builds the invoice-level accounting state JSON from the current legacy columns. */
+/** Builds the invoice-level accounting state JSON from the current legacy columns.
+ * @deprecated Future development should use the more comprehensive `paymentSyncState` function for handling accounting sync state, as it includes additional fields and better reflects the current data model.
+ */
 export function invoiceSyncState(input: {
-  qboInvoiceId?: unknown
-  qboInvoiceSyncToken?: unknown
-  qboPaymentId?: unknown
-  qboStatus?: unknown
-  qboMessage?: unknown
-  qboLastSyncDate?: unknown
-  stripeCheckoutSessionId?: unknown
-  stripePaymentIntentId?: unknown
+  qboInvoiceId?: unknown;
+  qboInvoiceSyncToken?: unknown;
+  qboPaymentId?: unknown;
+  qboStatus?: unknown;
+  qboMessage?: unknown;
+  qboLastSyncDate?: unknown;
+  stripeCheckoutSessionId?: unknown;
+  stripePaymentIntentId?: unknown;
 }): string {
   return serializeAccountingSyncState({
     qbo: {
@@ -83,25 +56,27 @@ export function invoiceSyncState(input: {
       checkoutSessionId: normalizeString(input.stripeCheckoutSessionId),
       paymentIntentId: normalizeString(input.stripePaymentIntentId),
     },
-  })
+  });
 }
 
-/** Builds the payment-level accounting state JSON from the current legacy columns. */
+/** Builds the payment-level accounting state JSON from the current legacy columns.
+ * @deprecated Future development should use the more comprehensive `paymentSyncState` function for handling accounting sync state, as it includes additional fields and better reflects the current data model.
+ */
 export function paymentSyncState(input: {
-  qboPaymentId?: unknown
-  qboDepositId?: unknown
-  qboStatus?: unknown
-  qboMessage?: unknown
-  qboLastSyncDate?: unknown
-  stripeCheckoutSessionId?: unknown
-  stripePaymentIntentId?: unknown
-  stripeChargeId?: unknown
-  stripeBalanceTransactionId?: unknown
-  stripePayoutId?: unknown
-  stripePayoutStatus?: unknown
-  stripePayoutReconciledDate?: unknown
-  stripeDetailsStatus?: unknown
-  accountingNotificationSentDate?: unknown
+  qboPaymentId?: unknown;
+  qboDepositId?: unknown;
+  qboStatus?: unknown;
+  qboMessage?: unknown;
+  qboLastSyncDate?: unknown;
+  stripeCheckoutSessionId?: unknown;
+  stripePaymentIntentId?: unknown;
+  stripeChargeId?: unknown;
+  stripeBalanceTransactionId?: unknown;
+  stripePayoutId?: unknown;
+  stripePayoutStatus?: unknown;
+  stripePayoutReconciledDate?: unknown;
+  stripeDetailsStatus?: unknown;
+  accountingNotificationSentDate?: unknown;
 }): string {
   return serializeAccountingSyncState({
     qbo: {
@@ -122,19 +97,23 @@ export function paymentSyncState(input: {
       detailsStatus: normalizeString(input.stripeDetailsStatus),
     },
     notifications: {
-      accountingPaymentSentDate: normalizeString(input.accountingNotificationSentDate),
+      accountingPaymentSentDate: normalizeString(
+        input.accountingNotificationSentDate,
+      ),
     },
-  })
+  });
 }
 
-/** Builds the Stripe payout-level accounting state JSON from the current legacy columns. */
+/** Builds the Stripe payout-level accounting state JSON from the current legacy columns.
+ * @deprecated Future development should use the more comprehensive `paymentSyncState` function for handling accounting sync state, as it includes additional fields and better reflects the current data model.
+ */
 export function payoutSyncState(input: {
-  payoutStatus?: unknown
-  qboDepositId?: unknown
-  qboStatus?: unknown
-  qboMessage?: unknown
-  qboLastSyncDate?: unknown
-  payoutEmailSentDate?: unknown
+  payoutStatus?: unknown;
+  qboDepositId?: unknown;
+  qboStatus?: unknown;
+  qboMessage?: unknown;
+  qboLastSyncDate?: unknown;
+  payoutEmailSentDate?: unknown;
 }): string {
   return serializeAccountingSyncState({
     stripe: {
@@ -149,5 +128,5 @@ export function payoutSyncState(input: {
     notifications: {
       payoutEmailSentDate: normalizeString(input.payoutEmailSentDate),
     },
-  })
+  });
 }

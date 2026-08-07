@@ -112,7 +112,6 @@ export async function fetchGisPoints(): Promise<GisRecord[]> {
   const data = await requestJson<{ points?: unknown[] }>('/api/gis/points', {
     method: 'GET',
     authMode: 'key',
-    apiKeyPreference: 'gis',
   })
 
   return (data.points || []).map((item) => normalizeGisRecord(item))

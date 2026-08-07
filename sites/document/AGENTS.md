@@ -5,8 +5,8 @@ The purpose of this site is to provide document, field, and operations tooling f
 # Ownership
 
 - This site owns document-specific pages, routes, workflows, and site-local components.
-- Shared UI primitives should come from `packages/@wps/input` or `packages/@wps/layout` when they fit.
-- Shared types, constants, and pure utilities should come from `packages/@wps/scripts` when they are reused beyond this site.
+- Shared UI primitives should come from `packages/cfdg/input` or `packages/cfdg/layout` when they fit.
+- Shared types, constants, and pure utilities should come from `packages/cfdg/scripts` when they are reused beyond this site.
 - Site-local components should stay in this site when they are specific to document workflows.
 
 # Constraints

@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback } from "react"
 import { useParams } from "react-router-dom"
 import { CircleCheck, CircleX, Printer } from "lucide-react"
-import { WorkInProgressComponent } from "@wps/layout";
-import { Button } from "@wps/input"
+import { WorkInProgressComponent } from "cfdg/layout";
+import { Button } from "cfdg/input"
 import ChecklistItem from "./components/ChecklistItem"
 
 interface ChecklistMeta {

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { notes as Notes } from './SurveyNoteDefinitions.json'
 import { type SurveyNotesProps } from '../SurveyorNotes';
-import { Button } from '@wps/input';
-import { Dates } from '@wps/scripts';
+import { Button } from 'cfdg/input';
+import { Dates } from 'cfdg/scripts';
 import { NoteBlock } from '../components/noteBlock'
 
 export function NotesWindow({

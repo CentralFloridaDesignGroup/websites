@@ -1,38 +1,38 @@
 {
-  "name": "whitepointsurvey",
-  "version": "1.0.0",
-  "description": "SWP Cloudflare Pages Monorepo",
+  "name": "wps",
+  "version": "5.0.0",
+  "description": "Websites monorepo for White Point Survey",
   "private": true,
   "workspaces": [
     "packages/**",
     "sites/**"
   ],
   "scripts": {
-    "dev:main": "pnpm -r --parallel --filter sites-main --filter sites-api run dev",
-    "dev:document": "pnpm -r --parallel --filter sites-document --filter sites-api run dev",
-    "dev:api": "pnpm --filter sites-api run dev",
-    "build:main": "pnpm --filter sites-main run build",
-    "build:document": "pnpm --filter sites-document run build",
-    "build:api": "pnpm --filter sites-api run build",
+    "dev:main": "pnpm -r --parallel --filter api --filter main run dev",
+    "dev:document": "pnpm -r --parallel --filter api --filter document run dev",
+    "dev:api": "pnpm --filter api run dev",
+    "build:main": "pnpm --filter main run build",
+    "build:document": "pnpm --filter document run build",
+    "build:api": "pnpm --filter api run build",
     "build": "pnpm run build:main && pnpm run build:document && pnpm run build:api",
-    "deploy:main": "pnpm --filter sites-main run deploy",
-    "deploy:document": "pnpm --filter sites-document run deploy",
-    "deploy:api": "pnpm --filter sites-api run deploy",
+    "deploy:main": "pnpm --filter main run deploy",
+    "deploy:document": "pnpm --filter document run deploy",
+    "deploy:api": "pnpm --filter api run deploy",
     "deploy": "pnpm run deploy:main && pnpm run deploy:document && pnpm run deploy:api",
-    "d1:migrate:local": "pnpm --filter sites-api run d1:migrate:local",
-    "d1:migrate:remote": "pnpm --filter sites-api run d1:migrate:remote",
+    "d1:migrate:local": "pnpm --filter api run d1:migrate:local",
+    "d1:migrate:remote": "pnpm --filter api run d1:migrate:remote",
     "lint": "eslint .",
-    "type-check": "pnpm --filter @wps/input exec tsc -b && pnpm --filter @wps/layout exec tsc -b && pnpm --filter @wps/scripts exec tsc -b && pnpm --filter sites-main exec tsc --noEmit && pnpm --filter sites-document exec tsc --noEmit && pnpm --filter sites-api exec tsc --noEmit"
+    "type-check": "pnpm --filter cfdg/input exec tsc -b && pnpm --filter cfdg/layout exec tsc -b && pnpm --filter cfdg/scripts exec tsc -b && pnpm --filter cfdg/types exec tsc -b && pnpm --filter main exec tsc --noEmit && pnpm --filter document exec tsc --noEmit && pnpm --filter api exec tsc --noEmit"
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
-    "@types/node": "^25.9.2",
-    "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.2.3",
-    "@typescript-eslint/eslint-plugin": "^8.61.0",
-    "@typescript-eslint/parser": "^8.61.0",
-    "eslint": "^10.4.1",
-    "react": "^19.2.7",
-    "typescript": "^5.9.3"
+    "@eslint/js": "10.0.1",
+    "@types/node": "26.1.1",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "@typescript-eslint/eslint-plugin": "8.65.0",
+    "@typescript-eslint/parser": "8.65.0",
+    "eslint": "10.8.0",
+    "react": "19.2.8",
+    "typescript": "5.9.3"
   }
 }

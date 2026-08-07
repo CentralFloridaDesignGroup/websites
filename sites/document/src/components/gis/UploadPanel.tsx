@@ -1,7 +1,7 @@
 import { useMemo, useState, type ChangeEvent } from 'react'
 import Papa from 'papaparse'
-import { Button } from '@wps/input'
-import { Geodesy } from '@wps/scripts'
+import { Button } from 'cfdg/input'
+import { Geodesy } from 'cfdg/scripts'
 import {
   defaultPointMaterial,
   getDatumFromProjection,
@@ -11,6 +11,7 @@ import {
   verticalEstablishmentMethodOptions,
 } from './constants'
 import type { CreateGisRecordInput, UploadImportSummary } from './types'
+import { KnownStatePlaneProjection } from 'cfdg/types'
 
 type UploadPanelProps = {
   isOpen: boolean
@@ -184,7 +185,7 @@ function toPointMaterial(value: string | undefined) {
 
 export function UploadPanel({ isOpen, currentUser, onClose, onImport }: UploadPanelProps) {
   const [statePlaneProjection, setStatePlaneProjection] =
-    useState<Geodesy.KnownStatePlaneProjection>('EPSG:2236')
+    useState<KnownStatePlaneProjection>('EPSG:2236')
   const [summary, setSummary] = useState<UploadImportSummary | null>(null)
   const [uploading, setUploading] = useState(false)
   const sourceDatum = getDatumFromProjection(statePlaneProjection)
@@ -317,7 +318,7 @@ export function UploadPanel({ isOpen, currentUser, onClose, onImport }: UploadPa
           <select
             value={statePlaneProjection}
             onChange={(event) =>
-              setStatePlaneProjection(event.target.value as Geodesy.KnownStatePlaneProjection)
+              setStatePlaneProjection(event.target.value as KnownStatePlaneProjection)
             }
             className="w-full rounded border border-slate-300 px-2 py-1 dark:bg-slate-700/75 dark:text-white"
           >

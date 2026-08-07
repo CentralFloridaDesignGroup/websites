@@ -1,6 +1,6 @@
 import { Pencil } from "lucide-react";
 import type { GisRecord } from "./types";
-import { Button } from "@wps/input";
+import { Button } from "cfdg/input";
 import { getDatumLabel } from "./constants";
 import React from "react";
 

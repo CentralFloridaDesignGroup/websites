@@ -5,8 +5,8 @@ The purpose of this site is to provide the main public-facing or brand-oriented 
 # Ownership
 
 - This site owns main-site pages, routes, brand presentation, marketing-oriented UI, and site-local content components.
-- Shared UI components should come from `packages/@wps/layout` or `packages/@wps/input` when they fit the use case.
-- Shared types, constants, and pure utilities should come from `packages/@wps/scripts` when they are reused beyond this site.
+- Shared UI components should come from `packages/cfdg/layout` or `packages/cfdg/input` when they fit the use case.
+- Shared types, constants, and pure utilities should come from `packages/cfdg/scripts` when they are reused beyond this site.
 
 # Constraints
 

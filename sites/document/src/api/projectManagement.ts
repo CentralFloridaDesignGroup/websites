@@ -1,22 +1,29 @@
-import {
-  type ClientContact,
-  type ClientCreatePayload,
-  type ClientUpdatePayload,
-  type ProjectBillingProfile,
-  type ProjectManager,
-  type ProjectCreatePayload,
-  type ProjectInvoiceDocument,
-  type ProjectMovePayload,
-  type ProjectUpdatePayload,
-  type QboCustomer,
-} from '@wps/scripts'
+import type {
+  ClientContact,
+  ClientCreatePayload,
+  ClientUpdatePayload,
+  ProjectBillingProfile,
+  ProjectManager,
+  ProjectCreatePayload,
+  ProjectInvoiceDocument,
+  ProjectMovePayload,
+  ProjectStatus,
+  ProjectTask,
+  ProjectUpdatePayload,
+  QboCustomer,
+} from 'cfdg/types'
 import { requestBlob, requestJson } from './client'
+import { normalizeBoolean, normalizeString } from 'cfdg/scripts'
+import { PROJECT_STATUSES } from 'cfdg/types/constants'
 
 type UnknownRecord = Record<string, unknown>
 
 export type ProjectSummary = QboCustomer & {
   parentDisplayName: string
+  parcelId: string
+  status: ProjectStatus
 }
+export type ProjectTaskPayload = Pick<ProjectTask, 'name' | 'scopeOfWork' | 'contractAmountCents' | 'retainerCents' | 'priceType' | 'sortOrder' | 'active'>
 
 export type ContactPayload = {
   name: string
@@ -45,13 +52,11 @@ function asRecord(value: unknown): UnknownRecord {
   return value && typeof value === 'object' ? value as UnknownRecord : {}
 }
 
-function normalizeString(value: unknown): string {
-  return String(value ?? '').trim()
+function normalizeProjectStatus(value: unknown, fallback: ProjectStatus): ProjectStatus {
+  const status = normalizeString(value).toLowerCase()
+  return (PROJECT_STATUSES as readonly string[]).includes(status) ? status as ProjectStatus : fallback
 }
 
-function normalizeBool(value: unknown): boolean {
-  return value === true || value === 1 || value === '1'
-}
 
 function normalizeCustomer(value: unknown): QboCustomer {
   const row = asRecord(value)
@@ -75,7 +80,7 @@ function normalizeCustomer(value: unknown): QboCustomer {
     shipAddrCity: normalizeString(row.shipAddrCity ?? row.ship_addr_city),
     shipAddrState: normalizeString(row.shipAddrState ?? row.ship_addr_state),
     shipAddrPostalCode: normalizeString(row.shipAddrPostalCode ?? row.ship_addr_postal_code),
-    active: normalizeBool(row.active),
+    active: normalizeBoolean(row.active),
     syncToken: normalizeString(row.syncToken ?? row.sync_token),
     qboUpdatedTime: normalizeString(row.qboUpdatedTime ?? row.qbo_updated_time),
     lastSyncedDate: normalizeString(row.lastSyncedDate ?? row.last_synced_date),
@@ -91,8 +96,8 @@ function normalizeContact(value: unknown): ClientContact {
     email: normalizeString(row.email),
     phone: normalizeString(row.phone),
     role: normalizeString(row.role),
-    isInvoiceRecipient: normalizeBool(row.isInvoiceRecipient ?? row.is_invoice_recipient),
-    active: normalizeBool(row.active),
+    isInvoiceRecipient: normalizeBoolean(row.isInvoiceRecipient ?? row.is_invoice_recipient),
+    active: normalizeBoolean(row.active),
     notes: normalizeString(row.notes),
     createdDate: normalizeString(row.createdDate ?? row.created_date),
     updatedDate: normalizeString(row.updatedDate ?? row.updated_date),
@@ -136,7 +141,7 @@ function normalizeInvoiceDocument(value: unknown): ProjectInvoiceDocument {
     filename: normalizeString(row.filename),
     contentType: normalizeString(row.contentType ?? row.content_type),
     sizeBytes: Number(row.sizeBytes ?? row.size_bytes ?? 0) || 0,
-    active: normalizeBool(row.active),
+    active: normalizeBoolean(row.active),
     createdDate: normalizeString(row.createdDate ?? row.created_date),
     createdBy: normalizeString(row.createdBy ?? row.created_by),
     updatedDate: normalizeString(row.updatedDate ?? row.updated_date),
@@ -144,14 +149,29 @@ function normalizeInvoiceDocument(value: unknown): ProjectInvoiceDocument {
   }
 }
 
-export async function fetchClients(search = ''): Promise<QboCustomer[]> {
+export async function fetchClients(search = '', status: 'active' | 'inactive' | 'all' = 'active'): Promise<QboCustomer[]> {
   const params = new URLSearchParams()
   if (search) params.set('search', search)
+  params.set('status', status)
   const data = await requestJson<{ clients?: unknown[] }>(`/api/clients${params.toString() ? `?${params}` : ''}`, {
     method: 'GET',
     authMode: 'microsoft',
   })
   return (data.clients || []).map((client) => normalizeCustomer(client))
+}
+
+function normalizeProjectTask(value: unknown): ProjectTask {
+  const row = asRecord(value)
+  return { id: normalizeString(row.id), qboProjectId: normalizeString(row.qboProjectId ?? row.qbo_project_id), name: normalizeString(row.name), scopeOfWork: normalizeString(row.scopeOfWork ?? row.scope_of_work), contractAmountCents: Number(row.contractAmountCents ?? row.contract_amount_cents ?? 0) || 0, retainerCents: Number(row.retainerCents ?? row.retainer_cents ?? 0) || 0, priceType: normalizeString(row.priceType ?? row.price_type), sortOrder: Number(row.sortOrder ?? row.sort_order ?? 0) || 0, active: normalizeBoolean(row.active), createdDate: normalizeString(row.createdDate ?? row.created_date), updatedDate: normalizeString(row.updatedDate ?? row.updated_date), createdBy: normalizeString(row.createdBy ?? row.created_by), updatedBy: normalizeString(row.updatedBy ?? row.updated_by), billedCents: Number(row.billedCents ?? row.billed_cents ?? 0) || 0, remainingCents: Number(row.remainingCents ?? row.remaining_cents ?? 0) || 0 }
+}
+
+export async function updateClientStatus(qboCustomerId: string, status: 'active' | 'inactive'): Promise<QboCustomer> {
+  const data = await requestJson<{ client?: unknown }>(`/api/clients/${encodeURIComponent(qboCustomerId)}/status`, {
+    method: 'PUT',
+    authMode: 'microsoft',
+    body: JSON.stringify({ status }),
+  })
+  return normalizeCustomer(data.client)
 }
 
 export async function createClient(payload: ClientCreatePayload): Promise<QboCustomer> {
@@ -218,35 +238,78 @@ export async function deleteClientContact(qboCustomerId: string, contactId: stri
   })
 }
 
-export async function fetchProjects(filters: string | { search?: string; parentCustomerId?: string } = ''): Promise<ProjectSummary[]> {
+export async function fetchProjects(filters: string | { search?: string; parentCustomerId?: string; status?: ProjectStatus | 'current' | 'all' } = ''): Promise<ProjectSummary[]> {
   const search = typeof filters === 'string' ? filters : filters.search || ''
   const params = new URLSearchParams()
   if (search) params.set('search', search)
   if (typeof filters !== 'string' && filters.parentCustomerId) params.set('parentCustomerId', filters.parentCustomerId)
+  if (typeof filters !== 'string' && filters.status) params.set('status', filters.status)
   const data = await requestJson<{ projects?: unknown[] }>(`/api/projects${params.toString() ? `?${params}` : ''}`, {
     method: 'GET',
     authMode: 'microsoft',
   })
   return (data.projects || []).map((project) => {
     const row = asRecord(project)
+    const customer = normalizeCustomer(project)
     return {
-      ...normalizeCustomer(project),
+      ...customer,
       parentDisplayName: normalizeString(row.parentDisplayName ?? row.parent_display_name),
+      parcelId: normalizeString(row.parcelId ?? row.parcel_id),
+      status: normalizeProjectStatus(row.status, customer.active ? 'active' : 'complete'),
     }
   })
 }
 
-export async function createProject(payload: ProjectCreatePayload): Promise<ProjectSummary> {
+export async function updateProjectStatus(qboProjectId: string, status: ProjectStatus): Promise<ProjectSummary> {
+  const data = await requestJson<{ project?: unknown }>(`/api/projects/${encodeURIComponent(qboProjectId)}/status`, {
+    method: 'PUT',
+    authMode: 'microsoft',
+    body: JSON.stringify({ status }),
+  })
+  const row = asRecord(data.project)
+  const customer = normalizeCustomer(data.project)
+  return {
+    ...customer,
+    parentDisplayName: normalizeString(row.parentDisplayName ?? row.parent_display_name),
+    parcelId: normalizeString(row.parcelId ?? row.parcel_id),
+    status: normalizeProjectStatus(row.status, customer.active ? 'active' : 'complete'),
+  }
+}
+
+export async function createProject(payload: ProjectCreatePayload & { tasks?: ProjectTaskPayload[] }): Promise<ProjectSummary> {
   const data = await requestJson<{ project?: unknown }>('/api/projects', {
     method: 'POST',
     authMode: 'microsoft',
     body: JSON.stringify(payload),
   })
   const row = asRecord(data.project)
+  const customer = normalizeCustomer(data.project)
   return {
-    ...normalizeCustomer(data.project),
+    ...customer,
     parentDisplayName: normalizeString(row.parentDisplayName ?? row.parent_display_name),
+    parcelId: normalizeString(row.parcelId ?? row.parcel_id),
+    status: normalizeProjectStatus(row.status, customer.active ? 'active' : 'complete'),
   }
+}
+
+export async function fetchNextProjectNumber(year: string): Promise<string> {
+  const data = await requestJson<{ projectNumber?: unknown }>(`/api/projects/next-number?year=${encodeURIComponent(year)}`, { method: 'GET', authMode: 'microsoft' })
+  return normalizeString(data.projectNumber)
+}
+
+export async function fetchProjectTasks(qboProjectId: string, includeInactive = false): Promise<ProjectTask[]> {
+  const data = await requestJson<{ tasks?: unknown[] }>(`/api/projects/${encodeURIComponent(qboProjectId)}`, { method: 'GET', authMode: 'microsoft' })
+  return (data.tasks || []).map(normalizeProjectTask).filter((task) => includeInactive || task.active)
+}
+
+export async function createProjectTask(qboProjectId: string, payload: ProjectTaskPayload): Promise<ProjectTask> {
+  const data = await requestJson<{ task?: unknown }>(`/api/projects/${encodeURIComponent(qboProjectId)}/tasks`, { method: 'POST', authMode: 'microsoft', body: JSON.stringify(payload) })
+  return normalizeProjectTask(data.task)
+}
+
+export async function updateProjectTask(qboProjectId: string, taskId: string, payload: ProjectTaskPayload): Promise<ProjectTask> {
+  const data = await requestJson<{ task?: unknown }>(`/api/projects/${encodeURIComponent(qboProjectId)}/tasks/${encodeURIComponent(taskId)}`, { method: 'PUT', authMode: 'microsoft', body: JSON.stringify(payload) })
+  return normalizeProjectTask(data.task)
 }
 
 export async function updateProject(qboProjectId: string, payload: ProjectUpdatePayload): Promise<ProjectSummary> {
@@ -256,9 +319,12 @@ export async function updateProject(qboProjectId: string, payload: ProjectUpdate
     body: JSON.stringify(payload),
   })
   const row = asRecord(data.project)
+  const customer = normalizeCustomer(data.project)
   return {
-    ...normalizeCustomer(data.project),
+    ...customer,
     parentDisplayName: normalizeString(row.parentDisplayName ?? row.parent_display_name),
+    parcelId: normalizeString(row.parcelId ?? row.parcel_id),
+    status: normalizeProjectStatus(row.status, customer.active ? 'active' : 'complete'),
   }
 }
 
@@ -270,9 +336,12 @@ export async function moveProject(projectId: string, parentCustomerId: string): 
     body: JSON.stringify(payload),
   })
   const row = asRecord(data.project)
+  const customer = normalizeCustomer(data.project)
   return {
-    ...normalizeCustomer(data.project),
+    ...customer,
     parentDisplayName: normalizeString(row.parentDisplayName ?? row.parent_display_name),
+    parcelId: normalizeString(row.parcelId ?? row.parcel_id),
+    status: normalizeProjectStatus(row.status, customer.active ? 'active' : 'complete'),
   }
 }
 
@@ -284,21 +353,25 @@ export async function fetchProjectManager(qboProjectId: string): Promise<Project
   return normalizeManager(data.manager)
 }
 
-export async function fetchProjectDetails(qboProjectId: string): Promise<{ project: ProjectSummary; client: QboCustomer | null; manager: ProjectManager | null; billingProfile: ProjectBillingProfile; invoiceDocuments: ProjectInvoiceDocument[] }> {
-  const data = await requestJson<{ project?: unknown; client?: unknown; manager?: unknown; billingProfile?: unknown; invoiceDocuments?: unknown[] }>(`/api/projects/${encodeURIComponent(qboProjectId)}`, {
+export async function fetchProjectDetails(qboProjectId: string): Promise<{ project: ProjectSummary; client: QboCustomer | null; manager: ProjectManager | null; billingProfile: ProjectBillingProfile; invoiceDocuments: ProjectInvoiceDocument[]; tasks: ProjectTask[] }> {
+  const data = await requestJson<{ project?: unknown; client?: unknown; manager?: unknown; billingProfile?: unknown; invoiceDocuments?: unknown[]; tasks?: unknown[] }>(`/api/projects/${encodeURIComponent(qboProjectId)}`, {
     method: 'GET',
     authMode: 'microsoft',
   })
   const projectRow = asRecord(data.project)
+  const projectCustomer = normalizeCustomer(data.project)
   return {
     project: {
-      ...normalizeCustomer(data.project),
+      ...projectCustomer,
       parentDisplayName: normalizeString(projectRow.parentDisplayName ?? projectRow.parent_display_name),
+      parcelId: normalizeString(projectRow.parcelId ?? projectRow.parcel_id),
+      status: normalizeProjectStatus(projectRow.status, projectCustomer.active ? 'active' : 'complete'),
     },
     client: data.client ? normalizeCustomer(data.client) : null,
     manager: normalizeManager(data.manager),
     billingProfile: normalizeBillingProfile(data.billingProfile, qboProjectId),
     invoiceDocuments: (data.invoiceDocuments || []).map((document) => normalizeInvoiceDocument(document)),
+    tasks: (data.tasks || []).map(normalizeProjectTask),
   }
 }
 

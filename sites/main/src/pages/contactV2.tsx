@@ -1,6 +1,6 @@
 import { ArrowRight, CheckCircle2, ClipboardList, Mail, MapPin, MessageSquareText, Phone } from "lucide-react";
-import { showNotification } from "@wps/layout";
-import { type FormSubmission, type Package } from "@wps/scripts";
+import { showNotification } from "cfdg/layout";
+import type { FormSubmission, Package } from "cfdg/types";
 import { useState } from "react";
 import { MarketingButton, MarketingSelect, MarketingTextarea, MarketingTextField } from "../components/marketing";
 import { coreCountyNames } from "../data/serviceCounties";
@@ -120,22 +120,8 @@ function ContactFormV2() {
   const [submissionStatus, setSubmissionStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
-  const getApiKeyTarget = (): "local" | "prod" => {
-    const configuredTarget = String(import.meta.env.VITE_API_KEY_TARGET ?? "").trim().toLowerCase();
-    if (configuredTarget === "local" || configuredTarget === "prod") return configuredTarget;
-
-    const hostname = typeof window !== "undefined" ? window.location.hostname.toLowerCase() : "";
-    return hostname === "localhost" || hostname === "127.0.0.1" ? "local" : "prod";
-  };
-
   const resolveTransactionEmailApiKey = (): string => {
-    const target = getApiKeyTarget();
-    const localKey = String(import.meta.env.VITE_TRANSACTION_EMAIL_API_KEY_LOCAL ?? "").trim();
-    const prodKey = String(import.meta.env.VITE_TRANSACTION_EMAIL_API_KEY_PROD ?? "").trim();
-    const legacyKey = String(import.meta.env.VITE_TRANSACTION_EMAIL_API_KEY ?? "").trim();
-
-    if (target === "local") return localKey || legacyKey || prodKey;
-    return prodKey || legacyKey || localKey;
+    return String(import.meta.env.VITE_API_KEY ?? "").trim();
   };
 
   const validateFields = (): boolean => {

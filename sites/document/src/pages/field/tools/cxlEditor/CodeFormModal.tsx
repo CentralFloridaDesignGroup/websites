@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Modal } from "@wps/layout";
-import { Button, Textbox, Checkbox } from "@wps/input";
+import { Modal } from "cfdg/layout";
+import { Button, Textbox, Checkbox } from "cfdg/input";
 import { Plus, Trash2, X } from "lucide-react";
 import {
   type CodeEntry,

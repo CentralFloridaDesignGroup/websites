@@ -1,20 +1,20 @@
-import {
-  mapInvoicePaymentRow,
-  type ClientCreatePayload,
-  type ClientUpdatePayload,
-  type Invoice,
-  type InvoicePayment,
-  type InvoicePaymentRow,
-  type ProjectCreatePayload,
-  type ProjectUpdatePayload,
-  type QboAccount,
-  type QboConnectionStatus,
-  type QboCustomer,
-  type QboServiceItem,
-} from '@wps/scripts'
+import type {
+  ClientCreatePayload,
+  ClientUpdatePayload,
+  Invoice,
+  InvoicePayment,
+  InvoicePaymentRow,
+  ProjectCreatePayload,
+  ProjectUpdatePayload,
+  QboAccount,
+  QboConnectionStatus,
+  QboCustomer,
+  QboServiceItem,
+} from 'cfdg/types'
 import { Hono } from 'hono'
 import { invoiceSyncState, paymentSyncState, payoutSyncState } from './accountingSyncState'
-import { badRequest, jsonResponse, requireAuthMode, serverError, type ApiContext, type ApiHonoEnv } from './apiTypes'
+import { badRequest, jsonResponse, requireAuthMode, serverError, type ApiContext, type HonoEnv } from './apiTypes'
+import { mapInvoicePaymentRow } from 'cfdg/types/invoice'
 
 const QBO_ADMIN_EMAIL = 'nwhite@whitepointsurvey.com'
 
@@ -101,6 +101,12 @@ type QboItemResponse = {
   MetaData?: { LastUpdatedTime?: string }
 }
 
+type QboPaymentMethodResponse = {
+  Id?: string
+  Name?: string
+  Active?: boolean
+}
+
 const qboSchemaReadyByDb = new WeakMap<D1Database, Promise<void>>()
 
 function normalizeString(value: unknown): string {
@@ -125,19 +131,19 @@ function createStateToken(): string {
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '')
 }
 
-function getQboEnvironment(env: ApiHonoEnv['Bindings']): 'sandbox' | 'production' {
+function getQboEnvironment(env: HonoEnv['Bindings']): 'sandbox' | 'production' {
   return normalizeString(env.QBO_ENVIRONMENT).toLowerCase() === 'sandbox' ? 'sandbox' : 'production'
 }
 
-function getQboApiBaseUrl(env: ApiHonoEnv['Bindings']): string {
+function getQboApiBaseUrl(env: HonoEnv['Bindings']): string {
   return getQboEnvironment(env) === 'sandbox' ? 'https://sandbox-quickbooks.api.intuit.com' : 'https://quickbooks.api.intuit.com'
 }
 
-function getQboMinorVersion(env: ApiHonoEnv['Bindings']): string {
+function getQboMinorVersion(env: HonoEnv['Bindings']): string {
   return normalizeString(env.QBO_MINOR_VERSION) || '75'
 }
 
-function getDocumentBaseUrl(env: ApiHonoEnv['Bindings']): string {
+function getDocumentBaseUrl(env: HonoEnv['Bindings']): string {
   const configured = normalizeString(env.INVOICE_PUBLIC_BASE_URL)
   if (!configured) {
     throw new Error('Server configuration error: Missing INVOICE_PUBLIC_BASE_URL')
@@ -145,7 +151,7 @@ function getDocumentBaseUrl(env: ApiHonoEnv['Bindings']): string {
   return configured.replace(/\/+$/g, '')
 }
 
-function requireQboConfig(env: ApiHonoEnv['Bindings']): { clientId: string; clientSecret: string; redirectUri: string } {
+function requireQboConfig(env: HonoEnv['Bindings']): { clientId: string; clientSecret: string; redirectUri: string } {
   const clientId = normalizeString(env.QBO_CLIENT_ID)
   const clientSecret = normalizeString(env.QBO_CLIENT_SECRET)
   const redirectUri = normalizeString(env.QBO_REDIRECT_URI)
@@ -359,7 +365,7 @@ async function getConnection(db: D1Database): Promise<Record<string, unknown> | 
   return db.prepare('SELECT * FROM qbo_connection WHERE id = 1').first<Record<string, unknown>>()
 }
 
-async function exchangeToken(env: ApiHonoEnv['Bindings'], body: URLSearchParams): Promise<QboTokenResponse> {
+async function exchangeToken(env: HonoEnv['Bindings'], body: URLSearchParams): Promise<QboTokenResponse> {
   const { clientId, clientSecret } = requireQboConfig(env)
   const response = await fetch('https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer', {
     method: 'POST',
@@ -379,7 +385,7 @@ async function exchangeToken(env: ApiHonoEnv['Bindings'], body: URLSearchParams)
   return data as QboTokenResponse
 }
 
-async function storeConnection(db: D1Database, env: ApiHonoEnv['Bindings'], realmId: string, token: QboTokenResponse): Promise<void> {
+async function storeConnection(db: D1Database, env: HonoEnv['Bindings'], realmId: string, token: QboTokenResponse): Promise<void> {
   const accessToken = normalizeString(token.access_token)
   const refreshToken = normalizeString(token.refresh_token)
   if (!accessToken || !refreshToken) {
@@ -408,7 +414,7 @@ async function storeConnection(db: D1Database, env: ApiHonoEnv['Bindings'], real
   ).bind(realmId, getQboEnvironment(env), accessToken, refreshToken, tokenExpiresDate, refreshExpiresDate, date, date).run()
 }
 
-async function getAccessToken(db: D1Database, env: ApiHonoEnv['Bindings']): Promise<{ realmId: string; accessToken: string }> {
+async function getAccessToken(db: D1Database, env: HonoEnv['Bindings']): Promise<{ realmId: string; accessToken: string }> {
   const connection = await getConnection(db)
   const realmId = normalizeString(connection?.realm_id)
   const accessToken = normalizeString(connection?.access_token)
@@ -430,7 +436,7 @@ async function getAccessToken(db: D1Database, env: ApiHonoEnv['Bindings']): Prom
   return { realmId, accessToken: normalizeString(token.access_token) }
 }
 
-async function qboFetch<T>(db: D1Database, env: ApiHonoEnv['Bindings'], path: string, init: RequestInit = {}): Promise<T> {
+async function qboFetch<T>(db: D1Database, env: HonoEnv['Bindings'], path: string, init: RequestInit = {}): Promise<T> {
   const { realmId, accessToken } = await getAccessToken(db, env)
   const separator = path.includes('?') ? '&' : '?'
   const response = await fetch(`${getQboApiBaseUrl(env)}/v3/company/${realmId}${path}${separator}minorversion=${encodeURIComponent(getQboMinorVersion(env))}`, {
@@ -593,6 +599,8 @@ function buildCachedCustomerPatch(
 ): QboCustomerResponse {
   const address = buildCustomerAddress(payload.address)
   const syncToken = normalizeString(qboCustomer.SyncToken || current.syncToken)
+  const email = 'email' in payload ? payload.email : ''
+  const phone = 'phone' in payload ? payload.phone : ''
   return {
     Id: current.id,
     ParentRef: parentId ? { value: parentId } : undefined,
@@ -601,8 +609,8 @@ function buildCachedCustomerPatch(
     CompanyName: normalizeString(qboCustomer.CompanyName || payload.name || current.companyName),
     GivenName: current.givenName,
     FamilyName: current.familyName,
-    PrimaryEmailAddr: payload.email ? { Address: normalizeString(payload.email).toLowerCase() } : current.primaryEmail ? { Address: current.primaryEmail } : undefined,
-    PrimaryPhone: payload.phone ? { FreeFormNumber: normalizeString(payload.phone) } : current.primaryPhone ? { FreeFormNumber: current.primaryPhone } : undefined,
+    PrimaryEmailAddr: email ? { Address: normalizeString(email).toLowerCase() } : current.primaryEmail ? { Address: current.primaryEmail } : undefined,
+    PrimaryPhone: phone ? { FreeFormNumber: normalizeString(phone) } : current.primaryPhone ? { FreeFormNumber: current.primaryPhone } : undefined,
     BillAddr: address,
     ShipAddr: parentId ? address : {
       Line1: current.shipAddrLine1,
@@ -618,7 +626,7 @@ function buildCachedCustomerPatch(
   }
 }
 
-export async function createQboClientCustomer(db: D1Database, env: ApiHonoEnv['Bindings'], payload: ClientCreatePayload): Promise<QboCustomer> {
+export async function createQboClientCustomer(db: D1Database, env: HonoEnv['Bindings'], payload: ClientCreatePayload): Promise<QboCustomer> {
   await ensureQboSchemaReady(db)
   const name = normalizeString(payload.name)
   const data = await qboFetch<{ Customer?: QboCustomerResponse }>(db, env, '/customer', {
@@ -643,7 +651,7 @@ export async function createQboClientCustomer(db: D1Database, env: ApiHonoEnv['B
   return cached
 }
 
-export async function updateQboClientCustomer(db: D1Database, env: ApiHonoEnv['Bindings'], client: QboCustomer, payload: ClientUpdatePayload): Promise<QboCustomer> {
+export async function updateQboClientCustomer(db: D1Database, env: HonoEnv['Bindings'], client: QboCustomer, payload: ClientUpdatePayload): Promise<QboCustomer> {
   await ensureQboSchemaReady(db)
   const name = normalizeString(payload.name)
   const data = await qboFetch<{ Customer?: QboCustomerResponse }>(db, env, '/customer', {
@@ -671,7 +679,60 @@ export async function updateQboClientCustomer(db: D1Database, env: ApiHonoEnv['B
   return cached
 }
 
-export async function createQboProjectCustomer(db: D1Database, env: ApiHonoEnv['Bindings'], payload: ProjectCreatePayload): Promise<QboCustomer> {
+/** Updates a QuickBooks customer or project active state and refreshes its local cache record. */
+export async function updateQboCustomerActiveState(db: D1Database, env: HonoEnv['Bindings'], customer: QboCustomer, active: boolean): Promise<QboCustomer> {
+  await ensureQboSchemaReady(db)
+  const data = await qboFetch<{ Customer?: QboCustomerResponse }>(db, env, '/customer', {
+    method: 'POST',
+    body: JSON.stringify({
+      Id: customer.id,
+      SyncToken: customer.syncToken,
+      sparse: true,
+      Active: active,
+    }),
+  })
+  const updated = data.Customer
+  const qboCustomerId = normalizeString(updated?.Id)
+  if (!updated || !qboCustomerId) {
+    throw new Error('QuickBooks did not return the updated customer status')
+  }
+  await upsertQboCustomer(db, {
+    Id: customer.id,
+    ParentRef: customer.parentId ? { value: customer.parentId } : undefined,
+    DisplayName: customer.displayName,
+    FullyQualifiedName: customer.fullyQualifiedName,
+    CompanyName: customer.companyName,
+    GivenName: customer.givenName,
+    FamilyName: customer.familyName,
+    PrimaryEmailAddr: customer.primaryEmail ? { Address: customer.primaryEmail } : undefined,
+    PrimaryPhone: customer.primaryPhone ? { FreeFormNumber: customer.primaryPhone } : undefined,
+    BillAddr: {
+      Line1: customer.billAddrLine1,
+      Line2: customer.billAddrLine2,
+      City: customer.billAddrCity,
+      CountrySubDivisionCode: customer.billAddrState,
+      PostalCode: customer.billAddrPostalCode,
+    },
+    ShipAddr: {
+      Line1: customer.shipAddrLine1,
+      Line2: customer.shipAddrLine2,
+      City: customer.shipAddrCity,
+      CountrySubDivisionCode: customer.shipAddrState,
+      PostalCode: customer.shipAddrPostalCode,
+    },
+    Active: active,
+    SyncToken: normalizeString(updated.SyncToken || customer.syncToken),
+    Job: Boolean(customer.parentId),
+    MetaData: { LastUpdatedTime: normalizeString(updated.MetaData?.LastUpdatedTime || customer.qboUpdatedTime) },
+  }, nowIso())
+  const cached = await fetchCachedQboCustomer(db, qboCustomerId)
+  if (!cached) {
+    throw new Error('QuickBooks customer was not cached after status update')
+  }
+  return cached
+}
+
+export async function createQboProjectCustomer(db: D1Database, env: HonoEnv['Bindings'], payload: ProjectCreatePayload): Promise<QboCustomer> {
   await ensureQboSchemaReady(db)
   const name = normalizeString(payload.name)
   const parentCustomerId = normalizeString(payload.parentCustomerId)
@@ -684,7 +745,6 @@ export async function createQboProjectCustomer(db: D1Database, env: ApiHonoEnv['
       Job: true,
       BillAddr: buildCustomerAddress(payload.address),
       ShipAddr: buildCustomerAddress(payload.address),
-      ...buildCustomerContact(payload),
     }),
   })
   const customer = data.Customer
@@ -700,7 +760,7 @@ export async function createQboProjectCustomer(db: D1Database, env: ApiHonoEnv['
   return cached
 }
 
-export async function updateQboProjectCustomer(db: D1Database, env: ApiHonoEnv['Bindings'], project: QboCustomer, payload: ProjectUpdatePayload): Promise<QboCustomer> {
+export async function updateQboProjectCustomer(db: D1Database, env: HonoEnv['Bindings'], project: QboCustomer, payload: ProjectUpdatePayload): Promise<QboCustomer> {
   await ensureQboSchemaReady(db)
   const name = normalizeString(payload.name)
   const data = await qboFetch<{ Customer?: QboCustomerResponse }>(db, env, '/customer', {
@@ -715,7 +775,6 @@ export async function updateQboProjectCustomer(db: D1Database, env: ApiHonoEnv['
       Job: true,
       BillAddr: buildCustomerAddress(payload.address),
       ShipAddr: buildCustomerAddress(payload.address),
-      ...buildCustomerContact(payload),
     }),
   })
   const customer = data.Customer
@@ -731,7 +790,7 @@ export async function updateQboProjectCustomer(db: D1Database, env: ApiHonoEnv['
   return cached
 }
 
-export async function moveQboProjectCustomer(db: D1Database, env: ApiHonoEnv['Bindings'], project: QboCustomer, parentCustomerId: string): Promise<QboCustomer> {
+export async function moveQboProjectCustomer(db: D1Database, env: HonoEnv['Bindings'], project: QboCustomer, parentCustomerId: string): Promise<QboCustomer> {
   await ensureQboSchemaReady(db)
   const data = await qboFetch<{ Customer?: QboCustomerResponse }>(db, env, '/customer', {
     method: 'POST',
@@ -782,7 +841,7 @@ export async function moveQboProjectCustomer(db: D1Database, env: ApiHonoEnv['Bi
   return cached
 }
 
-export async function syncQboCustomers(db: D1Database, env: ApiHonoEnv['Bindings']): Promise<number> {
+export async function syncQboCustomers(db: D1Database, env: HonoEnv['Bindings']): Promise<number> {
   await ensureQboSchemaReady(db)
   let startPosition = 1
   let syncedCount = 0
@@ -833,7 +892,7 @@ async function upsertQboServiceItem(db: D1Database, item: QboItemResponse, synce
   ).run()
 }
 
-export async function syncQboServiceItems(db: D1Database, env: ApiHonoEnv['Bindings']): Promise<number> {
+export async function syncQboServiceItems(db: D1Database, env: HonoEnv['Bindings']): Promise<number> {
   await ensureQboSchemaReady(db)
   let startPosition = 1
   let syncedCount = 0
@@ -889,7 +948,7 @@ async function upsertQboAccount(db: D1Database, account: QboAccountResponse, syn
   ).run()
 }
 
-export async function syncQboAccounts(db: D1Database, env: ApiHonoEnv['Bindings']): Promise<number> {
+export async function syncQboAccounts(db: D1Database, env: HonoEnv['Bindings']): Promise<number> {
   await ensureQboSchemaReady(db)
   let startPosition = 1
   let syncedCount = 0
@@ -924,7 +983,7 @@ async function getPaymentDepositSettings(db: D1Database): Promise<{ depositAccou
   }
 }
 
-async function getQboPaymentTxnLineId(db: D1Database, env: ApiHonoEnv['Bindings'], paymentId: string): Promise<string> {
+async function getQboPaymentTxnLineId(db: D1Database, env: HonoEnv['Bindings'], paymentId: string): Promise<string> {
   const normalizedPaymentId = normalizeString(paymentId)
   if (!normalizedPaymentId) return ''
 
@@ -944,7 +1003,42 @@ function paymentPrivateNote(payment: InvoicePayment): string {
   return payment.note ? `${payment.note} ${referenceDetail}.` : `${referenceDetail} synced from Compass.`
 }
 
-export async function syncInvoiceToQbo(db: D1Database, env: ApiHonoEnv['Bindings'], invoice: Invoice): Promise<string> {
+function paymentMethodNames(method: string): string[] {
+  const supportedMethods: Record<string, string[]> = {
+    ach: ['ACH'],
+    'ach / bank transfer': ['ACH'],
+    'credit card': ['Credit Card'],
+    check: ['Check'],
+    cash: ['Cash'],
+    'stripe other payment': ['Stripe Other Payment'],
+  }
+  return supportedMethods[normalizeString(method).toLowerCase()] || []
+}
+
+/** Finds the active QuickBooks payment method corresponding to a Compass payment method. */
+async function getQboPaymentMethodId(db: D1Database, env: HonoEnv['Bindings'], method: string): Promise<string> {
+  const names = paymentMethodNames(method).map((name) => name.toLowerCase())
+  if (names.length === 0 || !names[0]) return ''
+
+  const query = encodeURIComponent('SELECT * FROM PaymentMethod')
+  const data = await qboFetch<{ QueryResponse?: { PaymentMethod?: QboPaymentMethodResponse[] } }>(db, env, `/query?query=${query}`)
+  const paymentMethods = data.QueryResponse?.PaymentMethod || []
+  const matchedMethod = paymentMethods.find((paymentMethod) => (
+    paymentMethod.Active !== false && names.includes(normalizeString(paymentMethod.Name).toLowerCase())
+  ))
+  return normalizeString(matchedMethod?.Id)
+}
+
+async function buildQboPaymentFields(db: D1Database, env: HonoEnv['Bindings'], payment: InvoicePayment): Promise<Record<string, unknown>> {
+  const referenceNumber = normalizeString(payment.referenceNumber)
+  const paymentMethodId = await getQboPaymentMethodId(db, env, payment.method)
+  return {
+    ...(referenceNumber ? { PaymentRefNum: referenceNumber } : {}),
+    ...(paymentMethodId ? { PaymentMethodRef: { value: paymentMethodId } } : {}),
+  }
+}
+
+export async function syncInvoiceToQbo(db: D1Database, env: HonoEnv['Bindings'], invoice: Invoice): Promise<string> {
   await ensureQboSchemaReady(db)
   const customerRef = normalizeString(invoice.qboProjectId || invoice.qboCustomerId)
   if (!customerRef) return ''
@@ -990,7 +1084,7 @@ export async function syncInvoiceToQbo(db: D1Database, env: ApiHonoEnv['Bindings
   return qboInvoiceId
 }
 
-export async function syncPaymentToQbo(db: D1Database, env: ApiHonoEnv['Bindings'], invoice: Invoice): Promise<void> {
+export async function syncPaymentToQbo(db: D1Database, env: HonoEnv['Bindings'], invoice: Invoice): Promise<void> {
   await ensureQboSchemaReady(db)
   if (!invoice.qboInvoiceId || invoice.qboPaymentId) return
   const customerRef = normalizeString(invoice.qboProjectId || invoice.qboCustomerId)
@@ -1029,9 +1123,10 @@ export async function syncPaymentToQbo(db: D1Database, env: ApiHonoEnv['Bindings
   }
 }
 
-export async function syncInvoicePaymentToQbo(db: D1Database, env: ApiHonoEnv['Bindings'], invoice: Invoice, payment: InvoicePayment): Promise<void> {
+export async function syncInvoicePaymentToQbo(db: D1Database, env: HonoEnv['Bindings'], invoice: Invoice, payment: InvoicePayment): Promise<void> {
   await ensureQboSchemaReady(db)
   if (payment.status !== 'succeeded' || payment.grossCents <= 0) return
+  if (payment.stripePaymentIntentId && payment.method === 'Stripe Details Pending') return
   const customerRef = normalizeString(invoice.qboProjectId || invoice.qboCustomerId)
   if (!customerRef) return
   const qboInvoiceId = invoice.qboInvoiceId || await syncInvoiceToQbo(db, env, invoice)
@@ -1041,6 +1136,7 @@ export async function syncInvoicePaymentToQbo(db: D1Database, env: ApiHonoEnv['B
 
   let paymentId = payment.qboPaymentId
   if (!paymentId) {
+    const qboPaymentFields = await buildQboPaymentFields(db, env, payment)
     const data = await qboFetch<QboInvoiceResponse>(db, env, '/payment', {
       method: 'POST',
       body: JSON.stringify({
@@ -1048,6 +1144,7 @@ export async function syncInvoicePaymentToQbo(db: D1Database, env: ApiHonoEnv['B
         TotalAmt: qboAmount(payment.grossCents),
         TxnDate: (payment.paidDate || nowIso()).slice(0, 10),
         PrivateNote: paymentPrivateNote(payment),
+        ...qboPaymentFields,
         Line: [
           {
             Amount: qboAmount(payment.grossCents),
@@ -1084,7 +1181,7 @@ export async function syncInvoicePaymentToQbo(db: D1Database, env: ApiHonoEnv['B
     }), invoice.id).run()
 
     const { depositAccountId, feeExpenseAccountId } = await getPaymentDepositSettings(db)
-    const shouldCreateImmediateDeposit = !payment.stripeBalanceTransactionId && payment.method.toLowerCase() !== 'stripe'
+    const shouldCreateImmediateDeposit = !payment.stripeBalanceTransactionId && !payment.stripePaymentIntentId
     if (shouldCreateImmediateDeposit && depositAccountId && !payment.qboDepositId) {
       if (payment.feeCents > 0 && !feeExpenseAccountId) {
         throw new Error('QuickBooks Stripe fee expense account is not selected')
@@ -1141,7 +1238,7 @@ async function fetchSavedInvoicePayment(db: D1Database, paymentId: string): Prom
 
 export async function syncStripePayoutDepositToQbo(
   db: D1Database,
-  env: ApiHonoEnv['Bindings'],
+  env: HonoEnv['Bindings'],
   payout: StripePayoutDepositInput,
   payoutPayments: StripePayoutDepositPayment[]
 ): Promise<string> {
@@ -1257,7 +1354,7 @@ export async function syncStripePayoutDepositToQbo(
   return depositId
 }
 
-export async function voidInvoiceInQbo(db: D1Database, env: ApiHonoEnv['Bindings'], invoice: Invoice): Promise<void> {
+export async function voidInvoiceInQbo(db: D1Database, env: HonoEnv['Bindings'], invoice: Invoice): Promise<void> {
   await ensureQboSchemaReady(db)
   if (!invoice.qboInvoiceId) return
   const data = await qboFetch<QboInvoiceResponse>(db, env, `/invoice/${encodeURIComponent(invoice.qboInvoiceId)}`)
@@ -1297,7 +1394,7 @@ async function setInvoiceQboSyncError(db: D1Database, invoiceId: string, message
   }), invoiceId).run()
 }
 
-export async function trySyncPaymentToQbo(db: D1Database, env: ApiHonoEnv['Bindings'], invoice: Invoice): Promise<void> {
+export async function trySyncPaymentToQbo(db: D1Database, env: HonoEnv['Bindings'], invoice: Invoice): Promise<void> {
   try {
     await syncPaymentToQbo(db, env, invoice)
   } catch (error: unknown) {
@@ -1305,7 +1402,7 @@ export async function trySyncPaymentToQbo(db: D1Database, env: ApiHonoEnv['Bindi
   }
 }
 
-export async function trySyncInvoicePaymentToQbo(db: D1Database, env: ApiHonoEnv['Bindings'], invoice: Invoice, payment: InvoicePayment): Promise<void> {
+export async function trySyncInvoicePaymentToQbo(db: D1Database, env: HonoEnv['Bindings'], invoice: Invoice, payment: InvoicePayment): Promise<void> {
   try {
     await syncInvoicePaymentToQbo(db, env, invoice, payment)
   } catch (error: unknown) {
@@ -1324,7 +1421,7 @@ export async function trySyncInvoicePaymentToQbo(db: D1Database, env: ApiHonoEnv
 }
 
 export function createQboApi() {
-  const app = new Hono<ApiHonoEnv>()
+  const app = new Hono<HonoEnv>()
 
   app.get('/api/qbo/status', async (context) => {
     try {

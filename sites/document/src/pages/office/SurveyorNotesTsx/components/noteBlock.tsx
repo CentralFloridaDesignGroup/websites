@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Button } from '@wps/input';
-import { showNotification } from '@wps/layout';
+import { Button } from 'cfdg/input';
+import { showNotification } from 'cfdg/layout';
 
 export function NoteBlock({
     title,

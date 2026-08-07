@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2020",
+    "jsx": "react-jsx",
     "useDefineForClassFields": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
@@ -19,20 +20,31 @@
     "moduleResolution": "bundler",
     "paths": {
       "@styles/*": ["./styles/*"],
-      "@wps/input": ["./packages/@wps/input/src"],
-      "@wps/input/*": ["./packages/@wps/input/src/*"],
-      "@wps/layout": ["./packages/@wps/layout/src"],
-      "@wps/layout/*": ["./packages/@wps/layout/src/*"],
-      "@wps/scripts": ["./packages/@wps/scripts/src"],
-      "@wps/scripts/*": ["./packages/@wps/scripts/src/*"]
+      "cfdg/input": ["./packages/cfdg/input/src"],
+      "cfdg/input/*": ["./packages/cfdg/input/src/*"],
+      "cfdg/layout": ["./packages/cfdg/layout/src"],
+      "cfdg/layout/*": ["./packages/cfdg/layout/src/*"],
+      "cfdg/scripts": ["./packages/cfdg/scripts/src"],
+      "cfdg/scripts/*": ["./packages/cfdg/scripts/src/*"],
+      "cfdg/types": ["./packages/cfdg/types/src/types"],
+      "cfdg/types/*": ["./packages/cfdg/types/src/types/*"],
+      "cfdg/types/mappers": ["./packages/cfdg/types/src/mappers"],
+      "cfdg/types/constants": ["./packages/cfdg/types/src/constants"],
+      "cfdg/types/constants/*": ["./packages/cfdg/types/src/constants/*"],
+      "cfdg/ui/input": ["./packages/cfdg/ui/src/input"],
+      "cfdg/ui/input/*": ["./packages/cfdg/ui/src/input/*"],
+      "cfdg/ui/layout": ["./packages/cfdg/ui/src/layout"],
+      "cfdg/ui/layout/*": ["./packages/cfdg/ui/src/layout/*"]
     }
   },
   "include": ["packages", "sites"],
   "exclude": ["**/dist", "**/node_modules"],
   "references": [
-    { "path": "./packages/@wps/input" },
-    { "path": "./packages/@wps/layout" },
-    { "path": "./packages/@wps/scripts" },
+    { "path": "./packages/cfdg/input" },
+    { "path": "./packages/cfdg/layout" },
+    { "path": "./packages/cfdg/scripts" },
+    { "path": "./packages/cfdg/types" },
+    { "path": "./packages/cfdg/ui" },
     { "path": "./sites/main" },
     { "path": "./sites/document" },
     { "path": "./sites/api" }

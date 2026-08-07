@@ -1,29 +1,27 @@
-import {
-  INVOICE_STATUSES,
-  mapInvoiceContactRecipientRow,
-  mapInvoiceLineItemRow,
-  mapInvoicePaymentRow,
-  mapInvoiceRow,
-  type Invoice,
-  type InvoiceContactRecipient,
-  type InvoiceContactRecipientRow,
-  type InvoiceLineItem,
-  type InvoiceLineItemRow,
-  type InvoicePayment,
-  type InvoicePaymentKind,
-  type InvoicePaymentRow,
-  type InvoiceRow,
-  type InvoiceStatus,
-  type ProjectManager,
-  type ProjectInvoiceDocument,
-} from '@wps/scripts'
+import type {
+  Invoice,
+  InvoiceContactRecipient,
+  InvoiceContactRecipientRow,
+  InvoiceLineItem,
+  InvoiceLineItemRow,
+  InvoicePayment,
+  InvoicePaymentKind,
+  InvoicePaymentRow,
+  InvoiceRow,
+  InvoiceStatus,
+  ProjectManager,
+  ProjectInvoiceDocument,
+} from 'cfdg/types'
 import { Hono } from 'hono'
 import { invoiceSyncState, paymentSyncState, payoutSyncState } from './accountingSyncState'
-import { badRequest, jsonResponse, requireAuthMode, serverError, type ApiHonoEnv } from './apiTypes'
+import { badRequest, jsonResponse, requireAuthMode, serverError, type HonoEnv } from './apiTypes'
 import { ensureQboSchemaReady, syncInvoiceToQbo, syncStripePayoutDepositToQbo, trySyncInvoicePaymentToQbo, voidInvoiceInQbo } from './qboApi'
 import { ensureProjectManagementSchemaReady, fetchActiveClientContactsByIds, fetchProjectBillingProfile, fetchProjectInvoiceDocuments, fetchProjectManager } from './projectManagementApi'
+import { INVOICE_STATUSES } from 'cfdg/types/constants'
+import { mapInvoiceContactRecipientRow, mapInvoiceLineItemRow, mapInvoicePaymentRow, mapInvoiceRow } from 'cfdg/types/mappers'
 
 type InvoiceLineItemInput = {
+  projectTaskId?: unknown
   description?: unknown
   quantity?: unknown
   unitAmountCents?: unknown
@@ -129,7 +127,13 @@ type StripePaymentIntent = {
   amount?: number
   amount_received?: number
   metadata?: Record<string, string>
+  payment_method?: string | StripePaymentMethod
   latest_charge?: string | { id?: string; balance_transaction?: string | StripeBalanceTransaction }
+}
+
+type StripePaymentMethod = {
+  id?: string
+  type?: string
 }
 
 type StripeCharge = {
@@ -149,6 +153,16 @@ type StripeBalanceTransaction = {
 type StripeListResponse<T> = {
   data?: T[]
   has_more?: boolean
+}
+
+type StripePaymentDetails = {
+  chargeId: string
+  balanceTransactionId: string
+  grossCents: number
+  feeCents: number
+  netCents: number
+  method: string
+  paymentMethodResolved: boolean
 }
 
 const invoiceSchemaReadyByDb = new WeakMap<D1Database, Promise<void>>()
@@ -175,7 +189,7 @@ function normalizeString(value: unknown): string {
   return String(value ?? '').trim()
 }
 
-function getStripeSecretKey(env: ApiHonoEnv['Bindings']): string {
+function getStripeSecretKey(env: HonoEnv['Bindings']): string {
   const stripeSecretKey = normalizeString(env.STRIPE_SECRET_KEY)
   if (!stripeSecretKey) {
     throw new Error('Server configuration error: Missing STRIPE_SECRET_KEY')
@@ -189,7 +203,7 @@ function getStripeSecretKey(env: ApiHonoEnv['Bindings']): string {
   return stripeSecretKey
 }
 
-function getStripePublishableKey(env: ApiHonoEnv['Bindings']): string {
+function getStripePublishableKey(env: HonoEnv['Bindings']): string {
   const publishableKey = normalizeString(env.STRIPE_PUBLISHABLE_KEY)
   if (!publishableKey) {
     throw new Error('Server configuration error: Missing STRIPE_PUBLISHABLE_KEY')
@@ -472,6 +486,7 @@ async function ensureInvoicesSchema(db: D1Database): Promise<void> {
   await backfillInvoiceProjectAddressSnapshots(db)
 
   const lineItemColumns = [
+    'project_task_id INTEGER',
     'contract_amount_cents INTEGER NOT NULL DEFAULT 0',
     'percent_complete REAL NOT NULL DEFAULT 0',
     'bill_in_full INTEGER NOT NULL DEFAULT 0',
@@ -480,6 +495,7 @@ async function ensureInvoicesSchema(db: D1Database): Promise<void> {
   for (const column of lineItemColumns) {
     await ensureColumn(db, 'invoice_line_items', column)
   }
+  await db.prepare('CREATE INDEX IF NOT EXISTS idx_invoice_line_items_project_task_id ON invoice_line_items(project_task_id)').run()
 
   const paymentColumns = [
     'kind TEXT NOT NULL DEFAULT \'payment\'',
@@ -574,6 +590,7 @@ function normalizeLineItems(value: unknown): InvoiceLineItemInput[] {
   return value
     .filter((entry): entry is Record<string, unknown> => Boolean(entry) && typeof entry === 'object')
     .map((entry) => ({
+      projectTaskId: entry.projectTaskId ?? entry.project_task_id,
       description: entry.description,
       quantity: entry.quantity,
       unitAmountCents: entry.unitAmountCents ?? entry.unit_amount_cents,
@@ -607,6 +624,7 @@ function prepareLineItems(value: unknown): Array<Omit<InvoiceLineItem, 'id' | 'i
       const quantity = percentComplete
       const unitAmountCents = contractAmountCents
       return {
+        projectTaskId: normalizeString(item.projectTaskId),
         description,
         quantity,
         unitAmountCents,
@@ -810,10 +828,11 @@ async function replaceLineItems(db: D1Database, invoiceId: string, lineItems: Ar
   for (const item of lineItems) {
     await db.prepare(
       `INSERT INTO invoice_line_items (
-         invoice_id, description, quantity, unit_amount_cents, contract_amount_cents, percent_complete, amount_cents, bill_in_full, sort_order
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+         invoice_id, project_task_id, description, quantity, unit_amount_cents, contract_amount_cents, percent_complete, amount_cents, bill_in_full, sort_order
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).bind(
       invoiceId,
+      item.projectTaskId || null,
       item.description,
       item.quantity,
       item.unitAmountCents,
@@ -853,6 +872,7 @@ async function getProjectPreviouslyBilledCents(db: D1Database, qboProjectId: str
 
 async function copyInvoiceToDraft(db: D1Database, source: Invoice, copiedBy: string): Promise<Invoice | null> {
   const lineItems = source.lineItems.map((item) => ({
+    projectTaskId: item.projectTaskId,
     description: item.description,
     quantity: item.quantity,
     unitAmountCents: item.unitAmountCents,
@@ -977,7 +997,7 @@ function formatInvoiceEmailDate(value: string): string {
   return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(date)
 }
 
-function getInvoicePublicBaseUrl(env: ApiHonoEnv['Bindings']): string {
+function getInvoicePublicBaseUrl(env: HonoEnv['Bindings']): string {
   const configured = normalizeString(env.INVOICE_PUBLIC_BASE_URL)
   if (!configured) {
     throw new Error('Server configuration error: Missing INVOICE_PUBLIC_BASE_URL')
@@ -1012,7 +1032,7 @@ function encodeBase64(bytes: Uint8Array): string {
   return btoa(binary)
 }
 
-async function buildProjectEmailAttachments(env: ApiHonoEnv['Bindings'], documents: ProjectInvoiceDocument[]): Promise<NormalizedEmailAttachment[]> {
+async function buildProjectEmailAttachments(env: HonoEnv['Bindings'], documents: ProjectInvoiceDocument[]): Promise<NormalizedEmailAttachment[]> {
   const attachments: NormalizedEmailAttachment[] = []
   for (const document of documents) {
     const object = await env.INVOICE_DOCUMENTS.get(document.r2Key)
@@ -1160,7 +1180,7 @@ function hasInvoiceDeliveryNoticeForFailure(invoice: Invoice, event: string, rec
     && (!messageId || existing.messageId === messageId)
 }
 
-async function sendInvoiceDeliveryIssueEmail(env: ApiHonoEnv['Bindings'], invoice: Invoice, manager: ProjectManager, state: InvoiceEmailDeliveryStatePayload): Promise<string[]> {
+async function sendInvoiceDeliveryIssueEmail(env: HonoEnv['Bindings'], invoice: Invoice, manager: ProjectManager, state: InvoiceEmailDeliveryStatePayload): Promise<string[]> {
   const apiKey = normalizeString(env.BREVO_API_KEY)
   const senderEmail = normalizeString(env.SENDER_EMAIL)
   if (!apiKey) {
@@ -1209,7 +1229,7 @@ async function sendInvoiceDeliveryIssueEmail(env: ApiHonoEnv['Bindings'], invoic
   return noticeRecipients
 }
 
-async function handleBrevoInvoiceDeliveryWebhook(db: D1Database, env: ApiHonoEnv['Bindings'], payload: BrevoWebhookPayload): Promise<boolean> {
+async function handleBrevoInvoiceDeliveryWebhook(db: D1Database, env: HonoEnv['Bindings'], payload: BrevoWebhookPayload): Promise<boolean> {
   const event = getBrevoDeliveryEvent(payload)
   if (!isTrackedBrevoDeliveryEvent(event)) return false
 
@@ -1241,7 +1261,7 @@ async function handleBrevoInvoiceDeliveryWebhook(db: D1Database, env: ApiHonoEnv
   return true
 }
 
-async function sendInvoiceEmail(invoice: Invoice, env: ApiHonoEnv['Bindings'], manager: ProjectManager, attachments: NormalizedEmailAttachment[] = [], bccSenderEmail = ''): Promise<string> {
+async function sendInvoiceEmail(invoice: Invoice, env: HonoEnv['Bindings'], manager: ProjectManager, attachments: NormalizedEmailAttachment[] = [], bccSenderEmail = ''): Promise<string> {
   const apiKey = normalizeString(env.BREVO_API_KEY)
   const senderEmail = normalizeString(env.SENDER_EMAIL)
   if (!apiKey) {
@@ -1299,7 +1319,7 @@ async function sendInvoiceEmail(invoice: Invoice, env: ApiHonoEnv['Bindings'], m
   return normalizeString(data?.messageId || data?.messageIds?.[0])
 }
 
-async function sendStripePayoutEmail(env: ApiHonoEnv['Bindings'], payout: StripePayout, matchedPaymentsCount = 0): Promise<void> {
+async function sendStripePayoutEmail(env: HonoEnv['Bindings'], payout: StripePayout, matchedPaymentsCount = 0): Promise<void> {
   const apiKey = normalizeString(env.BREVO_API_KEY)
   const senderEmail = normalizeString(env.SENDER_EMAIL)
   if (!apiKey) {
@@ -1340,7 +1360,7 @@ async function sendStripePayoutEmail(env: ApiHonoEnv['Bindings'], payout: Stripe
   }
 }
 
-async function getGraphAccessToken(env: ApiHonoEnv['Bindings']): Promise<string> {
+async function getGraphAccessToken(env: HonoEnv['Bindings']): Promise<string> {
   const tenantId = normalizeString(env.MICROSOFT_TENANT_ID)
   const clientId = normalizeString(env.MICROSOFT_CLIENT_ID)
   const clientSecret = normalizeString(env.MICROSOFT_CLIENT_SECRET)
@@ -1365,7 +1385,7 @@ async function getGraphAccessToken(env: ApiHonoEnv['Bindings']): Promise<string>
   return data.access_token
 }
 
-async function fetchAccountingAccessRecipients(env: ApiHonoEnv['Bindings']): Promise<Array<{ email: string; name: string }>> {
+async function fetchAccountingAccessRecipients(env: HonoEnv['Bindings']): Promise<Array<{ email: string; name: string }>> {
   const accessToken = await getGraphAccessToken(env)
   const recipients = new Map<string, { email: string; name: string }>()
   let url = `https://graph.microsoft.com/v1.0/groups/${encodeURIComponent(ACCOUNTING_ACCESS_GROUP_ID)}/members/microsoft.graph.user?$select=displayName,mail,userPrincipalName&$top=999`
@@ -1390,7 +1410,7 @@ async function fetchAccountingAccessRecipients(env: ApiHonoEnv['Bindings']): Pro
   return Array.from(recipients.values())
 }
 
-async function sendAccountingPaymentSubmittedEmail(env: ApiHonoEnv['Bindings'], invoice: Invoice, payment: InvoicePayment): Promise<void> {
+async function sendAccountingPaymentSubmittedEmail(env: HonoEnv['Bindings'], invoice: Invoice, payment: InvoicePayment): Promise<void> {
   const apiKey = normalizeString(env.BREVO_API_KEY)
   const senderEmail = normalizeString(env.SENDER_EMAIL)
   if (!apiKey) {
@@ -1441,7 +1461,7 @@ async function sendAccountingPaymentSubmittedEmail(env: ApiHonoEnv['Bindings'], 
   }
 }
 
-async function notifyAccountingPaymentSubmitted(db: D1Database, env: ApiHonoEnv['Bindings'], invoice: Invoice, payment: InvoicePayment): Promise<void> {
+async function notifyAccountingPaymentSubmitted(db: D1Database, env: HonoEnv['Bindings'], invoice: Invoice, payment: InvoicePayment): Promise<void> {
   if (payment.status !== 'succeeded' || payment.grossCents <= 0 || payment.accountingNotificationSentDate) return
   try {
     await sendAccountingPaymentSubmittedEmail(env, invoice, payment)
@@ -1467,7 +1487,7 @@ async function notifyAccountingPaymentSubmitted(db: D1Database, env: ApiHonoEnv[
         stripePayoutId: payment.stripePayoutId,
         stripePayoutStatus: payment.stripePayoutStatus,
         stripePayoutReconciledDate: payment.stripePayoutReconciledDate,
-        stripeDetailsStatus: payment.method.toLowerCase() === 'stripe' ? (payment.stripeBalanceTransactionId ? 'complete' : 'details_pending') : '',
+        stripeDetailsStatus: payment.stripePaymentIntentId ? (payment.stripeBalanceTransactionId ? 'complete' : 'details_pending') : '',
         accountingNotificationSentDate: date,
       }),
       date,
@@ -1482,7 +1502,7 @@ function getInvoiceBillingEmail(invoice: Invoice): string {
   return invoice.contacts[0]?.email || invoice.clientEmail
 }
 
-async function createStripeCheckoutSession(invoice: Invoice, env: ApiHonoEnv['Bindings'], amountCents: number): Promise<StripeCheckoutSession> {
+async function createStripeCheckoutSession(invoice: Invoice, env: HonoEnv['Bindings'], amountCents: number): Promise<StripeCheckoutSession> {
   const stripeSecretKey = getStripeSecretKey(env)
 
   const params = new URLSearchParams()
@@ -1528,7 +1548,7 @@ async function createStripeCheckoutSession(invoice: Invoice, env: ApiHonoEnv['Bi
   return data as StripeCheckoutSession
 }
 
-async function stripeFetch<T>(env: ApiHonoEnv['Bindings'], path: string): Promise<T | null> {
+async function stripeFetch<T>(env: HonoEnv['Bindings'], path: string): Promise<T | null> {
   const stripeSecretKey = getStripeSecretKey(env)
   const response = await fetch(`https://api.stripe.com/v1${path}`, {
     headers: { Authorization: `Bearer ${stripeSecretKey}` },
@@ -1561,18 +1581,49 @@ function escapeHtml(value: unknown): string {
     .replace(/'/g, '&#39;')
 }
 
-async function getStripePaymentDetails(env: ApiHonoEnv['Bindings'], paymentIntentId: string): Promise<{
-  chargeId: string
-  balanceTransactionId: string
-  grossCents: number
-  feeCents: number
-  netCents: number
-}> {
+function stripeLedgerMethod(paymentMethodType: unknown): Pick<StripePaymentDetails, 'method' | 'paymentMethodResolved'> {
+  switch (normalizeString(paymentMethodType).toLowerCase()) {
+    case 'card':
+      return { method: 'Credit Card', paymentMethodResolved: true }
+    case 'us_bank_account':
+      return { method: 'ACH', paymentMethodResolved: true }
+    case '':
+      return { method: 'Stripe Details Pending', paymentMethodResolved: false }
+    default:
+      return { method: 'Stripe Other Payment', paymentMethodResolved: true }
+  }
+}
+
+async function validateProjectTaskLinks(db: D1Database, qboProjectId: string, lineItems: Array<Omit<InvoiceLineItem, 'id' | 'invoiceId'>>): Promise<Response | null> {
+  const taskIds = Array.from(new Set(lineItems.map((item) => normalizeString(item.projectTaskId)).filter(Boolean)))
+  if (taskIds.length === 0) return null
+  if (!qboProjectId) return badRequest('A project is required when using project tasks')
+  const placeholders = taskIds.map(() => '?').join(', ')
+  const rows = await db.prepare(`SELECT id FROM project_tasks WHERE qbo_project_id = ? AND active = 1 AND id IN (${placeholders})`).bind(qboProjectId, ...taskIds).all<{ id?: unknown }>()
+  if ((rows.results || []).length !== taskIds.length) return badRequest('One or more invoice tasks do not belong to the selected active project')
+  return null
+}
+
+function pendingStripePaymentDetails(grossCents: number): StripePaymentDetails {
+  return {
+    chargeId: '',
+    balanceTransactionId: '',
+    grossCents,
+    feeCents: 0,
+    netCents: grossCents,
+    method: 'Stripe Details Pending',
+    paymentMethodResolved: false,
+  }
+}
+
+async function getStripePaymentDetails(env: HonoEnv['Bindings'], paymentIntentId: string): Promise<StripePaymentDetails> {
   if (!paymentIntentId) {
-    return { chargeId: '', balanceTransactionId: '', grossCents: 0, feeCents: 0, netCents: 0 }
+    return pendingStripePaymentDetails(0)
   }
 
-  const paymentIntent = await stripeFetch<StripePaymentIntent>(env, `/payment_intents/${encodeURIComponent(paymentIntentId)}?expand[]=latest_charge.balance_transaction`)
+  const paymentIntent = await stripeFetch<StripePaymentIntent>(env, `/payment_intents/${encodeURIComponent(paymentIntentId)}?expand[]=payment_method&expand[]=latest_charge.balance_transaction`)
+  const paymentMethod = paymentIntent?.payment_method
+  const paymentMethodType = paymentMethod && typeof paymentMethod === 'object' ? paymentMethod.type : ''
   const latestCharge = paymentIntent?.latest_charge
   const expandedCharge = latestCharge && typeof latestCharge === 'object' ? latestCharge as StripeCharge : null
   const chargeId = getExpandedId(latestCharge)
@@ -1597,10 +1648,11 @@ async function getStripePaymentDetails(env: ApiHonoEnv['Bindings'], paymentInten
     grossCents: normalizeAmountCents(balanceTransaction?.amount),
     feeCents: normalizeAmountCents(balanceTransaction?.fee),
     netCents: Math.max(0, normalizeAmountCents(balanceTransaction?.net)),
+    ...stripeLedgerMethod(paymentMethodType),
   }
 }
 
-async function listStripePayoutBalanceTransactions(env: ApiHonoEnv['Bindings'], payoutId: string): Promise<StripeBalanceTransaction[]> {
+async function listStripePayoutBalanceTransactions(env: HonoEnv['Bindings'], payoutId: string): Promise<StripeBalanceTransaction[]> {
   const transactions: StripeBalanceTransaction[] = []
   let startingAfter = ''
   while (true) {
@@ -1669,7 +1721,7 @@ async function upsertInvoicePayment(db: D1Database, payment: {
     ? await fetchInvoicePaymentByStripe(db, payment.stripeCheckoutSessionId || '', payment.stripePaymentIntentId || '')
     : null
   const date = nowIso()
-  const stripeDetailsStatus = payment.method.toLowerCase() === 'stripe' ? (payment.stripeBalanceTransactionId ? 'complete' : 'details_pending') : ''
+  const stripeDetailsStatus = payment.stripePaymentIntentId ? (payment.stripeBalanceTransactionId ? 'complete' : 'details_pending') : ''
   if (existing) {
     await db.prepare(
       `UPDATE invoice_payments
@@ -1876,7 +1928,7 @@ async function markPayoutPaymentsReconciled(db: D1Database, payoutId: string, ba
   }
 }
 
-async function handleStripePayoutPaid(db: D1Database, env: ApiHonoEnv['Bindings'], payout: StripePayout): Promise<void> {
+async function handleStripePayoutPaid(db: D1Database, env: HonoEnv['Bindings'], payout: StripePayout): Promise<void> {
   const payoutId = normalizeString(payout.id)
   if (!payoutId) return
   const row = await upsertStripePayout(db, payout, 'paid')
@@ -1892,7 +1944,7 @@ async function handleStripePayoutPaid(db: D1Database, env: ApiHonoEnv['Bindings'
   ).bind(date, payoutSyncState({ payoutStatus: 'paid', payoutEmailSentDate: date }), date, payoutId).run()
 }
 
-async function handleStripePayoutReconciled(db: D1Database, env: ApiHonoEnv['Bindings'], payout: StripePayout): Promise<void> {
+async function handleStripePayoutReconciled(db: D1Database, env: HonoEnv['Bindings'], payout: StripePayout): Promise<void> {
   const payoutId = normalizeString(payout.id)
   if (!payoutId) return
   await upsertStripePayout(db, payout, 'reconciled')
@@ -1936,7 +1988,7 @@ async function handleStripePayoutReconciled(db: D1Database, env: ApiHonoEnv['Bin
   }
 }
 
-async function markInvoicePaidFromStripe(db: D1Database, env: ApiHonoEnv['Bindings'], session: StripeCheckoutSession): Promise<void> {
+async function markInvoicePaidFromStripe(db: D1Database, env: HonoEnv['Bindings'], session: StripeCheckoutSession): Promise<void> {
   const invoiceId = normalizeString(session.metadata?.invoice_id)
   const sessionId = normalizeString(session.id)
   const paymentIntentId = normalizeString(session.payment_intent)
@@ -1944,19 +1996,15 @@ async function markInvoicePaidFromStripe(db: D1Database, env: ApiHonoEnv['Bindin
 
   if (invoiceId) {
     const invoice = await fetchInvoiceById(db, invoiceId)
-    const stripeDetails = await getStripePaymentDetails(env, paymentIntentId).catch(() => ({
-      chargeId: '',
-      balanceTransactionId: '',
-      grossCents: invoice?.totalCents || 0,
-      feeCents: 0,
-      netCents: invoice?.totalCents || 0,
-    }))
+    const stripeDetails = await getStripePaymentDetails(env, paymentIntentId)
+      .catch(() => pendingStripePaymentDetails(invoice?.totalCents || 0))
     const grossCents = stripeDetails.grossCents || invoice?.totalCents || 0
     const savedPayment = await upsertInvoicePayment(db, {
       invoiceId,
       kind: 'payment',
       status: 'succeeded',
-      method: 'Stripe',
+      method: stripeDetails.method,
+      referenceNumber: paymentIntentId,
       grossCents,
       feeCents: stripeDetails.feeCents,
       netCents: stripeDetails.netCents || Math.max(0, grossCents - stripeDetails.feeCents),
@@ -1981,7 +2029,9 @@ async function markInvoicePaidFromStripe(db: D1Database, env: ApiHonoEnv['Bindin
     const payment = await fetchInvoicePaymentByStripe(db, sessionId, paymentIntentId)
     if (syncedInvoice && payment) {
       await notifyAccountingPaymentSubmitted(db, env, syncedInvoice, savedPayment)
-      await trySyncInvoicePaymentToQbo(db, env, syncedInvoice, payment)
+      if (stripeDetails.paymentMethodResolved) {
+        await trySyncInvoicePaymentToQbo(db, env, syncedInvoice, payment)
+      }
     }
     return
   }
@@ -1989,19 +2039,15 @@ async function markInvoicePaidFromStripe(db: D1Database, env: ApiHonoEnv['Bindin
   if (sessionId) {
     const invoice = await fetchInvoiceByWhere(db, 'stripe_checkout_session_id', sessionId, true)
     if (invoice) {
-      const stripeDetails = await getStripePaymentDetails(env, paymentIntentId).catch(() => ({
-        chargeId: '',
-        balanceTransactionId: '',
-        grossCents: invoice.totalCents,
-        feeCents: 0,
-        netCents: invoice.totalCents,
-      }))
+      const stripeDetails = await getStripePaymentDetails(env, paymentIntentId)
+        .catch(() => pendingStripePaymentDetails(invoice.totalCents))
       const grossCents = stripeDetails.grossCents || invoice.totalCents
       const savedPayment = await upsertInvoicePayment(db, {
         invoiceId: invoice.id,
         kind: 'payment',
         status: 'succeeded',
-        method: 'Stripe',
+        method: stripeDetails.method,
+        referenceNumber: paymentIntentId,
         grossCents,
         feeCents: stripeDetails.feeCents,
         netCents: stripeDetails.netCents || Math.max(0, grossCents - stripeDetails.feeCents),
@@ -2025,13 +2071,15 @@ async function markInvoicePaidFromStripe(db: D1Database, env: ApiHonoEnv['Bindin
       const payment = await fetchInvoicePaymentByStripe(db, sessionId, paymentIntentId)
       if (syncedInvoice && payment) {
         await notifyAccountingPaymentSubmitted(db, env, syncedInvoice, savedPayment)
-        await trySyncInvoicePaymentToQbo(db, env, syncedInvoice, payment)
+        if (stripeDetails.paymentMethodResolved) {
+          await trySyncInvoicePaymentToQbo(db, env, syncedInvoice, payment)
+        }
       }
     }
   }
 }
 
-async function markInvoicePaidFromStripePaymentIntent(db: D1Database, env: ApiHonoEnv['Bindings'], paymentIntent: StripePaymentIntent): Promise<void> {
+async function markInvoicePaidFromStripePaymentIntent(db: D1Database, env: HonoEnv['Bindings'], paymentIntent: StripePaymentIntent): Promise<void> {
   const paymentIntentId = normalizeString(paymentIntent.id)
   const invoiceId = normalizeString(paymentIntent.metadata?.invoice_id)
   const paidAt = nowIso()
@@ -2042,19 +2090,15 @@ async function markInvoicePaidFromStripePaymentIntent(db: D1Database, env: ApiHo
     : await fetchInvoiceByWhere(db, 'stripe_payment_intent_id', paymentIntentId, true)
   if (!invoice) return
 
-  const stripeDetails = await getStripePaymentDetails(env, paymentIntentId).catch(() => ({
-    chargeId: '',
-    balanceTransactionId: '',
-    grossCents: normalizeAmountCents(paymentIntent.amount_received || paymentIntent.amount) || invoice.totalCents,
-    feeCents: 0,
-    netCents: normalizeAmountCents(paymentIntent.amount_received || paymentIntent.amount) || invoice.totalCents,
-  }))
+  const stripeDetails = await getStripePaymentDetails(env, paymentIntentId)
+    .catch(() => pendingStripePaymentDetails(normalizeAmountCents(paymentIntent.amount_received || paymentIntent.amount) || invoice.totalCents))
   const grossCents = stripeDetails.grossCents || normalizeAmountCents(paymentIntent.amount_received || paymentIntent.amount) || invoice.totalCents
   const savedPayment = await upsertInvoicePayment(db, {
     invoiceId: invoice.id,
     kind: 'payment',
     status: 'succeeded',
-    method: 'Stripe',
+    method: stripeDetails.method,
+    referenceNumber: paymentIntentId,
     grossCents,
     feeCents: stripeDetails.feeCents,
     netCents: stripeDetails.netCents || Math.max(0, grossCents - stripeDetails.feeCents),
@@ -2077,12 +2121,14 @@ async function markInvoicePaidFromStripePaymentIntent(db: D1Database, env: ApiHo
   const payment = await fetchInvoicePaymentByStripe(db, '', paymentIntentId)
   if (syncedInvoice && payment) {
     await notifyAccountingPaymentSubmitted(db, env, syncedInvoice, savedPayment)
-    await trySyncInvoicePaymentToQbo(db, env, syncedInvoice, payment)
+    if (stripeDetails.paymentMethodResolved) {
+      await trySyncInvoicePaymentToQbo(db, env, syncedInvoice, payment)
+    }
   }
 }
 
 export function createInvoicesApi() {
-  const app = new Hono<ApiHonoEnv>()
+  const app = new Hono<HonoEnv>()
 
   app.get('/api/invoices', async (context) => {
     try {
@@ -2210,6 +2256,8 @@ export function createInvoicesApi() {
       if (resolvedContacts instanceof Response) return resolvedContacts
 
       const lineItems = prepareLineItems(payload.lineItems)
+      const taskError = await validateProjectTaskLinks(context.env.DB, normalizeString(payload.qboProjectId), lineItems)
+      if (taskError) return taskError
       const subtotalCents = calculateTotalCents(lineItems)
       const previouslyBilledCents = Math.min(calculatePreviousBillingEligibleCents(lineItems), normalizeAmountCents(payload.previouslyBilledCents))
       const totalCents = Math.max(0, subtotalCents - previouslyBilledCents)
@@ -2297,6 +2345,8 @@ export function createInvoicesApi() {
       const resolvedContacts = await resolveInvoiceContacts(context.env.DB, payload)
       if (resolvedContacts instanceof Response) return resolvedContacts
       const lineItems = prepareLineItems(payload.lineItems)
+      const taskError = await validateProjectTaskLinks(context.env.DB, normalizeString(payload.qboProjectId), lineItems)
+      if (taskError) return taskError
       const subtotalCents = calculateTotalCents(lineItems)
       const previouslyBilledCents = Math.min(calculatePreviousBillingEligibleCents(lineItems), normalizeAmountCents(payload.previouslyBilledCents))
       const totalCents = Math.max(0, subtotalCents - previouslyBilledCents)
@@ -2573,10 +2623,11 @@ export function createInvoicesApi() {
         return badRequest('Void invoices cannot sync payments')
       }
 
-      const syncablePayments = invoice.payments.filter((payment) => payment.status === 'succeeded' && (
+      const syncablePayments = invoice.payments.filter((payment) => payment.status === 'succeeded' &&
+        !(payment.stripePaymentIntentId && payment.method === 'Stripe Details Pending') && (
         !payment.qboPaymentId ||
         payment.qboSyncStatus === 'error' ||
-        Boolean(payment.qboPaymentId && !payment.qboDepositId && !payment.stripeBalanceTransactionId && payment.method.toLowerCase() !== 'stripe')
+        Boolean(payment.qboPaymentId && !payment.qboDepositId && !payment.stripeBalanceTransactionId && !payment.stripePaymentIntentId)
       ))
       for (const payment of syncablePayments) {
         const currentInvoice = await fetchInvoiceById(context.env.DB, invoiceId)
@@ -2614,13 +2665,16 @@ export function createInvoicesApi() {
       const netCents = details.netCents || Math.max(0, grossCents - feeCents)
       await context.env.DB.prepare(
         `UPDATE invoice_payments
-         SET gross_cents = ?, fee_cents = ?, net_cents = ?,
+         SET method = ?, reference_number = COALESCE(NULLIF(?, ''), reference_number),
+             gross_cents = ?, fee_cents = ?, net_cents = ?,
              stripe_charge_id = COALESCE(NULLIF(?, ''), stripe_charge_id),
              stripe_balance_transaction_id = COALESCE(NULLIF(?, ''), stripe_balance_transaction_id),
              accounting_sync_state = json_patch(COALESCE(NULLIF(accounting_sync_state, ''), '{}'), ?),
              updated_date = ?, updated_by = ?
          WHERE id = ?`
       ).bind(
+        details.method,
+        paymentIntentId,
         grossCents,
         feeCents,
         netCents,
@@ -2647,6 +2701,11 @@ export function createInvoicesApi() {
         paymentId
       ).run()
       await refreshInvoicePaymentStatus(context.env.DB, invoiceId)
+      const refreshedInvoice = await fetchInvoiceById(context.env.DB, invoiceId)
+      const refreshedPayment = await fetchInvoicePaymentForInvoice(context.env.DB, invoiceId, paymentId)
+      if (details.paymentMethodResolved && refreshedInvoice && refreshedPayment) {
+        await trySyncInvoicePaymentToQbo(context.env.DB, context.env, refreshedInvoice, refreshedPayment)
+      }
       return jsonResponse({ invoice: await fetchInvoiceById(context.env.DB, invoiceId) })
     } catch (error: unknown) {
       console.error('Error retrying Stripe payment details:', error)
@@ -2669,6 +2728,9 @@ export function createInvoicesApi() {
       }
       if (invoice.status === 'void') {
         return badRequest('Void invoices cannot sync payments')
+      }
+      if (payment.stripePaymentIntentId && payment.method === 'Stripe Details Pending') {
+        return badRequest('Stripe payment details must be retrieved before syncing to QuickBooks')
       }
 
       await trySyncInvoicePaymentToQbo(context.env.DB, context.env, invoice, payment)

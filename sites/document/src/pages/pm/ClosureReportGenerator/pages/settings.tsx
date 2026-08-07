@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Button, Textbox } from "@wps/input"
+import { Button, Textbox } from "cfdg/input"
 import { type ProjectInformation } from "../ClosureReportGenerator"
 import { Upload, X } from "lucide-react"
 

@@ -1,8 +1,9 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
-import { createAuthMiddleware } from './authPolicy'
-import { corsHeaders, jsonHeaders, type ApiHonoEnv } from './apiTypes'
-import { createCommentsApi } from './commentsApi'
+import { createAuthMiddleware } from './auth/authPolicy'
+import { CORS_HEADERS, CORS_HEADERS_V2, JSON_HEADERS, JSON_HEADERS_V2 } from 'cfdg/types/constants'
+import { serverError, type HonoEnv } from './apiTypes'
+import { createCommentsApi } from './comments/hono'
 import { createGisPointsApi } from './gisPointsApi'
 import { handleTransactionEmail } from './transactionEmail'
 import { createInvoicesApi } from './invoicesApi'
@@ -10,25 +11,49 @@ import { createQboApi } from './qboApi'
 import { createUserFavoritesApi } from './userFavoritesApi'
 import { createProjectManagementApi } from './projectManagementApi'
 
-const app = new Hono<ApiHonoEnv>()
+const app = new Hono<HonoEnv>()
 
+// For reference, the base URL is 'https://api.whitepointsurvey.com'. You do not need to include 'api' in the route.
+
+// V1 original routes. To be deprecated.
 app.use(
   '/api/*',
   cors({
-    origin: corsHeaders['Access-Control-Allow-Origin'],
-    allowMethods: corsHeaders['Access-Control-Allow-Methods'].split(', '),
-    allowHeaders: corsHeaders['Access-Control-Allow-Headers'].split(', '),
+    origin: CORS_HEADERS['Access-Control-Allow-Origin'],
+    allowMethods: CORS_HEADERS['Access-Control-Allow-Methods'].split(', '),
+    allowHeaders: CORS_HEADERS['Access-Control-Allow-Headers'].split(', '),
   })
 )
 
+// V2 routes. New routes should be added here.
+app.use(
+  '/api/v2/*',
+  cors({
+    origin: CORS_HEADERS_V2['Access-Control-Allow-Origin'],
+    allowMethods: CORS_HEADERS_V2['Access-Control-Allow-Methods'].split(', '),
+    allowHeaders: CORS_HEADERS_V2['Access-Control-Allow-Headers'].split(', '),
+  })
+)
+
+// Auth middleware for all routes
 app.use('*', createAuthMiddleware())
 
+// Health check endpoint for V1 (and technically V2 as well)
 app.get('/api/health', () => {
   return new Response(JSON.stringify({ status: 'ok' }), {
-    headers: jsonHeaders,
+    headers: JSON_HEADERS,
   })
-})
+});
 
+// Health check endpoint for V2
+app.get('/v2/health', () => {
+  return new Response(JSON.stringify({ status: 'ok' }), {
+    headers: JSON_HEADERS_V2,
+  })
+});
+
+
+// V1 API routes
 app.route('/', createCommentsApi())
 app.route('/', createGisPointsApi())
 app.route('/', createInvoicesApi())
@@ -40,16 +65,15 @@ app.post('/api/email/transactionEmail', async (context) => {
   return handleTransactionEmail(context.req.raw, context.env)
 })
 
+// Catch-all for 404 Not Found - updated to V2 response headers
 app.notFound(() => {
-  return new Response('Not Found', { status: 404, headers: jsonHeaders })
+  return new Response('Not Found', { status: 404, headers: JSON_HEADERS_V2 })
 })
 
+// Catch-all for unhandled errors - updated to V2 response headers
 app.onError((error) => {
   console.error('Unhandled API error:', error)
-  return new Response(JSON.stringify({ error: 'Internal server error' }), {
-    status: 500,
-    headers: jsonHeaders,
-  })
+  return serverError(String(error?.message || error));
 })
 
 export default app

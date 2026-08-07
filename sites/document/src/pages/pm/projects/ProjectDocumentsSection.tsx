@@ -1,5 +1,5 @@
-import { Button } from '@wps/input'
-import { type ProjectInvoiceDocument } from '@wps/scripts'
+import { Button } from 'cfdg/input'
+import { type ProjectInvoiceDocument } from 'cfdg/types'
 import { Download, Trash2, Upload } from 'lucide-react'
 import { formatFileSize, getDocumentUpdatedLabel } from './projectUtils'
 

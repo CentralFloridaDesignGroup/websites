@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Button, Textbox } from '@wps/input';
+import { Button, Textbox } from 'cfdg/input';
 import { CircleX, Folder, FolderOpen } from 'lucide-react';
-import { Modal } from '@wps/layout';
-import { ReviewPackage, Dates } from '@wps/scripts';
+import { Modal } from 'cfdg/layout';
+import { Dates } from 'cfdg/scripts';
+import { type ReviewPackage } from 'cfdg/types';
 
 type ReviewPackageProperties = {
 	packages: ReviewPackage[];

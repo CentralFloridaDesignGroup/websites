@@ -5,9 +5,9 @@ import { useMsal } from '@azure/msal-react'
 import { CheckoutElementsProvider, PaymentElement, useCheckoutElements } from '@stripe/react-stripe-js/checkout'
 import { loadStripe } from '@stripe/stripe-js'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { Button, Combobox, Multiselect, Textarea, Textbox } from '@wps/input'
-import { Modal, showNotification } from '@wps/layout'
-import { type ClientContact, type Invoice, type InvoicePayment, type InvoicePaymentKind, type ProjectManager, type QboConnectionStatus, type QboCustomer } from '@wps/scripts'
+import { Button, Combobox, Multiselect, Textarea, Textbox } from 'cfdg/input'
+import { Modal, showNotification } from 'cfdg/layout'
+import { type ClientContact, type Invoice, type InvoicePayment, type InvoicePaymentKind, type ProjectManager, type QboConnectionStatus, type QboCustomer } from 'cfdg/types'
 import { ArrowLeft, Banknote, Check, Copy, CopyPlus, CreditCard, Download, ExternalLink, File, Mail, Plus, RefreshCw, Save, SquareArrowOutUpRight, Trash2, X } from 'lucide-react'
 import {
   copyInvoice,
@@ -31,7 +31,7 @@ import {
   type InvoiceSavePayload,
 } from '../../../api/invoices'
 import { fetchQboCustomers, fetchQboProjects, fetchQboStatus } from '../../../api/qbo'
-import { fetchClientContacts, fetchProjectDetails, type ProjectSummary } from '../../../api/projectManagement'
+import { fetchClientContacts, fetchProjectDetails, fetchProjectTasks, type ProjectSummary } from '../../../api/projectManagement'
 import { createInvoicePdfAttachment, downloadInvoicePdf, openInvoicePdfPreview } from './createInvoicePdf'
 import { InvoiceOverviewStats } from './InvoiceOverviewStats'
 import { EmailDeliveryNotice, StatusBadge } from './InvoiceStatus'
@@ -41,6 +41,7 @@ import { EmailDeliveryNotice, StatusBadge } from './InvoiceStatus'
 // #region Types
 type InvoiceLineItemForm = {
   localId: string
+  projectTaskId: string
   description: string
   percentComplete: string
   contractAmount: string
@@ -113,6 +114,7 @@ function createLocalId(): string {
 function emptyLineItem(): InvoiceLineItemForm {
   return {
     localId: createLocalId(),
+    projectTaskId: '',
     description: '',
     percentComplete: '100',
     contractAmount: '',
@@ -183,6 +185,7 @@ function formFromInvoice(invoice: Invoice): InvoiceForm {
     lineItems: invoice.lineItems.length > 0
       ? invoice.lineItems.map((item) => ({
         localId: item.id || createLocalId(),
+        projectTaskId: item.projectTaskId,
         description: item.description,
         percentComplete: String(item.percentComplete || item.quantity || 0),
         contractAmount: centsToInput(item.contractAmountCents || item.unitAmountCents),
@@ -238,6 +241,7 @@ function invoiceForEmailAttachment(invoice: Invoice): Invoice {
 function buildPayload(form: InvoiceForm, editorName: string): InvoiceSavePayload {
   const lineItems: InvoiceLineItemDraft[] = form.lineItems
     .map((item) => ({
+      projectTaskId: item.projectTaskId,
       description: item.description.trim(),
       quantity: percentFromInput(item.percentComplete),
       unitAmountCents: centsFromInput(item.contractAmount),
@@ -502,11 +506,11 @@ export function InvoicesManager() {
       }
     })
   }
-  
+
   // If creating a new invoice, automatically set the contactIds to the active invoice recipients for the selected client.
   useEffect(() => {
     if (selectedInvoice) return; // Only apply this logic when creating a new invoice.
-    if(clientContacts.length === 0) return; // No contacts to select from, cancel.
+    if (clientContacts.length === 0) return; // No contacts to select from, cancel.
     updateContactIds(clientContacts.filter(contact => contact.isInvoiceRecipient).map(contact => contact.id));
   }, [clientContacts])
 
@@ -642,8 +646,9 @@ export function InvoicesManager() {
     if (!selectedInvoice || payment.status !== 'succeeded') return null
     const isStripe = payment.method.toLowerCase() === 'stripe' || Boolean(payment.stripePaymentIntentId)
     const missingStripeDetails = isStripe && payment.stripePaymentIntentId && !payment.stripeBalanceTransactionId
-    const missingQboPayment = !payment.qboPaymentId || payment.qboSyncStatus === 'error'
-    const missingManualDeposit = Boolean(payment.qboPaymentId && !payment.qboDepositId && !payment.stripeBalanceTransactionId && payment.method.toLowerCase() !== 'stripe')
+    const pendingStripeMethod = isStripe && payment.method === 'Stripe Details Pending'
+    const missingQboPayment = !pendingStripeMethod && (!payment.qboPaymentId || payment.qboSyncStatus === 'error')
+    const missingManualDeposit = Boolean(payment.qboPaymentId && !payment.qboDepositId && !payment.stripeBalanceTransactionId && !payment.stripePaymentIntentId)
     const missingPayoutDeposit = Boolean(payment.stripePayoutId && payment.qboPaymentId && !payment.qboDepositId)
 
     if (!missingStripeDetails && !missingQboPayment && !missingManualDeposit && !missingPayoutDeposit) return null
@@ -742,15 +747,17 @@ export function InvoicesManager() {
     }))
   }
 
-  function applyQboProject(projectId: string) {
+  async function applyQboProject(projectId: string) {
     const project = qboProjects.find((entry) => entry.id === projectId)
     if (!selectedInvoice) setPreviouslyBilledManuallyEdited(false)
     const previouslyBilledCents = getProjectPreviouslyBilledCents(summaryInvoices, projectId)
+    const tasks = selectedInvoice ? [] : await fetchProjectTasks(projectId)
     setForm((previous) => ({
       ...previous,
       qboCustomerId: project?.parentId || previous.qboCustomerId,
       qboProjectId: projectId,
       projectReference: project?.displayName || '',
+      lineItems: tasks.filter((task) => task.remainingCents > 0).map((task) => ({ localId: createLocalId(), projectTaskId: task.id, description: task.name, percentComplete: '100', contractAmount: (task.remainingCents / 100).toFixed(2), billInFull: false })).length > 0 ? tasks.filter((task) => task.remainingCents > 0).map((task) => ({ localId: createLocalId(), projectTaskId: task.id, description: task.name, percentComplete: '100', contractAmount: (task.remainingCents / 100).toFixed(2), billInFull: false })) : previous.lineItems,
       previouslyBilled: selectedInvoice ? previous.previouslyBilled : centsToInput(previouslyBilledCents),
     }))
   }
@@ -1045,7 +1052,7 @@ export function InvoicesManager() {
             value={form.qboProjectId}
             placeholder={form.qboCustomerId ? 'Select project' : 'Select client first'}
             disabled={!canEdit || !form.qboCustomerId}
-            onChange={(_, value) => applyQboProject(value)}
+            onChange={(_, value) => void applyQboProject(value)}
           />
           <div className="grid gap-3 md:grid-cols-2">
             <div className="rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900">

@@ -1,4 +1,4 @@
-import { type ClientContact, type QboCustomer } from '@wps/scripts'
+import { type ClientContact, type QboCustomer } from 'cfdg/types'
 import { type ClientForm, type ContactForm } from './types'
 
 export const emptyContact: ContactForm = {
@@ -18,7 +18,7 @@ export const emptyClient: ClientForm = {
     line1: '',
     line2: '',
     city: '',
-    state: '',
+    state: 'FL',
     postalCode: '',
   },
   phone: '',

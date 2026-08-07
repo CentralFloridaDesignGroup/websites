@@ -11,9 +11,10 @@ export default defineConfig({
   resolve: {
     alias: {
       '@styles': path.resolve(__dirname, '../../styles'),
-      '@wps/input': path.resolve(__dirname, '../../packages/@wps/input/src'),
-      '@wps/layout': path.resolve(__dirname, '../../packages/@wps/layout/src'),
-      '@wps/scripts': path.resolve(__dirname, '../../packages/@wps/scripts/src'),
+      'cfdg/input': path.resolve(__dirname, '../../packages/cfdg/input/src'),
+      'cfdg/layout': path.resolve(__dirname, '../../packages/cfdg/layout/src'),
+      'cfdg/scripts': path.resolve(__dirname, '../../packages/cfdg/scripts/src'),
+      'cfdg/types': path.resolve(__dirname, '../../packages/cfdg/types/src'),
     },
   },
 })

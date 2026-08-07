@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Button, Combobox } from '@wps/input'
-import { Modal, showNotification } from '@wps/layout'
-import { type QboAccount, type QboConnectionStatus, type QboServiceItem } from '@wps/scripts'
+import { Button, Combobox } from 'cfdg/input'
+import { Modal, showNotification } from 'cfdg/layout'
+import type { QboAccount, QboConnectionStatus, QboServiceItem } from 'cfdg/types'
 import { Link, RefreshCw } from 'lucide-react'
 import {
   fetchQboAccounts,

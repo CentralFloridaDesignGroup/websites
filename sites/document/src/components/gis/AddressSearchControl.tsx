@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Button } from "@wps/input";
+import { Button } from "cfdg/input";
 import { MapPin } from "lucide-react";
 import { Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";

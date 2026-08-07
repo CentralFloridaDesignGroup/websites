@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Button, Textbox } from "@wps/input";
+import { Button, Textbox } from "cfdg/input";
 import { AlertTriangle, Copy, Download, Layers, Mail, Pencil, Plus, Trash2 } from "lucide-react";
 import { GisDisclaimer } from "../../../../components/gis";
 import { newCodeEntry } from "./types";

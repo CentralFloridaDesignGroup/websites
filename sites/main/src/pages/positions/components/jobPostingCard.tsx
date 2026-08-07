@@ -1,15 +1,16 @@
 ﻿import { MarketingButton } from '../../../components/marketing';
-import { showNotification } from '@wps/layout';
-import { type JobPosition, Numbers, Dates } from "@wps/scripts";
+import { showNotification } from 'cfdg/layout';
+import { Numbers, Dates } from "cfdg/scripts";
+import type { JobPosition } from 'cfdg/types';
 
 export function JobPostingCard({ position }: { position: JobPosition }) {
 
     function GetSalaryString(): string {
         const { startingSalary, endingSalary } = position.basicInfo;
         if (endingSalary && endingSalary !== startingSalary) {
-            return `${Numbers.FormatNumber(startingSalary, { style: "currency", currency: "USD" })} - ${Numbers.FormatNumber(endingSalary, { style: "currency", currency: "USD" })}`;
+            return `${Numbers.formatNumber(startingSalary, { style: "currency", currency: "USD" })} - ${Numbers.formatNumber(endingSalary, { style: "currency", currency: "USD" })}`;
         }
-        return Numbers.FormatNumber(startingSalary, { style: "currency", currency: "USD" });
+        return Numbers.formatNumber(startingSalary, { style: "currency", currency: "USD" });
     }
 
     function GetDateRangeString(): string {

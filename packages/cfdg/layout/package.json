@@ -1,0 +1,24 @@
+{
+  "name": "cfdg/layout",
+  "version": "1.0.0",
+  "description": "Shared layout components for SWP",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@headlessui/react": "latest",
+    "@tailwindcss/vite": "latest",
+    "cfdg/input": "workspace:*",
+    "lucide-react": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "react-router-dom": "latest"
+  },
+  "devDependencies": {
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "typescript": "latest"
+  }
+}

@@ -8,6 +8,10 @@ allowBuilds:
   sharp: true
   workerd: true
 
+minimumReleaseAgeExclude:
+  - playwright-core@1.62.0
+  - playwright@1.62.0
+
 onlyBuiltDependencies:
   - core-js
   - esbuild

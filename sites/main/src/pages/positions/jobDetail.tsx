@@ -1,6 +1,7 @@
 ﻿import { MarketingButton } from '../../components/marketing';
-import { showNotification } from '@wps/layout';
-import { type JobPosition, Dates } from "@wps/scripts";
+import { showNotification } from 'cfdg/layout';
+import { Dates } from "cfdg/scripts";
+import type { JobPosition } from 'cfdg/types';
 import { ChevronLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';

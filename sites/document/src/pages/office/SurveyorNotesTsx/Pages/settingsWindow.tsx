@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { parameters as Parameters } from './SurveyNoteDefinitions.json';
-import { TextboxSuggestion, Textbox, Combobox, Button, Bearing, Multiselect, Checkbox } from '@wps/input';
+import { TextboxSuggestion, Textbox, Combobox, Button, Bearing, Multiselect, Checkbox } from 'cfdg/input';
 import { type SurveyNotesProps } from '../SurveyorNotes';
 
 

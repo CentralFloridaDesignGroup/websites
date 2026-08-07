@@ -1,19 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useMsal } from '@azure/msal-react'
 import { useSearchParams } from 'react-router-dom'
-import { Button, Textbox } from '@wps/input'
-import { Modal, showNotification } from '@wps/layout'
-import { type ClientContact, type Invoice, type QboCustomer } from '@wps/scripts'
+import { Button, Textbox } from 'cfdg/input'
+import { Modal, showNotification } from 'cfdg/layout'
+import { type ClientContact, type Invoice, type QboCustomer } from 'cfdg/types'
 import { ArrowLeft, Plus, RefreshCw } from 'lucide-react'
 import { fetchInvoices } from '../../../api/invoices'
 import {
   createClient,
   createClientContact,
   deleteClientContact,
-  fetchClientContacts,
+  fetchClientDetails,
   fetchClients,
   fetchProjects,
   updateClient,
+  updateClientStatus,
   updateClientContact,
   type ContactPayload,
   type ProjectSummary,
@@ -35,6 +36,7 @@ export function ClientsManager() {
   const [selectedClientId, setSelectedClientId] = useState('')
   const [mode, setMode] = useState<'overview' | 'detail'>(() => searchParams.get('clientId') ? 'detail' : 'overview')
   const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('active')
   const [loading, setLoading] = useState(false)
   const [relatedLoading, setRelatedLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -43,6 +45,8 @@ export function ClientsManager() {
   const [clientDialogOpen, setClientDialogOpen] = useState(false)
   const [editingClientId, setEditingClientId] = useState('')
   const [clientSaving, setClientSaving] = useState(false)
+  const [clientStatus, setClientStatus] = useState<'active' | 'inactive'>('active')
+  const [clientStatusSaving, setClientStatusSaving] = useState(false)
   const [clientForm, setClientForm] = useState<ClientForm>(emptyClient)
 
   const selectedClient = useMemo(() => clients.find((client) => client.id === selectedClientId) ?? null, [clients, selectedClientId])
@@ -51,7 +55,7 @@ export function ClientsManager() {
   const loadClients = useCallback(async () => {
     setLoading(true)
     try {
-      const data = await fetchClients(searchTerm)
+      const data = await fetchClients(searchTerm, statusFilter)
       setClients(data)
       const clientIdParam = searchParams.get('clientId') || ''
       setSelectedClientId((previous) => previous || clientIdParam)
@@ -60,7 +64,7 @@ export function ClientsManager() {
     } finally {
       setLoading(false)
     }
-  }, [searchParams, searchTerm])
+  }, [searchParams, searchTerm, statusFilter])
 
   const loadContacts = useCallback(async () => {
     if (!selectedClientId) {
@@ -68,7 +72,9 @@ export function ClientsManager() {
       return
     }
     try {
-      setContacts(await fetchClientContacts(selectedClientId, true))
+      const data = await fetchClientDetails(selectedClientId)
+      setContacts(data.contacts)
+      setClients((previous) => [data.client, ...previous.filter((client) => client.id !== data.client.id)].sort((a, b) => a.displayName.localeCompare(b.displayName)))
     } catch (error) {
       showNotification({ title: 'Contacts Failed To Load', body: String(error), style: 'danger' })
     }
@@ -83,7 +89,7 @@ export function ClientsManager() {
     setRelatedLoading(true)
     try {
       const [projects, invoices] = await Promise.all([
-        fetchProjects({ parentCustomerId: selectedClientId }),
+        fetchProjects({ parentCustomerId: selectedClientId, status: 'all' }),
         fetchInvoices({ qboCustomerId: selectedClientId }),
       ])
       setRelatedProjects(projects)
@@ -120,6 +126,10 @@ export function ClientsManager() {
       setMode('detail')
     }
   }, [searchParams, selectedClientId])
+
+  useEffect(() => {
+    if (selectedClient) setClientStatus(selectedClient.active ? 'active' : 'inactive')
+  }, [selectedClient])
 
   function selectClient(clientId: string) {
     setSelectedClientId(clientId)
@@ -167,7 +177,7 @@ export function ClientsManager() {
         line1: selectedClient.billAddrLine1,
         line2: selectedClient.billAddrLine2,
         city: selectedClient.billAddrCity,
-        state: selectedClient.billAddrState,
+        state: selectedClient.billAddrState as ClientForm['address']['state'],
         postalCode: selectedClient.billAddrPostalCode,
       },
       phone: selectedClient.primaryPhone,
@@ -186,7 +196,7 @@ export function ClientsManager() {
           line1: clientForm.address.line1.trim(),
           line2: clientForm.address.line2.trim(),
           city: clientForm.address.city.trim(),
-          state: clientForm.address.state.trim(),
+          state: clientForm.address.state.trim() as ClientForm['address']['state'],
           postalCode: clientForm.address.postalCode.trim(),
         },
         phone: clientForm.phone.trim(),
@@ -205,6 +215,20 @@ export function ClientsManager() {
       showNotification({ title: editingClientId ? 'Client Update Failed' : 'Client Create Failed', body: String(error), style: 'danger' })
     } finally {
       setClientSaving(false)
+    }
+  }
+
+  async function saveClientStatus() {
+    if (!selectedClient) return
+    setClientStatusSaving(true)
+    try {
+      const saved = await updateClientStatus(selectedClient.id, clientStatus)
+      setClients((previous) => previous.map((client) => client.id === saved.id ? saved : client))
+      showNotification({ title: 'Client Status Saved', body: `${saved.displayName} is now ${saved.active ? 'Active' : 'Inactive'}.`, style: 'success' })
+    } catch (error) {
+      showNotification({ title: 'Client Status Save Failed', body: String(error), style: 'danger' })
+    } finally {
+      setClientStatusSaving(false)
     }
   }
 
@@ -326,8 +350,10 @@ export function ClientsManager() {
           clients={clients}
           loading={loading}
           searchTerm={searchTerm}
+          statusFilter={statusFilter}
           selectedClientId={selectedClientId}
           onSearchTermChange={setSearchTerm}
+          onStatusFilterChange={setStatusFilter}
           onSelectClient={selectClient}
         />
       ) : (
@@ -339,7 +365,11 @@ export function ClientsManager() {
           relatedLoading={relatedLoading}
           saving={saving}
           clientSaving={clientSaving}
+          clientStatus={clientStatus}
+          clientStatusSaving={clientStatusSaving}
           onEditClient={openEditClientDialog}
+          onClientStatusChange={setClientStatus}
+          onSaveClientStatus={() => void saveClientStatus()}
           onShowNewContact={() => {
             setContactForm(emptyContact)
             setContactFormVisible(true)

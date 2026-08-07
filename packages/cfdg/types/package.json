@@ -1,0 +1,30 @@
+{
+  "name": "cfdg/types",
+  "version": "5.0.0",
+  "description": "Shared types for the White Point Survey family of web applications",
+  "type": "module",
+  "types": "dist/types/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts"
+    },
+    "./mappers": {
+      "types": "./dist/mappers/index.d.ts",
+      "import": "./dist/mappers/index.js"
+    },
+    "./constants": {
+      "types": "./dist/constants/index.d.ts",
+      "import": "./dist/constants/index.js"
+    },
+    "./constants/*": {
+      "types": "./dist/constants/*.d.ts",
+      "import": "./dist/constants/*.js"
+    }
+  }
+}

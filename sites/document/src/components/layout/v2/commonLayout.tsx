@@ -8,7 +8,7 @@ import { useIsAuthenticated, useMsal } from "@azure/msal-react";
 import { getMsalSilentRedirectUri, loginRequest } from '../../../auth/msalConfig'
 import { ChevronDown, Settings } from "lucide-react";
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
-import { NotificationCard } from "@wps/layout";
+import { NotificationCard } from "cfdg/layout";
 import { QboSettingsModal } from "../../qbo/QboSettingsModal";
 
 export function CommonLayout() {
@@ -66,7 +66,8 @@ export function CommonLayout() {
     }, [location.pathname, recentStorageKey]);
 
     useEffect(() => {
-        let revokedUrl: string | null = null;
+        let cancelled = false;
+        let objectUrl: string | null = null;
 
         async function loadPhoto() {
             if (!accounts[0]) return;
@@ -83,25 +84,32 @@ export function CommonLayout() {
 
             // Profile photo may not exist for the user; treat 404 as "no photo".
             if (response.status === 404) {
-                setAccountImageUrl(null);
+                if (!cancelled) setAccountImageUrl(null);
                 return;
             }
 
             if (!response.ok) {
-                setAccountImageUrl(null);
+                if (!cancelled) setAccountImageUrl(null);
                 return;
             }
 
             const blob = await response.blob();
+            if (cancelled) return;
             const url = URL.createObjectURL(blob);
-            revokedUrl = url;
+            objectUrl = url;
             setAccountImageUrl(url);
         }
 
-        loadPhoto().catch(() => setAccountImageUrl(null));
+        loadPhoto().catch(() => {
+            if (!cancelled) setAccountImageUrl(null);
+        });
 
         return () => {
-            if (revokedUrl) URL.revokeObjectURL(revokedUrl);
+            cancelled = true;
+            if (objectUrl) {
+                setAccountImageUrl((currentUrl) => currentUrl === objectUrl ? null : currentUrl);
+                URL.revokeObjectURL(objectUrl);
+            }
         };
     }, [accounts, instance]);
 

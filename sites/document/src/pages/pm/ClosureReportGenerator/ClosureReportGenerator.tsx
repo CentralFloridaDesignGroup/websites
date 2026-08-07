@@ -54,11 +54,11 @@ export function ClosureReportGenerator() {
 
     return (
         <>
-            <div className="border-b border-gray-200 bg-white">
-                <div className="max-w-7xl mx-auto px-4 pb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="border-b border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700">
+                <div className="max-w-7xl mx-auto px-4 pb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200">
                     <div>
                         <p className="text-sm text-gray-500">Stage {stageIndex + 1} of {stages.length}</p>
-                        <p className="text-lg font-semibold text-gray-900">{stages[stageIndex]?.label}</p>
+                        <p className="text-lg font-semibold text-gray-900 dark:text-gray-200">{stages[stageIndex]?.label}</p>
                     </div>
                 </div>
             </div>
