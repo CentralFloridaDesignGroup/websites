@@ -15,6 +15,8 @@ build/
 .dev.vars
 .env.production
 .env.development
+.env.preview
+.env.main
 
 # IDE
 .vscode/

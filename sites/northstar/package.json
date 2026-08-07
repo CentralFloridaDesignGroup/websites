@@ -5,10 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port 5300",
-    "build": "tsc && vite build",
+    "build": "pnpm run build:main",
+    "build:main": "tsc && vite build --mode main",
+    "build:preview": "tsc && vite build --mode preview",
     "preview": "vite preview",
-    "deploy": "pnpm run build && wrangler pages deploy dist --branch main",
-    "deploy:preview": "pnpm run build && wrangler pages deploy dist --branch preview",
+    "deploy": "pnpm run build:main && wrangler pages deploy dist --branch main",
+    "deploy:preview": "pnpm run build:preview && wrangler pages deploy dist --branch preview",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
     "typecheck": "tsc --noEmit"
   },
