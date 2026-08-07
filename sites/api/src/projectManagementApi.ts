@@ -9,6 +9,8 @@ import type {
   ProjectInvoiceDocument,
   ProjectInvoiceDocumentRow,
   ProjectManagerRow,
+  ProjectTask,
+  ProjectTaskRow,
   ProjectMovePayload,
   ProjectStatus,
   ProjectUpdatePayload,
@@ -27,7 +29,7 @@ import {
   updateQboClientCustomer,
   updateQboProjectCustomer,
 } from './qboApi'
-import { mapClientContactRow, mapProjectBillingProfileRow, mapProjectInvoiceDocumentRow, mapProjectManagerRow } from 'cfdg/types/projectManagement'
+import { mapClientContactRow, mapProjectBillingProfileRow, mapProjectInvoiceDocumentRow, mapProjectManagerRow, mapProjectTaskRow } from 'cfdg/types/projectManagement'
 
 type ContactPayload = {
   name?: unknown
@@ -59,6 +61,7 @@ type ProjectDocumentPayload = {
 type StatusPayload = {
   status?: unknown
 }
+type ProjectTaskPayload = { name?: unknown; scopeOfWork?: unknown; contractAmountCents?: unknown; retainerCents?: unknown; priceType?: unknown; sortOrder?: unknown; active?: unknown }
 
 type AddressPayload = {
   line1?: unknown
@@ -246,6 +249,35 @@ async function ensureProjectManagementSchema(db: D1Database): Promise<void> {
   ).run()
 
   await db.prepare(
+    `CREATE TABLE IF NOT EXISTS project_tasks (
+      id INTEGER PRIMARY KEY, qbo_project_id TEXT NOT NULL, name TEXT NOT NULL, scope_of_work TEXT NOT NULL DEFAULT '',
+      contract_amount_cents INTEGER NOT NULL DEFAULT 0, retainer_cents INTEGER NOT NULL DEFAULT 0, price_type TEXT NOT NULL DEFAULT '',
+      sort_order INTEGER NOT NULL DEFAULT 0, active INTEGER NOT NULL DEFAULT 1, created_date DATETIME NOT NULL, updated_date DATETIME NOT NULL,
+      created_by TEXT NOT NULL, updated_by TEXT NOT NULL, FOREIGN KEY (qbo_project_id) REFERENCES qbo_customers(qbo_id)
+    )`
+  ).run()
+
+  for (const column of [
+    "scope_of_work TEXT NOT NULL DEFAULT ''",
+    'contract_amount_cents INTEGER NOT NULL DEFAULT 0',
+    'retainer_cents INTEGER NOT NULL DEFAULT 0',
+    "price_type TEXT NOT NULL DEFAULT ''",
+    'sort_order INTEGER NOT NULL DEFAULT 0',
+    'active INTEGER NOT NULL DEFAULT 1',
+    "created_date DATETIME NOT NULL DEFAULT ''",
+    "updated_date DATETIME NOT NULL DEFAULT ''",
+    "created_by TEXT NOT NULL DEFAULT ''",
+    "updated_by TEXT NOT NULL DEFAULT ''",
+  ]) {
+    try {
+      await db.prepare(`ALTER TABLE project_tasks ADD COLUMN ${column}`).run()
+    } catch (error: unknown) {
+      const message = String(error instanceof Error ? error.message : error).toLowerCase()
+      if (!message.includes('duplicate column name')) throw error
+    }
+  }
+
+  await db.prepare(
     `INSERT OR IGNORE INTO project_lifecycle (qbo_project_id, status, updated_date, updated_by)
      SELECT qbo_id, CASE WHEN active = 1 THEN 'active' ELSE 'complete' END, CURRENT_TIMESTAMP, 'migration'
      FROM qbo_customers
@@ -260,6 +292,7 @@ async function ensureProjectManagementSchema(db: D1Database): Promise<void> {
     'CREATE INDEX IF NOT EXISTS idx_project_invoice_documents_project_id ON project_invoice_documents(qbo_project_id)',
     'CREATE INDEX IF NOT EXISTS idx_project_lifecycle_status ON project_lifecycle(status)',
     'CREATE INDEX IF NOT EXISTS idx_project_property_profiles_parcel_id ON project_property_profiles(parcel_id)',
+    'CREATE INDEX IF NOT EXISTS idx_project_tasks_project_active ON project_tasks(qbo_project_id, active, sort_order)',
   ]) {
     await db.prepare(statement).run()
   }
@@ -377,6 +410,72 @@ async function fetchProjectSummary(db: D1Database, qboProjectId: string) {
   ).bind(qboProjectId).first<QboCustomerRow & { parent_display_name?: unknown }>()
   if (!row) return null
   return { ...mapQboCustomer(row), parentDisplayName: normalizeString(row.parent_display_name), parcelId: normalizeString((row as Record<string, unknown>).parcel_id), status: normalizeProjectStatus((row as Record<string, unknown>).project_status, normalizeBool(row.active) ? 'active' : 'complete') }
+}
+
+/** Fetches project tasks in their proposal order. */
+export async function fetchProjectTasks(db: D1Database, qboProjectId: string, includeInactive = false): Promise<ProjectTask[]> {
+  await ensureProjectManagementSchemaReady(db)
+  const rows = await db.prepare(`SELECT task.*, COALESCE(SUM(CASE WHEN invoice.status != 'void' THEN line.amount_cents ELSE 0 END), 0) AS billed_cents, MAX(0, task.contract_amount_cents - COALESCE(SUM(CASE WHEN invoice.status != 'void' THEN line.amount_cents ELSE 0 END), 0)) AS remaining_cents FROM project_tasks task LEFT JOIN invoice_line_items line ON line.project_task_id = task.id LEFT JOIN invoices invoice ON invoice.id = line.invoice_id WHERE task.qbo_project_id = ? ${includeInactive ? '' : 'AND task.active = 1'} GROUP BY task.id ORDER BY task.sort_order, task.id`).bind(qboProjectId).all()
+  return (rows.results || []).map((row) => mapProjectTaskRow(row as ProjectTaskRow))
+}
+
+function parseProjectTaskPayload(value: ProjectTaskPayload, fallbackSortOrder = 0) {
+  const name = normalizeString(value.name)
+  if (!name) return badRequest('Task name is required')
+  return {
+    name, scopeOfWork: normalizeString(value.scopeOfWork), contractAmountCents: Math.max(0, Math.round(Number(value.contractAmountCents) || 0)),
+    retainerCents: Math.max(0, Math.round(Number(value.retainerCents) || 0)), priceType: normalizeString(value.priceType),
+    sortOrder: Math.max(0, Math.round(Number(value.sortOrder) || fallbackSortOrder)), active: normalizeBool(value.active, true),
+  }
+}
+
+/** Identifies the task table used by databases created before proposal tasks existed. */
+async function usesLegacyProjectTaskSchema(db: D1Database): Promise<boolean> {
+  const columns = await db.prepare('PRAGMA table_info(project_tasks)').all<{ name?: unknown }>()
+  return (columns.results || []).some((column) => normalizeString(column.name) === 'phase_id')
+}
+
+/**
+ * Writes the current task fields and, for legacy databases, the required phase
+ * and task-code fields that predate the proposal workflow.
+ */
+async function insertProjectTask(
+  db: D1Database,
+  qboProjectId: string,
+  task: ReturnType<typeof parseProjectTaskPayload> extends Response ? never : Exclude<ReturnType<typeof parseProjectTaskPayload>, Response>,
+  user: string,
+): Promise<string> {
+  const date = nowIso()
+  if (await usesLegacyProjectTaskSchema(db)) {
+    const code = `proposal-task-${createStorageToken()}`
+    const phase = await db.prepare(
+      `INSERT INTO project_phases (qbo_project_id, label, name, billing_type, source_price_type, contract_amount_cents, previously_billed_cents, retainer_applied_cents, active, sort_order, created_date, updated_date, created_by, updated_by)
+       VALUES (?, ?, ?, ?, ?, ?, 0, 0, ?, ?, ?, ?, ?, ?)`
+    ).bind(qboProjectId, code, task.name, task.priceType || 'fixed_fee', task.priceType || null, task.contractAmountCents, task.active ? 1 : 0, task.sortOrder, date, date, user, user).run()
+    const result = await db.prepare(
+      `INSERT INTO project_tasks (phase_id, qbo_project_id, code, name, cost_cents, percent_complete, previously_billed_cents, scope_of_work, contract_amount_cents, retainer_cents, price_type, sort_order, active, created_date, updated_date, created_by, updated_by)
+       VALUES (?, ?, ?, ?, ?, 0, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(phase.meta.last_row_id, qboProjectId, code, task.name, task.contractAmountCents, task.scopeOfWork, task.contractAmountCents, task.retainerCents, task.priceType, task.sortOrder, task.active ? 1 : 0, date, date, user, user).run()
+    return String(result.meta.last_row_id)
+  }
+
+  const result = await db.prepare(
+    `INSERT INTO project_tasks (qbo_project_id, name, scope_of_work, contract_amount_cents, retainer_cents, price_type, sort_order, active, created_date, updated_date, created_by, updated_by)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).bind(qboProjectId, task.name, task.scopeOfWork, task.contractAmountCents, task.retainerCents, task.priceType, task.sortOrder, task.active ? 1 : 0, date, date, user, user).run()
+  return String(result.meta.last_row_id)
+}
+
+async function createProjectTasks(db: D1Database, qboProjectId: string, entries: unknown, user: string): Promise<ProjectTask[]> {
+  if (!Array.isArray(entries)) return []
+  for (let index = 0; index < entries.length; index += 1) {
+    const input = entries[index]
+    if (!input || typeof input !== 'object') throw new Error('Invalid project task')
+    const task = parseProjectTaskPayload(input as ProjectTaskPayload, index)
+    if (task instanceof Response) throw new Error('Invalid project task')
+    await insertProjectTask(db, qboProjectId, task, user)
+  }
+  return fetchProjectTasks(db, qboProjectId, true)
 }
 
 function parseProjectPayload(body: Record<string, unknown>): Omit<ProjectUpdatePayload, 'parentCustomerId'> | Response {
@@ -703,6 +802,26 @@ export function createProjectManagementApi() {
     }
   })
 
+  app.get('/api/projects/next-number', async (context) => {
+    try {
+      const authError = requireAuthMode(context, 'microsoft')
+      if (authError) return authError
+      await ensureProjectManagementSchemaReady(context.env.DB)
+      const year = normalizeString(context.req.query('year'))
+      if (!/^\d{2}$/.test(year)) return badRequest('year must use YY')
+      const rows = await context.env.DB.prepare("SELECT display_name FROM qbo_customers WHERE parent_id IS NOT NULL AND parent_id != '' AND display_name LIKE ?").bind(`${year}-%`).all<{ display_name?: unknown }>()
+      const maximum = (rows.results || []).reduce((largest, row) => {
+        const match = new RegExp(`^${year}-(\\d{4}) - `).exec(normalizeString(row.display_name))
+        return match ? Math.max(largest, Number(match[1])) : largest
+      }, 0)
+      if (maximum >= 9999) return badRequest(`No project numbers remain for ${year}`)
+      return jsonResponse({ projectNumber: `${year}-${String(maximum + 1).padStart(4, '0')}` })
+    } catch (error: unknown) {
+      console.error('Error calculating next project number:', error)
+      return serverError(String(error instanceof Error ? error.message : error))
+    }
+  })
+
   app.post('/api/projects', async (context) => {
     try {
       const authError = requireAuthMode(context, 'microsoft')
@@ -719,11 +838,14 @@ export function createProjectManagementApi() {
         parentCustomerId,
         ...projectPayload,
       }
+      const existing = await context.env.DB.prepare('SELECT qbo_id FROM qbo_customers WHERE display_name = ? LIMIT 1').bind(payload.name).first()
+      if (existing) return jsonResponse({ error: 'Project number is already in use' }, { status: 409 })
       const created = await createQboProjectCustomer(context.env.DB, context.env, payload)
       const user = context.get('auth').subject || 'unknown-user'
       await Promise.all([saveProjectStatus(context.env.DB, created.id, 'proposal', user), saveProjectParcelId(context.env.DB, created.id, payload.parcelId, user)])
+      const tasks = await createProjectTasks(context.env.DB, created.id, body.tasks, user)
       const project = await fetchProjectSummary(context.env.DB, created.id)
-      return jsonResponse({ project: project || created }, { status: 201 })
+      return jsonResponse({ project: project || created, tasks }, { status: 201 })
     } catch (error: unknown) {
       console.error('Error creating project:', error)
       return serverError(String(error instanceof Error ? error.message : error))
@@ -763,12 +885,39 @@ export function createProjectManagementApi() {
       const manager = await fetchProjectManager(context.env.DB, project.id)
       const billingProfile = await fetchProjectBillingProfile(context.env.DB, project.id)
       const invoiceDocuments = await fetchProjectInvoiceDocuments(context.env.DB, project.id)
+      const tasks = await fetchProjectTasks(context.env.DB, project.id, true)
       const summary = await fetchProjectSummary(context.env.DB, project.id)
-      return jsonResponse({ project: summary || project, client, manager, billingProfile, invoiceDocuments })
+      return jsonResponse({ project: summary || project, client, manager, billingProfile, invoiceDocuments, tasks })
     } catch (error: unknown) {
       console.error('Error fetching project:', error)
       return serverError(String(error instanceof Error ? error.message : error))
     }
+  })
+
+  app.post('/api/projects/:id/tasks', async (context) => {
+    try {
+      const authError = requireAuthMode(context, 'microsoft'); if (authError) return authError
+      const projectId = normalizeString(context.req.param('id')); const project = await fetchCustomer(context.env.DB, projectId, true)
+      if (!project) return jsonResponse({ error: 'Project not found' }, { status: 404 })
+      const task = parseProjectTaskPayload(await parseJsonBody(context.req.raw) as ProjectTaskPayload)
+      if (task instanceof Response) return task
+      const taskId = await insertProjectTask(context.env.DB, projectId, task, context.get('auth').subject || 'unknown-user')
+      const tasks = await fetchProjectTasks(context.env.DB, projectId, true)
+      return jsonResponse({ task: tasks.find((entry) => entry.id === taskId), tasks }, { status: 201 })
+    } catch (error: unknown) { return serverError(String(error instanceof Error ? error.message : error)) }
+  })
+
+  app.put('/api/projects/:id/tasks/:taskId', async (context) => {
+    try {
+      const authError = requireAuthMode(context, 'microsoft'); if (authError) return authError
+      const projectId = normalizeString(context.req.param('id')); const taskId = normalizeString(context.req.param('taskId'))
+      const task = parseProjectTaskPayload(await parseJsonBody(context.req.raw) as ProjectTaskPayload)
+      if (task instanceof Response) return task
+      await context.env.DB.prepare(`UPDATE project_tasks SET name = ?, scope_of_work = ?, contract_amount_cents = ?, retainer_cents = ?, price_type = ?, sort_order = ?, active = ?, updated_date = ?, updated_by = ? WHERE id = ? AND qbo_project_id = ?`)
+        .bind(task.name, task.scopeOfWork, task.contractAmountCents, task.retainerCents, task.priceType, task.sortOrder, task.active ? 1 : 0, nowIso(), context.get('auth').subject || 'unknown-user', taskId, projectId).run()
+      const tasks = await fetchProjectTasks(context.env.DB, projectId, true); const saved = tasks.find((entry) => entry.id === taskId)
+      return saved ? jsonResponse({ task: saved, tasks }) : jsonResponse({ error: 'Task not found' }, { status: 404 })
+    } catch (error: unknown) { return serverError(String(error instanceof Error ? error.message : error)) }
   })
 
   app.put('/api/projects/:id/billing', async (context) => {

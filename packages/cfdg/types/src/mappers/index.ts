@@ -11,6 +11,7 @@ export {
   mapProjectManagerRow,
   mapProjectBillingProfileRow,
   mapProjectInvoiceDocumentRow,
+  mapProjectTaskRow,
 } from '../types/projectManagement';
 
 export {

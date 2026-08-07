@@ -7,6 +7,36 @@ import type { PROJECT_STATUSES } from '../constants/projectManagement';
 /** Compass lifecycle status for a QuickBooks-backed project. */
 export type ProjectStatus = (typeof PROJECT_STATUSES)[number];
 
+/** A billable proposal phase stored against a Compass project. */
+export type ProjectTask = {
+  id: string;
+  qboProjectId: string;
+  name: string;
+  scopeOfWork: string;
+  contractAmountCents: number;
+  retainerCents: number;
+  priceType: string;
+  sortOrder: number;
+  active: boolean;
+  createdDate: string;
+  updatedDate: string;
+  createdBy: string;
+  updatedBy: string;
+  /** Total non-void invoice value billed from this task. */
+  billedCents: number;
+  /** Contract value not yet billed. */
+  remainingCents: number;
+};
+
+/** D1 row shape for a project task. */
+export type ProjectTaskRow = {
+  id?: unknown; qbo_project_id?: unknown; name?: unknown; scope_of_work?: unknown;
+  contract_amount_cents?: unknown; retainer_cents?: unknown; price_type?: unknown;
+  sort_order?: unknown; active?: unknown; created_date?: unknown; updated_date?: unknown;
+  created_by?: unknown; updated_by?: unknown;
+  billed_cents?: unknown; remaining_cents?: unknown;
+};
+
 /** Compass-managed lifecycle data associated with a QuickBooks project. */
 export type ProjectLifecycle = {
   /** The QuickBooks Online project ID. */
@@ -220,6 +250,17 @@ export function mapClientContactRow(row: ClientContactRow): ClientContact {
     updatedDate: normalizeString(row.updated_date),
     createdBy: normalizeString(row.created_by),
     updatedBy: normalizeString(row.updated_by),
+  };
+}
+
+/** Maps a D1 project task row to the shared API type. */
+export function mapProjectTaskRow(row: ProjectTaskRow): ProjectTask {
+  return {
+    id: normalizeString(row.id), qboProjectId: normalizeString(row.qbo_project_id), name: normalizeString(row.name),
+    scopeOfWork: normalizeString(row.scope_of_work), contractAmountCents: normalizeNumber(row.contract_amount_cents),
+    retainerCents: normalizeNumber(row.retainer_cents), priceType: normalizeString(row.price_type),
+    sortOrder: normalizeNumber(row.sort_order), active: normalizeBoolean(row.active), createdDate: normalizeString(row.created_date),
+    updatedDate: normalizeString(row.updated_date), createdBy: normalizeString(row.created_by), updatedBy: normalizeString(row.updated_by), billedCents: normalizeNumber(row.billed_cents), remainingCents: normalizeNumber(row.remaining_cents),
   };
 }
 

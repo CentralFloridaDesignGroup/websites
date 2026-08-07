@@ -45,6 +45,8 @@ export type InvoiceLineItem = {
   id: string;
   /** Unique identifier of the parent invoice */
   invoiceId: string;
+  /** Source project task, when this line was created from a proposal task. */
+  projectTaskId: string;
   /** Description of the line item */
   description: string;
   /** Quantity of the line item. @deprecated Use percentComplete instead. */
@@ -254,6 +256,7 @@ export type InvoiceLineItemRow = {
   id?: unknown;
   /** Identifier for the associated invoice */
   invoice_id?: unknown;
+  project_task_id?: unknown;
   /** Description of the line item */
   description?: unknown;
   /** Quantity of the line item. @deprecated use percent_complete instead */
@@ -485,6 +488,7 @@ export function mapInvoiceLineItemRow(row: InvoiceLineItemRow): InvoiceLineItem 
   return {
     id: normalizeString(row.id),
     invoiceId: normalizeString(row.invoice_id),
+    projectTaskId: normalizeString(row.project_task_id),
     description: normalizeString(row.description),
     quantity: percentComplete,
     unitAmountCents: contractAmountCents,

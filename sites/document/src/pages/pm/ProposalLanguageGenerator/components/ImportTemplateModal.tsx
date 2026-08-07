@@ -26,14 +26,13 @@ function ParamField({ param, value, onChange }: {
 }) {
     if (param.type === 'list') {
         const selections = param.options!.map(o => ({ key: o.label, value: o.value }));
-        const defaultIdx = Math.max(0, value ? selections.findIndex(s => s.value === value) : 0);
         return (
             <Combobox colorMode="auto"
                 field={param.key}
                 label={param.label}
                 selections={selections}
-                defaultIndex={defaultIdx}
-                onValidChange={(_, v) => onChange(param.key, v)}
+                value={value}
+                onChange={(_, v) => onChange(param.key, v)}
             />
         );
     }
@@ -57,7 +56,8 @@ function ParamField({ param, value, onChange }: {
                 field={param.key}
                 label={param.label}
                 allowNewlines
-                onValidChange={(_, v) => onChange(param.key, v)}
+                value={value}
+                onChange={event => onChange(param.key, event.target.value)}
             />
         );
     }

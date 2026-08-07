@@ -1,347 +1,51 @@
-import { useEffect, useState } from 'react';
-import { useMsal } from '@azure/msal-react';
-import { Combobox, Textbox } from 'cfdg/input';
-import { Button } from 'cfdg/input';
-import type { ClientInfo } from '../types/proposalTypes';
-import { EMPTY_CLIENT } from '../types/emptyClientInfo';
-import { Building, Link, RefreshCw, User } from 'lucide-react';
-import { fetchQboCustomers, fetchQboProjects, fetchQboStatus, startQboConnection, syncQboCustomers } from '../../../../api/qbo';
-import { showNotification } from 'cfdg/layout';
-import type { QboConnectionStatus, QboCustomer } from 'cfdg/types';
+import { useEffect, useState } from 'react'
+import { Button, Combobox, Textbox } from 'cfdg/input'
+import { Modal, showNotification } from 'cfdg/layout'
+import type { ClientContact, QboCustomer, State } from 'cfdg/types'
+import { Plus } from 'lucide-react'
+import { createClient, createClientContact, fetchClientContacts, fetchClients, type ContactPayload } from '../../../../api/projectManagement'
+import type { ClientInfo } from '../types/proposalTypes'
+import { EMPTY_CLIENT } from '../types/emptyClientInfo'
 
-interface ClientInfoStepProps {
-    initialValues?: Partial<ClientInfo>;
-    onNext: (info: ClientInfo) => void;
-}
+type Props = { initialValues?: Partial<ClientInfo>; onNext: (info: ClientInfo, clientId: string, contactId: string) => void }
+type ClientForm = { name: string; address: { line1: string; line2: string; city: string; state: string; postalCode: string }; phone: string; email: string; individual: boolean }
+type ContactForm = { name: string; email: string; phone: string; role: string }
+const emptyClient: ClientForm = { name: '', address: { line1: '', line2: '', city: '', state: 'FL', postalCode: '' }, phone: '', email: '', individual: false }
+const emptyContact: ContactForm = { name: '', email: '', phone: '', role: '' }
 
-export function ClientInfoStep({ initialValues, onNext }: ClientInfoStepProps) {
-    const { accounts } = useMsal();
-    const [form, setForm] = useState<ClientInfo>({ ...EMPTY_CLIENT, ...initialValues });
-    const [clientType, setClientType] = useState<"individual" | "company">("company");
-    const [copyProjectAddress, setCopyProjectAddress] = useState(false);
-    const [qboStatus, setQboStatus] = useState<QboConnectionStatus | null>(null);
-    const [qboCustomers, setQboCustomers] = useState<QboCustomer[]>([]);
-    const [qboProjects, setQboProjects] = useState<QboCustomer[]>([]);
-    const [qboCustomerId, setQboCustomerId] = useState("");
-    const [qboProjectId, setQboProjectId] = useState("");
-    const [qboBusy, setQboBusy] = useState(false);
-    const [errors, setErrors] = useState<{
-        hasError: boolean;
-        errors: Partial<Record<keyof ClientInfo, string>>
-    }>({
-        hasError: false,
-        errors: {}
-    });
-    const canManageQbo = accounts[0]?.username?.toLowerCase() === "nwhite@whitepointsurvey.com";
-
-    async function loadQboData() {
-        try {
-            const status = await fetchQboStatus();
-            setQboStatus(status);
-            if (status.connected) {
-                setQboCustomers(await fetchQboCustomers());
-            }
-        } catch {
-            setQboStatus({ connected: false, realmId: "", environment: "", lastCustomerSyncDate: "", lastItemSyncDate: "", lastAccountSyncDate: "", tokenExpiresDate: "", defaultServiceItemId: "", defaultServiceItemName: "", defaultDepositAccountId: "", defaultDepositAccountName: "", stripeFeeExpenseAccountId: "", stripeFeeExpenseAccountName: "" });
-        }
-    }
-
-    useEffect(() => {
-        void loadQboData();
-    }, []);
-
-    useEffect(() => {
-        async function loadProjects() {
-            if (!qboCustomerId) {
-                setQboProjects([]);
-                return;
-            }
-            try {
-                setQboProjects(await fetchQboProjects(qboCustomerId));
-            } catch (error) {
-                showNotification({ title: "QBO Projects Failed To Load", body: String(error), style: "warning" });
-            }
-        }
-        void loadProjects();
-    }, [qboCustomerId]);
-
-    async function connectQbo() {
-        setQboBusy(true);
-        try {
-            window.location.href = await startQboConnection();
-        } catch (error) {
-            showNotification({ title: "QBO Connection Failed", body: String(error), style: "danger" });
-        } finally {
-            setQboBusy(false);
-        }
-    }
-
-    async function refreshQboCustomers() {
-        setQboBusy(true);
-        try {
-            const count = await syncQboCustomers();
-            await loadQboData();
-            showNotification({ title: "QBO Customers Synced", body: `${count} customers refreshed.`, style: "success" });
-        } catch (error) {
-            showNotification({ title: "QBO Sync Failed", body: String(error), style: "danger" });
-        } finally {
-            setQboBusy(false);
-        }
-    }
-
-    function applyQboCustomer(customerId: string) {
-        const customer = qboCustomers.find((entry) => entry.id === customerId);
-        setQboCustomerId(customerId);
-        setQboProjectId("");
-        if (!customer) return;
-        setForm(prev => ({
-            ...prev,
-            clientName: customer.companyName || customer.displayName || prev.clientName,
-            contactName: `${customer.givenName} ${customer.familyName}`.trim() || prev.contactName,
-            email: customer.primaryEmail || prev.email,
-            phone: customer.primaryPhone || prev.phone,
-            clientAddressLine1: customer.billAddrLine1 || prev.clientAddressLine1,
-            clientAddressLine2: customer.billAddrLine2 || prev.clientAddressLine2,
-            clientCity: customer.billAddrCity || prev.clientCity,
-            clientState: customer.billAddrState || prev.clientState,
-            clientZip: customer.billAddrPostalCode || prev.clientZip,
-        }));
-    }
-
-    function applyQboProject(projectId: string) {
-        const project = qboProjects.find((entry) => entry.id === projectId);
-        setQboProjectId(projectId);
-        if (!project) return;
-        const addressLine = project.shipAddrLine1 || project.billAddrLine1;
-        const city = project.shipAddrCity || project.billAddrCity;
-        const state = project.shipAddrState || project.billAddrState;
-        const zip = project.shipAddrPostalCode || project.billAddrPostalCode;
-        setForm(prev => ({
-            ...prev,
-            projectName: project.displayName || prev.projectName,
-            address: addressLine || prev.address,
-            jurisdiction: city || prev.jurisdiction,
-            state: state || prev.state,
-            zipCode: zip || prev.zipCode,
-            email: project.primaryEmail || prev.email,
-        }));
-    }
-
-    /** Validates the form fields and updates the error state. */
-    function validate(): boolean {
-        var requiredFields: (keyof ClientInfo)[] = [
-            "clientName",
-            "phone",
-            "email",
-            "clientAddressLine1",
-            "clientCity",
-            "clientState",
-            "clientZip",
-            ...(clientType === "company" ? ["contactName" as keyof ClientInfo] : [])
-        ];
-
-        const newErrors: Partial<Record<keyof ClientInfo, string>> = {};
-        let hasError = false;
-        for (const field of requiredFields) {
-            if (!form[field] || form[field]?.toString().trim() === '') {
-                newErrors[field] = 'This field is required';
-                hasError = true;
-            }
-        }
-        setErrors({ hasError, errors: newErrors });
-        return !hasError;
-    }
-
-    function toggleCopyProjectAddress() {
-        if (!copyProjectAddress) {
-            setForm(prev => ({
-                ...prev,
-                clientAddressLine1: prev.address,
-                clientCity: prev.jurisdiction,
-                clientState: prev.state,
-                clientZip: prev.zipCode
-            }));
-        }
-        else {
-            setForm(prev => ({
-                ...prev,
-                clientAddressLine1: '',
-                clientCity: '',
-                clientState: '',
-                clientZip: ''
-            }));
-        }
-        setCopyProjectAddress(prev => !prev);
-    }
-
-    return (
-        <div className="p-6">
-            <h2 className="text-2xl font-bold">Client Information Setup</h2>
-            <p className="mb-6 text-gray-600">This is where you set up the client information.</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_auto] gap-3 lg:col-span-4">
-                    <Combobox
-                        field="proposal-qbo-customer"
-                        label="QBO Customer"
-                        colorMode="auto"
-                        selections={qboCustomers.map((customer) => ({ key: customer.displayName, value: customer.id }))}
-                        value={qboCustomerId}
-                        placeholder={qboStatus?.connected ? "Select customer" : "Connect QBO first"}
-                        disabled={!qboStatus?.connected}
-                        onChange={(_, value) => applyQboCustomer(value)}
-                    />
-                    <Combobox
-                        field="proposal-qbo-project"
-                        label="QBO Project / Sub-Customer"
-                        colorMode="auto"
-                        selections={qboProjects.map((project) => ({ key: project.displayName, value: project.id }))}
-                        value={qboProjectId}
-                        placeholder={qboCustomerId ? "Select project" : "Select customer first"}
-                        disabled={!qboCustomerId}
-                        onChange={(_, value) => applyQboProject(value)}
-                    />
-                    {canManageQbo && (qboStatus?.connected ? (
-                        <Button colorMode="auto" label="Sync QBO" style="secondary" icon={RefreshCw} onClick={() => void refreshQboCustomers()} properties={{ disabled: qboBusy }} />
-                    ) : (
-                        <Button colorMode="auto" label="Connect QBO" style="secondary" icon={Link} onClick={() => void connectQbo()} properties={{ disabled: qboBusy }} />
-                    ))}
-                </div>
-                <div className="flex flex-row gap-2 lg:col-span-2 justify-between">
-                    <div className={`flex flex-col flex-1 ${clientType === "company" ? "bg-blue-600 dark:bg-blue-800 text-white" : "bg-gray-200 dark:bg-gray-800"} px-4 py-2 rounded items-center cursor-pointer`} onClick={() => setClientType("company")}>
-                        <Building size={24} className="mb-1" />
-                        <h2 className="text-lg font-bold">Company Client</h2>
-                        <p className="text-sm">Must specify who in the company is requesting services.</p>
-                    </div>
-                    <div className={`flex flex-col flex-1 ${clientType === "individual" ? "bg-blue-600 dark:bg-blue-800 text-white" : "bg-gray-200 dark:bg-gray-800"} px-4 py-2 rounded items-center cursor-pointer`} onClick={() => setClientType("individual")}>
-                        <User size={24} className="mb-1" />
-                        <h2 className="text-lg font-bold">Individual Client</h2>
-                        <p className="text-sm">We assume the individual is the primary contact.</p>
-                    </div>
-                </div>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:col-span-2">
-                    <div className="flex flex-col gap-2">
-                        <Textbox colorMode="auto"
-                            field="clientName"
-                            label="Client Name"
-                            required
-                            value={form.clientName || ''}
-                            onChange={(e) => setForm(prev => ({ ...prev, clientName: e.target.value }))}
-                            showRequiredError={false}
-                        />
-                        {errors.errors.clientName && <p className="text-red-500 text-sm">{errors.errors.clientName}</p>}
-                    </div>
-                    <div className={`flex flex-col gap-2 ${clientType === "company" ? "" : "invisible"}`}>
-                        <Textbox colorMode="auto"
-                            field="contactName"
-                            label="Contact Name"
-                            required
-                            value={form.contactName || ''}
-                            onChange={(e) => setForm(prev => ({ ...prev, contactName: e.target.value }))}
-                            showRequiredError={false}
-                        />
-                        {errors.errors.contactName && <p className="text-red-500 text-sm">{errors.errors.contactName}</p>}
-                    </div>
-                    <div className="flex flex-col gap-2">
-                        <Textbox colorMode="auto"
-                            field="emailAddress"
-                            label="Email Address"
-                            required
-                            value={form.email || ''}
-                            onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))}
-                            showRequiredError={false}
-                        />
-                        {errors.errors.email && <p className="text-red-500 text-sm">{errors.errors.email}</p>}
-                    </div>
-                    <div className="flex flex-col gap-2">
-                        <Textbox colorMode="auto"
-                            field="phone"
-                            label="Phone Number"
-                            required
-                            value={form.phone || ''}
-                            onChange={(e) => setForm(prev => ({ ...prev, phone: e.target.value }))}
-                            showRequiredError={false}
-                        />
-                        {errors.errors.phone && <p className="text-red-500 text-sm">{errors.errors.phone}</p>}
-                    </div>
-                </div>
-                <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 lg:col-span-4">
-                    <Button colorMode="auto"
-                        label={copyProjectAddress ? "Clear Project Address" : "Copy Project Address"}
-                        style={copyProjectAddress ? "success" : "secondary"}
-                        onClick={toggleCopyProjectAddress}
-                    />
-                    <div className="flex flex-col gap-2">
-                        <Textbox colorMode="auto"
-                            field="clientAddressLine1"
-                            label="Client Mailing Address"
-                            required
-                            value={form.clientAddressLine1 || ''}
-                            onChange={(e) => setForm(prev => ({ ...prev, clientAddressLine1: e.target.value }))}
-                            showRequiredError={false}
-                            readOnly={copyProjectAddress}
-                        />
-                        {errors.errors.clientAddressLine1 && <p className="text-red-500 text-sm">{errors.errors.clientAddressLine1}</p>}
-                    </div>
-                    <div className="flex flex-col gap-2">
-                        <Textbox colorMode="auto"
-                            field="clientAddressLine2"
-                            label="Unit / Apt / Ste"
-                            value={form.clientAddressLine2 || ''}
-                            onChange={(e) => setForm(prev => ({ ...prev, clientAddressLine2: e.target.value }))}
-                            showRequiredError={false}
-                        />
-                        {errors.errors.clientAddressLine2 && <p className="text-red-500 text-sm">{errors.errors.clientAddressLine2}</p>}
-                    </div>
-                    <div className="flex flex-col gap-2">
-                        <Textbox colorMode="auto"
-                            field="clientCity"
-                            label="City"
-                            required
-                            value={form.clientCity || ''}
-                            onChange={(e) => setForm(prev => ({ ...prev, clientCity: e.target.value }))}
-                            showRequiredError={false}
-                            readOnly={copyProjectAddress}
-                        />
-                        {errors.errors.clientCity && <p className="text-red-500 text-sm">{errors.errors.clientCity}</p>}
-                    </div>
-                    <div className="flex flex-col gap-2">
-                        <Textbox colorMode="auto"
-                            field="clientState"
-                            label="State"
-                            required
-                            value={form.clientState || ''}
-                            onChange={(e) => setForm(prev => ({ ...prev, clientState: e.target.value }))}
-                            showRequiredError={false}
-                            readOnly={copyProjectAddress}
-                        />
-                        {errors.errors.clientState && <p className="text-red-500 text-sm">{errors.errors.clientState}</p>}
-                    </div>
-                    <div className="flex flex-col gap-2">
-                        <Textbox colorMode="auto"
-                            field="clientZip"
-                            label="Zip Code"
-                            required
-                            value={form.clientZip || ''}
-                            onChange={(e) => setForm(prev => ({ ...prev, clientZip: e.target.value }))}
-                            showRequiredError={false}
-                            readOnly={copyProjectAddress}
-                        />
-                        {errors.errors.clientZip && <p className="text-red-500 text-sm">{errors.errors.clientZip}</p>}
-                    </div>
-                </div>
-                <div className="flex justify-end md:col-span-2 lg:col-span-4">
-                    <Button colorMode="auto"
-                        label="Next: Select Services"
-                        style="primary"
-                        onClick={() => {
-                            const isFormValid = validate();
-                            if (isFormValid) {
-                                onNext(form as ClientInfo);
-                            }
-                        }}
-                    />
-                </div>
-            </div>
-        </div>
-    );
+export function ClientInfoStep({ initialValues, onNext }: Props) {
+  const [clients, setClients] = useState<QboCustomer[]>([]); const [contacts, setContacts] = useState<ClientContact[]>([])
+  const [clientId, setClientId] = useState(''); const [contactId, setContactId] = useState(''); const [saving, setSaving] = useState(false)
+  const [clientOpen, setClientOpen] = useState(false); const [contactOpen, setContactOpen] = useState(false)
+  const [clientForm, setClientForm] = useState<ClientForm>(emptyClient); const [contactForm, setContactForm] = useState<ContactForm>(emptyContact)
+  const loadClients = async () => { try { setClients(await fetchClients('', 'active')) } catch (error) { showNotification({ title: 'Clients Failed To Load', body: String(error), style: 'danger' }) } }
+  useEffect(() => { void loadClients() }, [])
+  useEffect(() => { if (!clientId) { setContacts([]); return }; void fetchClientContacts(clientId).then(setContacts).catch((error) => showNotification({ title: 'Contacts Failed To Load', body: String(error), style: 'danger' })) }, [clientId])
+  const client = clients.find((item) => item.id === clientId); const contact = contacts.find((item) => item.id === contactId)
+  async function saveClient() {
+    if (!clientForm.name.trim() || !clientForm.address.line1.trim() || !clientForm.address.city.trim() || !clientForm.address.state.trim() || !clientForm.address.postalCode.trim() || (clientForm.individual && !clientForm.email.trim())) return
+    setSaving(true); try {
+      const saved = await createClient({ name: clientForm.name.trim(), address: { ...clientForm.address, state: clientForm.address.state as State }, phone: clientForm.phone.trim(), email: clientForm.email.trim() })
+      await loadClients(); setClientId(saved.id)
+      let createdContact: ClientContact | null = null
+      if (clientForm.individual) createdContact = await createClientContact(saved.id, { name: saved.displayName, email: clientForm.email.trim(), phone: clientForm.phone.trim(), role: '', isInvoiceRecipient: true, active: true, notes: '' })
+      setContactId(createdContact?.id || ''); setClientOpen(false); setClientForm(emptyClient)
+    } catch (error) { showNotification({ title: 'Client Create Failed', body: String(error), style: 'danger' }) } finally { setSaving(false) }
+  }
+  async function saveContact() {
+    if (!clientId || !contactForm.name.trim() || !contactForm.email.trim()) return
+    setSaving(true); try { const saved = await createClientContact(clientId, { ...contactForm, name: contactForm.name.trim(), email: contactForm.email.trim(), phone: contactForm.phone.trim(), role: contactForm.role.trim(), isInvoiceRecipient: true, active: true, notes: '' } satisfies ContactPayload); setContacts((items) => [...items, saved]); setContactId(saved.id); setContactOpen(false); setContactForm(emptyContact) } catch (error) { showNotification({ title: 'Contact Create Failed', body: String(error), style: 'danger' }) } finally { setSaving(false) }
+  }
+  function next() {
+    if (!client || !contact) return
+    onNext({ ...EMPTY_CLIENT, ...initialValues, clientName: client.displayName, clientAddressLine1: client.billAddrLine1, clientAddressLine2: client.billAddrLine2, clientCity: client.billAddrCity, clientState: client.billAddrState, clientZip: client.billAddrPostalCode, contactName: contact.name, email: contact.email, phone: contact.phone }, client.id, contact.id)
+  }
+  return <div className="p-6 space-y-5"><div><h2 className="text-2xl font-bold">Client & Contact</h2><p className="text-gray-600">Choose the client and primary proposal contact.</p></div>
+    <div className="grid gap-4 md:grid-cols-2"><Combobox field="proposal-client" label="Client" colorMode="auto" selections={clients.map((item) => ({ key: item.displayName, value: item.id }))} value={clientId} placeholder="Select client" onChange={(_, value) => { setClientId(value); setContactId('') }} />
+      <Combobox field="proposal-contact" label="Primary Contact" colorMode="auto" selections={contacts.map((item) => ({ key: `${item.name} - ${item.email}`, value: item.id }))} value={contactId} disabled={!clientId} placeholder={clientId ? 'Select contact' : 'Select client first'} onChange={(_, value) => setContactId(value)} />
+    </div><div className="flex gap-2"><Button label="New Client" style="secondary" icon={Plus} onClick={() => setClientOpen(true)} /><Button label="New Contact" style="secondary" icon={Plus} onClick={() => setContactOpen(true)} properties={{ disabled: !clientId }} /></div>
+    <div className="flex justify-end"><Button label="Next: Project Details" style="primary" onClick={next} properties={{ disabled: !client || !contact }} /></div>
+    <Modal title="New Client" isOpen={clientOpen} onAccept={() => void saveClient()} onClose={() => !saving && setClientOpen(false)} acceptText={saving ? 'Saving' : 'Create Client'} acceptDisabled={saving} colorMode="auto" size="lg"><div className="grid gap-3 md:grid-cols-2"><div className="md:col-span-2"><Textbox field="proposal-new-client-name" label="Client Name" colorMode="auto" value={clientForm.name} required onChange={(e) => setClientForm((f) => ({ ...f, name: e.target.value }))} /></div><label className="md:col-span-2 flex gap-2 text-sm font-semibold"><input type="checkbox" checked={clientForm.individual} onChange={(e) => setClientForm((f) => ({ ...f, individual: e.target.checked }))} />Individual client — also create a matching contact</label>{(['line1', 'line2', 'city', 'state', 'postalCode'] as const).map((field) => <Textbox key={field} field={`proposal-client-${field}`} label={field === 'line1' ? 'Address Line 1' : field === 'line2' ? 'Address Line 2' : field === 'postalCode' ? 'Postal Code' : field[0].toUpperCase() + field.slice(1)} colorMode="auto" value={clientForm.address[field]} required={field !== 'line2'} onChange={(e) => setClientForm((f) => ({ ...f, address: { ...f.address, [field]: e.target.value } }))} />)}<Textbox field="proposal-client-phone" label="Phone" colorMode="auto" value={clientForm.phone} onChange={(e) => setClientForm((f) => ({ ...f, phone: e.target.value }))} /><Textbox field="proposal-client-email" label="Email" type="email" colorMode="auto" required={clientForm.individual} value={clientForm.email} onChange={(e) => setClientForm((f) => ({ ...f, email: e.target.value }))} /></div></Modal>
+    <Modal title="New Contact" isOpen={contactOpen} onAccept={() => void saveContact()} onClose={() => !saving && setContactOpen(false)} acceptText={saving ? 'Saving' : 'Create Contact'} acceptDisabled={saving || !contactForm.name.trim() || !contactForm.email.trim()} colorMode="auto" size="lg"><div className="space-y-3"><Textbox field="proposal-contact-name" label="Name" colorMode="auto" required value={contactForm.name} onChange={(e) => setContactForm((f) => ({ ...f, name: e.target.value }))} /><Textbox field="proposal-contact-email" label="Email" type="email" colorMode="auto" required value={contactForm.email} onChange={(e) => setContactForm((f) => ({ ...f, email: e.target.value }))} /><Textbox field="proposal-contact-phone" label="Phone" colorMode="auto" value={contactForm.phone} onChange={(e) => setContactForm((f) => ({ ...f, phone: e.target.value }))} /><Textbox field="proposal-contact-role" label="Role / Title" colorMode="auto" value={contactForm.role} onChange={(e) => setContactForm((f) => ({ ...f, role: e.target.value }))} /></div></Modal>
+  </div>
 }

@@ -17,6 +17,7 @@ import { normalizeBoolean, normalizeNumber, normalizeString, normalizeStringArra
 
 export type InvoiceLineItemDraft = {
   id?: string;
+  projectTaskId?: string;
   description: string;
   quantity: number;
   unitAmountCents: number;
@@ -80,6 +81,7 @@ function normalizeLineItem(value: unknown): InvoiceLineItem {
   return {
     id: normalizeString(row.id),
     invoiceId: normalizeString(row.invoiceId ?? row.invoice_id),
+    projectTaskId: normalizeString(row.projectTaskId ?? row.project_task_id),
     description: normalizeString(row.description),
     quantity: normalizeNumber(
       row.quantity ?? row.percentComplete ?? row.percent_complete,

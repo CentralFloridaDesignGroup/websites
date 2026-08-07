@@ -21,6 +21,7 @@ import { INVOICE_STATUSES } from 'cfdg/types/constants'
 import { mapInvoiceContactRecipientRow, mapInvoiceLineItemRow, mapInvoicePaymentRow, mapInvoiceRow } from 'cfdg/types/mappers'
 
 type InvoiceLineItemInput = {
+  projectTaskId?: unknown
   description?: unknown
   quantity?: unknown
   unitAmountCents?: unknown
@@ -485,6 +486,7 @@ async function ensureInvoicesSchema(db: D1Database): Promise<void> {
   await backfillInvoiceProjectAddressSnapshots(db)
 
   const lineItemColumns = [
+    'project_task_id INTEGER',
     'contract_amount_cents INTEGER NOT NULL DEFAULT 0',
     'percent_complete REAL NOT NULL DEFAULT 0',
     'bill_in_full INTEGER NOT NULL DEFAULT 0',
@@ -493,6 +495,7 @@ async function ensureInvoicesSchema(db: D1Database): Promise<void> {
   for (const column of lineItemColumns) {
     await ensureColumn(db, 'invoice_line_items', column)
   }
+  await db.prepare('CREATE INDEX IF NOT EXISTS idx_invoice_line_items_project_task_id ON invoice_line_items(project_task_id)').run()
 
   const paymentColumns = [
     'kind TEXT NOT NULL DEFAULT \'payment\'',
@@ -587,6 +590,7 @@ function normalizeLineItems(value: unknown): InvoiceLineItemInput[] {
   return value
     .filter((entry): entry is Record<string, unknown> => Boolean(entry) && typeof entry === 'object')
     .map((entry) => ({
+      projectTaskId: entry.projectTaskId ?? entry.project_task_id,
       description: entry.description,
       quantity: entry.quantity,
       unitAmountCents: entry.unitAmountCents ?? entry.unit_amount_cents,
@@ -620,6 +624,7 @@ function prepareLineItems(value: unknown): Array<Omit<InvoiceLineItem, 'id' | 'i
       const quantity = percentComplete
       const unitAmountCents = contractAmountCents
       return {
+        projectTaskId: normalizeString(item.projectTaskId),
         description,
         quantity,
         unitAmountCents,
@@ -823,10 +828,11 @@ async function replaceLineItems(db: D1Database, invoiceId: string, lineItems: Ar
   for (const item of lineItems) {
     await db.prepare(
       `INSERT INTO invoice_line_items (
-         invoice_id, description, quantity, unit_amount_cents, contract_amount_cents, percent_complete, amount_cents, bill_in_full, sort_order
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+         invoice_id, project_task_id, description, quantity, unit_amount_cents, contract_amount_cents, percent_complete, amount_cents, bill_in_full, sort_order
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).bind(
       invoiceId,
+      item.projectTaskId || null,
       item.description,
       item.quantity,
       item.unitAmountCents,
@@ -866,6 +872,7 @@ async function getProjectPreviouslyBilledCents(db: D1Database, qboProjectId: str
 
 async function copyInvoiceToDraft(db: D1Database, source: Invoice, copiedBy: string): Promise<Invoice | null> {
   const lineItems = source.lineItems.map((item) => ({
+    projectTaskId: item.projectTaskId,
     description: item.description,
     quantity: item.quantity,
     unitAmountCents: item.unitAmountCents,
@@ -1587,6 +1594,16 @@ function stripeLedgerMethod(paymentMethodType: unknown): Pick<StripePaymentDetai
   }
 }
 
+async function validateProjectTaskLinks(db: D1Database, qboProjectId: string, lineItems: Array<Omit<InvoiceLineItem, 'id' | 'invoiceId'>>): Promise<Response | null> {
+  const taskIds = Array.from(new Set(lineItems.map((item) => normalizeString(item.projectTaskId)).filter(Boolean)))
+  if (taskIds.length === 0) return null
+  if (!qboProjectId) return badRequest('A project is required when using project tasks')
+  const placeholders = taskIds.map(() => '?').join(', ')
+  const rows = await db.prepare(`SELECT id FROM project_tasks WHERE qbo_project_id = ? AND active = 1 AND id IN (${placeholders})`).bind(qboProjectId, ...taskIds).all<{ id?: unknown }>()
+  if ((rows.results || []).length !== taskIds.length) return badRequest('One or more invoice tasks do not belong to the selected active project')
+  return null
+}
+
 function pendingStripePaymentDetails(grossCents: number): StripePaymentDetails {
   return {
     chargeId: '',
@@ -2239,6 +2256,8 @@ export function createInvoicesApi() {
       if (resolvedContacts instanceof Response) return resolvedContacts
 
       const lineItems = prepareLineItems(payload.lineItems)
+      const taskError = await validateProjectTaskLinks(context.env.DB, normalizeString(payload.qboProjectId), lineItems)
+      if (taskError) return taskError
       const subtotalCents = calculateTotalCents(lineItems)
       const previouslyBilledCents = Math.min(calculatePreviousBillingEligibleCents(lineItems), normalizeAmountCents(payload.previouslyBilledCents))
       const totalCents = Math.max(0, subtotalCents - previouslyBilledCents)
@@ -2326,6 +2345,8 @@ export function createInvoicesApi() {
       const resolvedContacts = await resolveInvoiceContacts(context.env.DB, payload)
       if (resolvedContacts instanceof Response) return resolvedContacts
       const lineItems = prepareLineItems(payload.lineItems)
+      const taskError = await validateProjectTaskLinks(context.env.DB, normalizeString(payload.qboProjectId), lineItems)
+      if (taskError) return taskError
       const subtotalCents = calculateTotalCents(lineItems)
       const previouslyBilledCents = Math.min(calculatePreviousBillingEligibleCents(lineItems), normalizeAmountCents(payload.previouslyBilledCents))
       const totalCents = Math.max(0, subtotalCents - previouslyBilledCents)

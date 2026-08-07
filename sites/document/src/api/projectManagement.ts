@@ -8,6 +8,7 @@ import type {
   ProjectInvoiceDocument,
   ProjectMovePayload,
   ProjectStatus,
+  ProjectTask,
   ProjectUpdatePayload,
   QboCustomer,
 } from 'cfdg/types'
@@ -22,6 +23,7 @@ export type ProjectSummary = QboCustomer & {
   parcelId: string
   status: ProjectStatus
 }
+export type ProjectTaskPayload = Pick<ProjectTask, 'name' | 'scopeOfWork' | 'contractAmountCents' | 'retainerCents' | 'priceType' | 'sortOrder' | 'active'>
 
 export type ContactPayload = {
   name: string
@@ -158,6 +160,11 @@ export async function fetchClients(search = '', status: 'active' | 'inactive' | 
   return (data.clients || []).map((client) => normalizeCustomer(client))
 }
 
+function normalizeProjectTask(value: unknown): ProjectTask {
+  const row = asRecord(value)
+  return { id: normalizeString(row.id), qboProjectId: normalizeString(row.qboProjectId ?? row.qbo_project_id), name: normalizeString(row.name), scopeOfWork: normalizeString(row.scopeOfWork ?? row.scope_of_work), contractAmountCents: Number(row.contractAmountCents ?? row.contract_amount_cents ?? 0) || 0, retainerCents: Number(row.retainerCents ?? row.retainer_cents ?? 0) || 0, priceType: normalizeString(row.priceType ?? row.price_type), sortOrder: Number(row.sortOrder ?? row.sort_order ?? 0) || 0, active: normalizeBoolean(row.active), createdDate: normalizeString(row.createdDate ?? row.created_date), updatedDate: normalizeString(row.updatedDate ?? row.updated_date), createdBy: normalizeString(row.createdBy ?? row.created_by), updatedBy: normalizeString(row.updatedBy ?? row.updated_by), billedCents: Number(row.billedCents ?? row.billed_cents ?? 0) || 0, remainingCents: Number(row.remainingCents ?? row.remaining_cents ?? 0) || 0 }
+}
+
 export async function updateClientStatus(qboCustomerId: string, status: 'active' | 'inactive'): Promise<QboCustomer> {
   const data = await requestJson<{ client?: unknown }>(`/api/clients/${encodeURIComponent(qboCustomerId)}/status`, {
     method: 'PUT',
@@ -269,7 +276,7 @@ export async function updateProjectStatus(qboProjectId: string, status: ProjectS
   }
 }
 
-export async function createProject(payload: ProjectCreatePayload): Promise<ProjectSummary> {
+export async function createProject(payload: ProjectCreatePayload & { tasks?: ProjectTaskPayload[] }): Promise<ProjectSummary> {
   const data = await requestJson<{ project?: unknown }>('/api/projects', {
     method: 'POST',
     authMode: 'microsoft',
@@ -283,6 +290,26 @@ export async function createProject(payload: ProjectCreatePayload): Promise<Proj
     parcelId: normalizeString(row.parcelId ?? row.parcel_id),
     status: normalizeProjectStatus(row.status, customer.active ? 'active' : 'complete'),
   }
+}
+
+export async function fetchNextProjectNumber(year: string): Promise<string> {
+  const data = await requestJson<{ projectNumber?: unknown }>(`/api/projects/next-number?year=${encodeURIComponent(year)}`, { method: 'GET', authMode: 'microsoft' })
+  return normalizeString(data.projectNumber)
+}
+
+export async function fetchProjectTasks(qboProjectId: string, includeInactive = false): Promise<ProjectTask[]> {
+  const data = await requestJson<{ tasks?: unknown[] }>(`/api/projects/${encodeURIComponent(qboProjectId)}`, { method: 'GET', authMode: 'microsoft' })
+  return (data.tasks || []).map(normalizeProjectTask).filter((task) => includeInactive || task.active)
+}
+
+export async function createProjectTask(qboProjectId: string, payload: ProjectTaskPayload): Promise<ProjectTask> {
+  const data = await requestJson<{ task?: unknown }>(`/api/projects/${encodeURIComponent(qboProjectId)}/tasks`, { method: 'POST', authMode: 'microsoft', body: JSON.stringify(payload) })
+  return normalizeProjectTask(data.task)
+}
+
+export async function updateProjectTask(qboProjectId: string, taskId: string, payload: ProjectTaskPayload): Promise<ProjectTask> {
+  const data = await requestJson<{ task?: unknown }>(`/api/projects/${encodeURIComponent(qboProjectId)}/tasks/${encodeURIComponent(taskId)}`, { method: 'PUT', authMode: 'microsoft', body: JSON.stringify(payload) })
+  return normalizeProjectTask(data.task)
 }
 
 export async function updateProject(qboProjectId: string, payload: ProjectUpdatePayload): Promise<ProjectSummary> {
@@ -326,8 +353,8 @@ export async function fetchProjectManager(qboProjectId: string): Promise<Project
   return normalizeManager(data.manager)
 }
 
-export async function fetchProjectDetails(qboProjectId: string): Promise<{ project: ProjectSummary; client: QboCustomer | null; manager: ProjectManager | null; billingProfile: ProjectBillingProfile; invoiceDocuments: ProjectInvoiceDocument[] }> {
-  const data = await requestJson<{ project?: unknown; client?: unknown; manager?: unknown; billingProfile?: unknown; invoiceDocuments?: unknown[] }>(`/api/projects/${encodeURIComponent(qboProjectId)}`, {
+export async function fetchProjectDetails(qboProjectId: string): Promise<{ project: ProjectSummary; client: QboCustomer | null; manager: ProjectManager | null; billingProfile: ProjectBillingProfile; invoiceDocuments: ProjectInvoiceDocument[]; tasks: ProjectTask[] }> {
+  const data = await requestJson<{ project?: unknown; client?: unknown; manager?: unknown; billingProfile?: unknown; invoiceDocuments?: unknown[]; tasks?: unknown[] }>(`/api/projects/${encodeURIComponent(qboProjectId)}`, {
     method: 'GET',
     authMode: 'microsoft',
   })
@@ -344,6 +371,7 @@ export async function fetchProjectDetails(qboProjectId: string): Promise<{ proje
     manager: normalizeManager(data.manager),
     billingProfile: normalizeBillingProfile(data.billingProfile, qboProjectId),
     invoiceDocuments: (data.invoiceDocuments || []).map((document) => normalizeInvoiceDocument(document)),
+    tasks: (data.tasks || []).map(normalizeProjectTask),
   }
 }
 

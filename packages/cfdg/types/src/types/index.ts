@@ -62,6 +62,8 @@ export type {
     ProjectBillingProfile,
     ProjectBillingProfileRow,
     ProjectStatus,
+    ProjectTask,
+    ProjectTaskRow,
     ProjectLifecycle,
     ProjectInvoiceDocument,
     ProjectInvoiceDocumentRow,

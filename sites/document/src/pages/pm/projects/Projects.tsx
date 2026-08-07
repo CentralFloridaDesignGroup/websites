@@ -3,12 +3,13 @@ import { useMsal } from '@azure/msal-react'
 import { useSearchParams } from 'react-router-dom'
 import { Button, Combobox, Textbox } from 'cfdg/input'
 import { Modal, showNotification } from 'cfdg/layout'
-import { State, type EntraUserAccount, type Invoice, type ProjectBillingProfile, type ProjectInvoiceDocument, type ProjectManager, type ProjectStatus, type QboCustomer } from 'cfdg/types'
+import { State, type EntraUserAccount, type Invoice, type ProjectBillingProfile, type ProjectInvoiceDocument, type ProjectManager, type ProjectStatus, type ProjectTask, type QboCustomer } from 'cfdg/types'
 import { ArrowLeft, Plus, RefreshCw } from 'lucide-react'
 import { fetchEligibleProjectManagers } from '../../../api/entra'
 import { fetchInvoices } from '../../../api/invoices'
 import {
   createProject,
+  createProjectTask,
   deleteProjectInvoiceDocument,
   downloadProjectInvoiceDocument,
   fetchClients,
@@ -18,6 +19,7 @@ import {
   saveProjectManager,
   saveProjectBillingProfile,
   updateProject,
+  updateProjectTask,
   updateProjectStatus,
   uploadProjectInvoiceDocument,
   type ProjectCreatePayload,
@@ -97,6 +99,7 @@ export function ProjectsManager() {
   const [billingPoNumber, setBillingPoNumber] = useState('')
   const [billingDocumentNote, setBillingDocumentNote] = useState('')
   const [invoiceDocuments, setInvoiceDocuments] = useState<ProjectInvoiceDocument[]>([])
+  const [tasks, setTasks] = useState<ProjectTask[]>([])
   const [billingSaving, setBillingSaving] = useState(false)
   const [documentBusy, setDocumentBusy] = useState(false)
   const [eligibleManagers, setEligibleManagers] = useState<EntraUserAccount[]>([])
@@ -138,6 +141,7 @@ export function ProjectsManager() {
       setBillingPoNumber('')
       setBillingDocumentNote('')
       setInvoiceDocuments([])
+      setTasks([])
       return
     }
     try {
@@ -150,6 +154,7 @@ export function ProjectsManager() {
       setBillingPoNumber(data.billingProfile.poNumber)
       setBillingDocumentNote(data.billingProfile.invoiceDocumentNote)
       setInvoiceDocuments(data.invoiceDocuments)
+      setTasks(data.tasks)
       setSelectedManagerId('')
     } catch (error) {
       showNotification({ title: 'Project Details Failed To Load', body: String(error), style: 'warning' })
@@ -408,6 +413,17 @@ export function ProjectsManager() {
     }
   }
 
+  async function saveTask(task: ProjectTask) {
+    if (!selectedProjectId) return
+    setSaving(true)
+    try {
+      const payload = { name: task.name, scopeOfWork: task.scopeOfWork, contractAmountCents: task.contractAmountCents, retainerCents: task.retainerCents, priceType: task.priceType, sortOrder: task.sortOrder, active: task.active }
+      const saved = task.id ? await updateProjectTask(selectedProjectId, task.id, payload) : await createProjectTask(selectedProjectId, payload)
+      setTasks((current) => [...current.filter((entry) => entry.id !== saved.id), saved].sort((a, b) => a.sortOrder - b.sortOrder))
+      showNotification({ title: 'Task Saved', body: saved.name, style: 'success' })
+    } catch (error) { showNotification({ title: 'Task Save Failed', body: String(error), style: 'danger' }) } finally { setSaving(false) }
+  }
+
   async function saveProjectStatus(status: ProjectStatus) {
     if (!selectedProject) return
     setProjectStatusSaving(true)
@@ -560,6 +576,7 @@ export function ProjectsManager() {
           billingPoNumber={billingPoNumber}
           billingDocumentNote={billingDocumentNote}
           invoiceDocuments={invoiceDocuments}
+          tasks={tasks}
           relatedInvoices={relatedInvoices}
           relatedLoading={relatedLoading}
           documentBusy={documentBusy}
@@ -581,6 +598,7 @@ export function ProjectsManager() {
           onUploadDocument={(file) => void uploadBillingDocument(file)}
           onDownloadDocument={(document) => void downloadBillingDocument(document)}
           onRemoveDocument={(document) => void removeBillingDocument(document)}
+          onSaveTask={(task) => void saveTask(task)}
         />
       )}
     </div>
