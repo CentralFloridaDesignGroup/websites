@@ -14,10 +14,10 @@ export default defineConfig({
     dedupe: ["react", "react-dom"],
     alias: {
       "@styles": path.resolve(__dirname, "../../styles"),
-      "cfdg/input": path.resolve(__dirname, "../../packages/cfdg/input/src"),
       "cfdg/layout": path.resolve(__dirname, "../../packages/cfdg/layout/src"),
       "cfdg/scripts": path.resolve(__dirname, "../../packages/cfdg/scripts/src"),
       "cfdg/types": path.resolve(__dirname, "../../packages/cfdg/types/src"),
+      "cfdg/ui": path.resolve(__dirname, "../../packages/cfdg/ui/src"),
     },
   },
 });

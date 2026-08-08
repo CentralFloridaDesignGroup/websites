@@ -1,7 +1,7 @@
 import { ChangeEvent, FocusEvent, useEffect, useState } from 'react';
 import { Textbox } from '../core/textbox';
 import type { TextboxProperties } from '../core/textbox';
-import { getRegexMessage, getRegexPattern, getRequiredMessage, isRequired } from 'cfdg/scripts';
+import { classValueToString, getRegexMessage, getRegexPattern, getRequiredMessage, isRequired } from 'cfdg/scripts';
 import type { ColorClassNamesFor, ColorMode } from 'cfdg/types';
 
 export type DocumentTextboxProperties = TextboxProperties & {
@@ -13,9 +13,7 @@ export type DocumentTextboxProperties = TextboxProperties & {
     errorMessage?: string;
 };
 
-function classValueToString(classValue: string | string[] | undefined): string {
-    return Array.isArray(classValue) ? classValue.join(' ') : (classValue ?? '');
-}
+
 
 export function DocumentTextbox(props: DocumentTextboxProperties) {
     const [error, setError] = useState<string | null>(null);

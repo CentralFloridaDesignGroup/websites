@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="400" viewBox="0 0 1200 400" role="img" aria-labelledby="title desc">
+  <title id="title">The Northstar dark logo</title>
+  <desc id="desc">Northstar logo, a White Point Survey product, for dark backgrounds.</desc>
+  <g transform="translate(42 46)">
+    <path d="M146 5 170 113 228 74 189 132 297 156 189 180 228 238 170 199 146 307 122 199 64 238 103 180 -5 156 103 132 64 74 122 113Z" fill="none" stroke="#f7fafc" stroke-width="14" stroke-linejoin="round"/>
+    <circle cx="146" cy="156" r="15" fill="#8baabd"/>
+  </g>
+  <g font-family="Bahnschrift, Arial, sans-serif">
+    <text x="390" y="133" fill="#b9c6d1" font-size="47" font-weight="600" letter-spacing="5">THE</text>
+    <text x="386" y="240" fill="#f7fafc" font-size="112" font-weight="700" letter-spacing="1">NORTHSTAR</text>
+    <path d="M390 267H1110" stroke="#8baabd" stroke-width="4"/>
+    <text x="390" y="315" fill="#d9e2e8" font-size="33" font-weight="600" letter-spacing="2">A WHITE POINT SURVEY PRODUCT</text>
+  </g>
+</svg>

@@ -15,6 +15,7 @@ Unless I explicitly ask you to edit files or run an implementation, first explai
 - Use 'pnpm' for external package management and wrangler interactions.
 - Do not run git commit, push, pull, reset, checkout, or other history-changing git commands. Read-only git commands like status and diff are allowed when useful.
 - It is important that there is generally one source of truth for this project no matter where that source of truth is located. Items shared between multiple resources should be smartly placed in either `packages` or within `[site]/src/components`.
+- If you are going to run typescript, run the check using `pnpm.cmd` and with elevated permissions.
 
 # Verification and script references
 

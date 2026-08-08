@@ -12,6 +12,7 @@ export {
   getRequiredMessage,
   getRegexPattern,
   getRegexMessage,
+  classValueToString,
 } from "./ui";
 
 export {

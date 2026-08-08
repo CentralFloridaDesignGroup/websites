@@ -110,3 +110,12 @@ export function getRegexMessage(
   }
   return "Invalid input.";
 }
+
+/**
+ * Converts a class value to a string.
+ * @param classValue - The class value, which can be a string, an array of strings, or undefined.
+ * @returns The class value as a string. If it is an array, the elements are joined with a space. If it is undefined, an empty string is returned.
+ */
+export function classValueToString(classValue: string | string[] | undefined): string {
+    return Array.isArray(classValue) ? classValue.join(' ') : (classValue ?? '');
+}

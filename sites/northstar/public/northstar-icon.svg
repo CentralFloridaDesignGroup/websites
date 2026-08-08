@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600" role="img" aria-labelledby="title desc">
+  <title id="title">Northstar icon</title>
+  <desc id="desc">A four-point north star above a survey chevron.</desc>
+  <path d="M300 44 338 216 430 154 368 246 556 300 368 338 430 430 338 368 300 556 262 368 170 430 232 338 44 300 232 262 170 170 262 232Z" fill="none" stroke="#1c3d5a" stroke-width="21" stroke-linejoin="round"/>
+  <circle cx="300" cy="300" r="24" fill="#6a7282"/>
+</svg>
