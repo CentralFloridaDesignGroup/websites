@@ -6,12 +6,11 @@
   "scripts": {
     "dev": "wrangler dev --env preview --port 8787",
     "typecheck": "tsc --noEmit",
-    "d1:migrate:local": "wrangler d1 migrations apply compass --local --env production",
-    "d1:migrate:remote": "wrangler d1 migrations apply compass --remote --env production",
-    "d1:migrate:northstar:local": "wrangler d1 migrations apply northstar --local --env production --config wrangler.v2.toml",
-    "d1:migrate:northstar:remote": "wrangler d1 migrations apply northstar --remote --env production --config wrangler.v2.toml",
-    "d1:migrate:v2:local": "pnpm run d1:migrate:northstar:local",
-    "d1:migrate:v2:remote": "pnpm run d1:migrate:northstar:remote",
+    "d1:migrate:v1:local": "wrangler d1 migrations apply compass --local --env production",
+    "d1:migrate:v1:remote": "wrangler d1 migrations apply compass --remote --env production",
+    "d1:migrate:ns:local": "wrangler d1 migrations apply northstar --local --env production --config wrangler.v2.toml",
+    "d1:migrate:ns:remote": "wrangler d1 migrations apply northstar --remote --env production --config wrangler.v2.toml",
+    "d1:migrate:ns:preview:remote": "wrangler d1 migrations apply northstar --remote --env preview --config wrangler.v2.toml",
     "build": "tsc && wrangler deploy --dry-run",
     "deploy:preview": "tsc && wrangler deploy --env preview",
     "deploy": "tsc && wrangler deploy --env production"

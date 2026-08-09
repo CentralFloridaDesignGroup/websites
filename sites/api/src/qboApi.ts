@@ -18,6 +18,7 @@ import { mapInvoicePaymentRow } from 'cfdg/types/invoice'
 
 const QBO_ADMIN_EMAIL = 'nwhite@whitepointsurvey.com'
 
+/** @deprecated Use QboTokenResponse from 'cfdg/types/qbo/http' instead */
 type QboTokenResponse = {
   access_token?: string
   refresh_token?: string
@@ -25,6 +26,7 @@ type QboTokenResponse = {
   x_refresh_token_expires_in?: number
 }
 
+/** @deprecated Use QboAddress from 'cfdg/types/qbo/types' instead */
 type QboAddress = {
   Line1?: string
   Line2?: string
@@ -33,6 +35,7 @@ type QboAddress = {
   PostalCode?: string
 }
 
+/** @deprecated Use QboCustomerResponse from 'cfdg/types/qbo/http' instead */
 type QboCustomerResponse = {
   Id?: string
   ParentRef?: { value?: string }
@@ -51,6 +54,7 @@ type QboCustomerResponse = {
   MetaData?: { LastUpdatedTime?: string }
 }
 
+/** @deprecated Use QboInvoiceResponse from 'cfdg/types/qbo/http' instead */
 type QboInvoiceResponse = {
   Invoice?: {
     Id?: string
@@ -78,6 +82,7 @@ type StripePayoutDepositPayment = {
   payment: InvoicePayment
 }
 
+/** @deprecated Use QboAccountResponse from 'cfdg/types/qbo/http' instead */
 type QboAccountResponse = {
   Id?: string
   Name?: string
@@ -90,6 +95,7 @@ type QboAccountResponse = {
   MetaData?: { LastUpdatedTime?: string }
 }
 
+/** @deprecated Use QboItemResponse from 'cfdg/types/qbo/http' instead */
 type QboItemResponse = {
   Id?: string
   Name?: string
@@ -101,6 +107,7 @@ type QboItemResponse = {
   MetaData?: { LastUpdatedTime?: string }
 }
 
+/** @deprecated Use QboPaymentMethodResponse from 'cfdg/types/qbo/http' instead */
 type QboPaymentMethodResponse = {
   Id?: string
   Name?: string
@@ -109,18 +116,22 @@ type QboPaymentMethodResponse = {
 
 const qboSchemaReadyByDb = new WeakMap<D1Database, Promise<void>>()
 
+/** @deprecated Use the shared normalizeString from 'cfdg/scripts' instead */
 function normalizeString(value: unknown): string {
   return String(value ?? '').trim()
 }
 
+/** @deprecated Use the shared normalizeBool from 'cfdg/scripts' instead */
 function normalizeBool(value: unknown): boolean {
   return value === true || value === 1 || value === '1'
 }
 
+/** @deprecated Use getIsoStringNow from 'cfdg/scripts' instead */
 function nowIso(): string {
   return new Date().toISOString()
 }
 
+/** @deprecated Use generateRandomString from 'cfdg/scripts/crypto' instead */
 function createStateToken(): string {
   const bytes = new Uint8Array(24)
   crypto.getRandomValues(bytes)
@@ -332,6 +343,7 @@ export function ensureQboSchemaReady(db: D1Database): Promise<void> {
   return ready
 }
 
+/** @deprecated Use mapQboCustomerRow from cfdg/types/src/types/qbo/mappers.ts instead */
 function mapCachedQboCustomer(row: Record<string, unknown>): QboCustomer {
   return {
     id: normalizeString(row.qbo_id),
@@ -365,6 +377,7 @@ async function getConnection(db: D1Database): Promise<Record<string, unknown> | 
   return db.prepare('SELECT * FROM qbo_connection WHERE id = 1').first<Record<string, unknown>>()
 }
 
+/** @deprecated Use exchangeToken from sites/api/src/v2/qbo/internal.ts instead */
 async function exchangeToken(env: HonoEnv['Bindings'], body: URLSearchParams): Promise<QboTokenResponse> {
   const { clientId, clientSecret } = requireQboConfig(env)
   const response = await fetch('https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer', {

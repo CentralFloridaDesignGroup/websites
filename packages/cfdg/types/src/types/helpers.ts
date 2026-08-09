@@ -45,6 +45,18 @@ export function normalizeBoolean(value: unknown): boolean {
   return value === true || value === 'true' || normalizeNumber(value) === 1;
 }
 
+/** Normalizes a JSON string by parsing it into an object of type T. Returns null if parsing fails. */
+export function normalizeJson<T>(value: unknown): T | null {
+  if (typeof value === 'string') {
+    try {
+      return JSON.parse(value) as T;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
 /**
  * Normalizes a value by converting it to a string, trimming whitespace, and matching it against an array of allowed values. If no match is found, it returns a default value.
  * @param value - The value to normalize.

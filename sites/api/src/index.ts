@@ -8,6 +8,7 @@ import { createGisPointsApi } from './gisPointsApi'
 import { handleTransactionEmail } from './transactionEmail'
 import { createInvoicesApi } from './invoicesApi'
 import { createQboApi } from './qboApi'
+import { qboConnectionApi } from './v2/qbo/hono'
 import { createUserFavoritesApi } from './userFavoritesApi'
 import { createProjectManagementApi } from './projectManagementApi'
 
@@ -28,6 +29,14 @@ app.use(
 // V2 routes. New routes should be added here.
 app.use(
   '/api/v2/*',
+  cors({
+    origin: CORS_HEADERS_V2['Access-Control-Allow-Origin'],
+    allowMethods: CORS_HEADERS_V2['Access-Control-Allow-Methods'].split(', '),
+    allowHeaders: CORS_HEADERS_V2['Access-Control-Allow-Headers'].split(', '),
+  })
+)
+app.use(
+  '/v2/*',
   cors({
     origin: CORS_HEADERS_V2['Access-Control-Allow-Origin'],
     allowMethods: CORS_HEADERS_V2['Access-Control-Allow-Methods'].split(', '),
@@ -58,6 +67,7 @@ app.route('/', createCommentsApi())
 app.route('/', createGisPointsApi())
 app.route('/', createInvoicesApi())
 app.route('/', createQboApi())
+app.route('/', qboConnectionApi())
 app.route('/', createUserFavoritesApi())
 app.route('/', createProjectManagementApi())
 

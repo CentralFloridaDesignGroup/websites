@@ -55,6 +55,7 @@ clean migration track for a new D1 database using a separate `migrations_v2` str
 1. [ ] Add dedicated scripts to apply `migrations_v2` separately from Compass migrations.
 1. [ ] Ensure `migrations_v2` is managed independently and does not alter existing Compass tables.
 1. [ ] Shift v2 schema ownership toward migration files rather than runtime schema creation.
+1. [ ] Refactor the Northstar v2 schema from lessons learned in `sites/document`, simplifying SQL call costs and reducing table requirements instead of preserving a one-for-one Compass schema copy.
 
 ## D. Validation and Closeout
 1. [ ] Verify `lint` passes at repo root.

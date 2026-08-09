@@ -12,6 +12,7 @@ import { normalizeString } from 'cfdg/scripts'
 // TODO: Review the route policies to ensure they align with the current API structure and access requirements. Remove any deprecated or unused routes to maintain clarity and security.
 const routePolicies: RoutePolicy[] = [
   { method: 'GET', route: '/api/health', mode: 'public' }, // Health check endpoint. Returns 200 if the service is running.
+  { method: 'GET', route: '/v2/health', mode: 'public' }, // V2 health check endpoint. Returns 200 if the service is running.
 
   { method: 'POST', route: '/api/email/transactionEmail', mode: 'key' }, // Send an email using the Transaction Email API.
   { method: 'GET', route: '/api/invoices/public/:token', mode: 'public' }, // Get invoice details for a public invoice link.
@@ -19,6 +20,7 @@ const routePolicies: RoutePolicy[] = [
   { method: 'POST', route: '/api/stripe/webhook', mode: 'public' }, // Stripe webhook endpoint. Receives events from Stripe and processes them.
   { method: 'POST', route: '/api/brevo/webhook', mode: 'public' }, // Brevo webhook endpoint. Receives events from Brevo and processes them.
   { method: 'GET', route: '/api/qbo/callback', mode: 'public' }, // QuickBooks Online OAuth callback endpoint. Receives the authorization code and exchanges it for an access token.
+  { method: 'GET', route: '/v2/qbo/callback', mode: 'public' }, // V2 QuickBooks Online OAuth callback endpoint.
 
   // Invoices
   // Routes relating to the invoice list
@@ -66,6 +68,11 @@ const routePolicies: RoutePolicy[] = [
   { method: '*', route: '/api/qbo/accounts', mode: 'microsoft' },
   // Allows multiple methods for retrieving QuickBooks Online settings.
   { method: '*', route: '/api/qbo/settings', mode: 'microsoft' },
+  // V2 QuickBooks Online connection management.
+  { method: '*', route: '/v2/qbo/status', mode: 'microsoft' },
+  { method: '*', route: '/v2/qbo/connect', mode: 'microsoft' },
+  { method: '*', route: '/v2/qbo/options', mode: 'microsoft' },
+  { method: '*', route: '/v2/qbo/settings', mode: 'microsoft' },
   // Allows multiple methods for handling QB clients.
   { method: '*', route: '/api/clients', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
   // Allows multiple methods for handling QB client details.

@@ -7,12 +7,12 @@ compatibility_date = "2026-06-10"
 name = "wps-api"
 d1_databases = [
   # Replace with the actual v2 database id once created.
-  { binding = "DB_NORTHSTAR", database_name = "northstar", database_id = "7321c32e-be1b-454c-b3b2-d66fe7c11ec4" }
+  { binding = "DB_NORTHSTAR", database_name = "northstar", database_id = "7321c32e-be1b-454c-b3b2-d66fe7c11ec4", migrations_dir = "migrations_v2" }
 ]
 
 [env.preview]
 name = "wps-api-preview"
 d1_databases = [
   # Replace with the actual preview v2 database id once created.
-  { binding = "DB_NORTHSTAR", database_name = "northstar_preview", database_id = "a9faddd7-66c8-4131-8285-adc9d6e53427" }
+  { binding = "DB_NORTHSTAR", database_name = "northstar_preview", database_id = "a9faddd7-66c8-4131-8285-adc9d6e53427", migrations_dir = "migrations_v2" }
 ]

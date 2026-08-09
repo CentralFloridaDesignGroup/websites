@@ -27,3 +27,9 @@ export {
   mapNotificationSyncStateRow,
   mapAccountingSyncStateRow
 } from '../types/accounting';
+
+export {
+  mapQboCustomerRow,
+  mapQboSettingsBlob,
+  mapQboAppSettings,
+} from '../types/qbo/mappers';

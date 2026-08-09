@@ -45,6 +45,22 @@ export function normalizeBoolean(value: unknown): boolean {
   return value === true || value === 'true' || normalizeNumber(value) === 1;
 }
 
+/** 
+ * Normalizes a JSON string by parsing it into an object of type T. Returns null if parsing fails. 
+ * @param value - The JSON string to normalize.
+ * @returns The parsed object of type T, or null if parsing fails.
+ */
+export function normalizeJson<T>(value: unknown): T | null {
+  if (typeof value === 'string') {
+    try {
+      return JSON.parse(value) as T;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
 /**
  * Normalizes a value by converting it to a string, trimming whitespace, and matching it against an array of allowed values. If no match is found, it returns a default value.
  * @param value - The value to normalize.
@@ -116,6 +132,14 @@ export function validateInt(value: unknown, min?: number, max?: number): number 
   if (min !== undefined && num < min) return null;
   if (max !== undefined && num > max) return null;
   return num;
+}
+
+/**
+ * Gets the current date and time as an ISO 8601 string. This function is useful for generating timestamps in a standardized format.
+ * @returns The current date and time in ISO 8601 format.
+ */
+export function getIsoStringNow(): string {
+  return new Date().toISOString()
 }
 
 // #endregion

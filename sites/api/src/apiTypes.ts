@@ -10,7 +10,7 @@ import { JSON_HEADERS_V2 } from 'cfdg/types/constants'
 /** API environment variables, including database and storage bindings. */
 export type ApiEnv = BaseApiEnv & {
   DB: D1Database
-  DB_NORTHSTAR?: D1Database
+  DB_NORTHSTAR: D1Database
   WPS_KV_BINDING: KVNamespace
   INVOICE_DOCUMENTS: R2Bucket
 }
