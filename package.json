@@ -33,6 +33,7 @@
     "d1:migrate:v1:local": "pnpm --filter api run d1:migrate:v1:local",
     "d1:migrate:v1:remote": "pnpm --filter api run d1:migrate:v1:remote",
     "d1:migrate:ns:local": "pnpm --filter api run d1:migrate:ns:local",
+    "d1:reset:ns:local": "pnpm --filter api run d1:reset:ns:local",
     "d1:migrate:ns:remote": "pnpm --filter api run d1:migrate:ns:remote",
     "d1:migrate:ns:preview:remote": "pnpm --filter api run d1:migrate:ns:preview:remote",
     "lint": "eslint .",

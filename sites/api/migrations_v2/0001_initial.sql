@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS client_extra_data (
 );
 CREATE TABLE IF NOT EXISTS company_settings (
 	id INTEGER PRIMARY KEY,
+	general_settings TEXT,
 	qbo_settings TEXT
 );
 CREATE TABLE IF NOT EXISTS project_files (
@@ -127,5 +128,5 @@ CREATE INDEX IF NOT EXISTS idx_project_phases_qbo_id_status ON project_phases(qb
 CREATE INDEX IF NOT EXISTS idx_project_phases_bill_type ON project_phases(bill_type); --Index for filtering by bill_type
 
 --for now, create a company_settings row with id=1 to hold the QBO settings blob. This will be updated later when the user connects to QBO.
-INSERT INTO company_settings (id, qbo_settings) VALUES (1, '{}') ON CONFLICT(id) DO NOTHING;
+INSERT INTO company_settings (id, general_settings, qbo_settings) VALUES (1, '{}', '{}') ON CONFLICT(id) DO NOTHING;
 COMMIT;
