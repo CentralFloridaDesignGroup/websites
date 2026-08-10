@@ -16,6 +16,7 @@ import type { LucideIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { getMsalSilentRedirectUri, loginRequest } from "../auth/msalConfig";
+import { useCompanySettings } from "../contexts/CompanySettingsContext";
 
 type NavigationItem = {
   label: string;
@@ -50,8 +51,8 @@ const NAVIGATION_SECTIONS: NavigationSection[] = [
   {
     label: "Reports",
     items: [
+      { label: "Dynamic Reporting", href: "/quick-reports", icon: FileText, implemented: false },
       { label: "Report Warehouse", href: "/report-warehouse", icon: FileText, implemented: false },
-      { label: "Quick Reports", href: "/quick-reports", icon: FileText, implemented: false },
     ],
   },
   {
@@ -125,6 +126,7 @@ export function NorthstarLayout() {
   const displayName = account?.name ?? account?.username ?? "White Point User";
   const claimRole = getClaimRole(account?.idTokenClaims as Record<string, unknown> | undefined);
   const [userRole, setUserRole] = useState(claimRole);
+  const { settings } = useCompanySettings();
 
   useEffect(() => {
     let cancelled = false;
@@ -181,6 +183,7 @@ export function NorthstarLayout() {
               <img src="/northstar-icon-dark.webp" alt="" className="hidden size-9 shrink-0 dark:block" />
               <div className="min-w-0 hidden md:block">
                 <p className="truncate text-base font-semibold">Northstar</p>
+                <p className="truncate text-xs text-neutral-500 dark:text-neutral-300 uppercase">{settings?.general.shortName ?? settings?.general.shortName ?? "Company Name Not Set"}</p>
               </div>
             </NavLink>
           </div>

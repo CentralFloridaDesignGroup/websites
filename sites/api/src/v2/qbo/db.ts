@@ -43,3 +43,11 @@ export async function getQboSettings(
   }
   return normalizeJson<QboSettings>(settings);
 }
+
+/** Removes the stored QBO connection and settings without deleting cached customers. */
+export async function clearQboSettings(db: D1Database): Promise<boolean> {
+  const result = await db
+    .prepare("UPDATE company_settings SET qbo_settings = NULL WHERE id = 1")
+    .run();
+  return result.success;
+}

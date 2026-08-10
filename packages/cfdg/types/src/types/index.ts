@@ -1,3 +1,5 @@
+// #region V1 exports
+
 // Accounting Exports
 export type {
   QuickbooksSyncState,
@@ -76,29 +78,6 @@ export type {
   ProjectMovePayload,
 } from "./projectManagement";
 
-// Quickbooks Online Exports
-export type {
-  QboCustomer,
-  QboConnectionStatus,
-  QboServiceItem,
-  QboAccount,
-  QboAddress,
-  QboSettings,
-  QboReferenceItem,
-  QboAppSettings,
-} from "./qbo/types";
-
-export type {
-  QboTokenResponse,
-  QboCustomerResponse,
-  QboInvoiceResponse,
-  QboAccountResponse,
-  QboItemResponse,
-  QboPaymentMethodResponse,
-  QboStatusResponse,
-  QboOptionsResponse,
-} from "./qbo/http";
-
 // Review Package Exports
 export type {
   CommentStatus,
@@ -129,3 +108,38 @@ export type {
   ClassNameValue,
   ColorClassNamesFor,
 } from "./ui";
+
+// #endregion
+
+// #region V2 exports
+
+// Quickbooks Online Exports
+export type {
+  QboCustomer,
+  QboConnectionStatus,
+  QboServiceItem,
+  QboAccount,
+  QboAddress,
+  QboSettings,
+  QboReferenceItem,
+  QboAppSettings,
+} from "./qbo/types";
+
+export type {
+  QboTokenResponse,
+  QboCustomerResponse,
+  QboInvoiceResponse,
+  QboAccountResponse,
+  QboItemResponse,
+  QboPaymentMethodResponse,
+  QboStatusResponse,
+  QboOptionsResponse,
+} from "./qbo/http";
+
+export type {
+  GeneralSettings,
+  CompanySettings,
+  CompanySettingsRow,
+} from "./company/types";
+
+// #endregion

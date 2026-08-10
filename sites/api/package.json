@@ -9,6 +9,7 @@
     "d1:migrate:v1:local": "wrangler d1 migrations apply compass --local --env production",
     "d1:migrate:v1:remote": "wrangler d1 migrations apply compass --remote --env production",
     "d1:migrate:ns:local": "wrangler d1 migrations apply northstar --local --env production --config wrangler.v2.toml",
+    "d1:migrate:ns:preview:local": "wrangler d1 migrations apply northstar_preview --local --env preview",
     "d1:reset:ns:local": "wrangler d1 execute northstar --local --env production --config wrangler.v2.toml --file=./scripts/reset-northstar-local.sql && pnpm run d1:migrate:ns:local",
     "d1:migrate:ns:remote": "wrangler d1 migrations apply northstar --remote --env production --config wrangler.v2.toml",
     "d1:migrate:ns:preview:remote": "wrangler d1 migrations apply northstar --remote --env preview --config wrangler.v2.toml",

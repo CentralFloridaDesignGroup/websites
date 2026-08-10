@@ -5,7 +5,7 @@ import {
   serverError,
   type HonoEnv,
 } from "../../apiTypes";
-import { getQboSettings, upsertQboSettings } from "./db";
+import { clearQboSettings, getQboSettings, upsertQboSettings } from "./db";
 import {
   exchangeToken,
   getQboConfig,
@@ -215,7 +215,8 @@ export function qboConnectionApi() {
 
   // GET: /v2/qbo/callback - Handles the QBO OAuth callback
   app.get("/v2/qbo/callback", async (c) => {
-    const fallbackRedirect = "/v2/qbo?status=error";
+    const northstarUrl = c.env.NORTHSTAR_PUBLIC_BASE_URL || "https://northstar.whitepointsurvey.com";
+    const fallbackRedirect = `${northstarUrl}/company-settings?section=qbo`;
     try {
       const state = normalizeString(c.req.query("state"));
       const code = normalizeString(c.req.query("code"));
@@ -276,9 +277,10 @@ export function qboConnectionApi() {
           stripeFeeExpenseAccount:
             existing?.accountingDefaults?.stripeFeeExpenseAccount || null,
         },
+        lastCustomerPullDate: existing?.lastCustomerPullDate,
       };
       await upsertQboSettings(c.env.DB_NORTHSTAR, settings);
-      return c.redirect("/v2/qbo?status=connected", 302);
+      return c.redirect(`${northstarUrl}/company-settings?section=qbo`, 302);
     } catch (error: unknown) {
       console.error("Error handling V2 QBO callback:", error);
       return c.redirect(fallbackRedirect, 302);
@@ -389,6 +391,22 @@ export function qboConnectionApi() {
       );
     } catch (error: unknown) {
       console.error("Error updating V2 QBO settings:", error);
+      return serverError(
+        String(error instanceof Error ? error.message : error),
+      );
+    }
+  });
+
+  // DELETE: /v2/qbo/settings - Disconnects QBO without deleting cached customers.
+  app.delete("/v2/qbo/settings", async (c) => {
+    try {
+      const authError = requireAuthMode(c, "microsoft");
+      if (authError) return authError;
+
+      await clearQboSettings(c.env.DB_NORTHSTAR);
+      return c.json({ status: "ok" }, 200);
+    } catch (error: unknown) {
+      console.error("Error disconnecting V2 QBO:", error);
       return serverError(
         String(error instanceof Error ? error.message : error),
       );

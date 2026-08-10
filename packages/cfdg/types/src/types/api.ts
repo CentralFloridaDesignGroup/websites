@@ -19,4 +19,5 @@ export type BaseApiEnv = AuthEnv & {
   QBO_REDIRECT_URI?: string;
   QBO_ENVIRONMENT?: string;
   QBO_MINOR_VERSION?: string;
+  NORTHSTAR_PUBLIC_BASE_URL?: string;
 };

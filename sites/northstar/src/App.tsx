@@ -1,39 +1,49 @@
-import { Navigate, Route, Routes } from "react-router-dom";
-import { RouteGuard } from "./auth/RouteGuard";
+import { MsalProvider } from "@azure/msal-react";
+import { lazy, Suspense } from "react";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS } from "cfdg/types/constants";
+import { msalInstance } from "./auth/msalConfig";
 import { LoginPage } from "./auth/login";
+import { AuthProvider, ProtectedRoutes } from "./auth/AuthContext";
+import { CompanySettingsProvider } from "./contexts/CompanySettingsContext";
+import { ErrorLandingPage, RouteErrorLandingPage } from "./components/ErrorLandingPage";
 import { NorthstarLayout } from "./components/NorthstarLayout";
-import { HomePage } from "./pages/home";
+
+const HomePage = lazy(() => import("./pages/home").then((module) => ({ default: module.HomePage })));
+const CompanySettingsPage = lazy(() => import("./pages/companySettings/companySettings").then((module) => ({ default: module.CompanySettingsPage })));
+
+function RouteLoading() { return <div className="flex min-h-[12rem] items-center justify-center text-sm text-neutral-600 dark:text-neutral-300">Loading...</div>; }
+
+const router = createBrowserRouter([
+  { path: "/login", element: <LoginPage />, errorElement: <RouteErrorLandingPage /> },
+  {
+    path: "/", element: <ProtectedRoutes />, errorElement: <RouteErrorLandingPage />,
+    children: [
+      { element: <CompanySettingsProvider><NorthstarLayout /></CompanySettingsProvider>, children: [
+        { index: true, element: <HomePage /> },
+        { path: "vendors", element: <PlaceholderPage title="Vendors" /> },
+        { path: "timesheets", element: <PlaceholderPage title="Timesheets" /> },
+        { path: "expense-reports", element: <PlaceholderPage title="Expense Reports" /> },
+        { path: "report-warehouse", element: <PlaceholderPage title="Report Warehouse" /> },
+        { path: "quick-reports", element: <PlaceholderPage title="Quick Reports" /> },
+        { path: "company-settings", element: <CompanySettingsPage /> },
+        { path: "proposal-generator", element: <PlaceholderPage title="Proposal Generator" /> },
+        { path: "settings", element: <PlaceholderPage title="User Settings" /> },
+        { element: <ProtectedRoutes allowedGroupIds={PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS} />, children: [
+          { path: "invoices", element: <PlaceholderPage title="Invoices" /> },
+          { path: "clients", element: <PlaceholderPage title="Clients" /> },
+          { path: "projects", element: <PlaceholderPage title="Projects" /> },
+        ] },
+      ] },
+    ],
+  },
+  { path: "*", element: <ErrorLandingPage /> },
+]);
 
 export default function App() {
-  return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route element={<RouteGuard />}>
-        <Route element={<NorthstarLayout />}>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/invoices" element={<PlaceholderPage title="Invoices" />} />
-          <Route path="/clients" element={<PlaceholderPage title="Clients" />} />
-          <Route path="/projects" element={<PlaceholderPage title="Projects" />} />
-          <Route path="/vendors" element={<PlaceholderPage title="Vendors" />} />
-          <Route path="/timesheets" element={<PlaceholderPage title="Timesheets" />} />
-          <Route path="/expense-reports" element={<PlaceholderPage title="Expense Reports" />} />
-          <Route path="/report-warehouse" element={<PlaceholderPage title="Report Warehouse" />} />
-          <Route path="/quick-reports" element={<PlaceholderPage title="Quick Reports" />} />
-          <Route path="/company-settings" element={<PlaceholderPage title="Company Settings" />} />
-          <Route path="/proposal-generator" element={<PlaceholderPage title="Proposal Generator" />} />
-          <Route path="/settings" element={<PlaceholderPage title="User Settings" />} />
-        </Route>
-      </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-  );
+  return <MsalProvider instance={msalInstance}><AuthProvider><Suspense fallback={<RouteLoading />}><RouterProvider router={router} /></Suspense></AuthProvider></MsalProvider>;
 }
 
 function PlaceholderPage({ title }: { title: string }) {
-  return (
-    <section className="rounded-lg border border-neutral-300 bg-neutral-50 p-6 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-      <h1 className="text-2xl font-semibold text-neutral-950 dark:text-neutral-50">{title}</h1>
-      <p className="mt-2 text-neutral-700 dark:text-neutral-300">This route is ready for migration from document PM workflows.</p>
-    </section>
-  );
+  return <section className="rounded-lg border border-neutral-300 bg-neutral-50 p-6 shadow-sm dark:border-neutral-700 dark:bg-neutral-800"><h1 className="text-2xl font-semibold text-neutral-950 dark:text-neutral-50">{title}</h1><p className="mt-2 text-neutral-700 dark:text-neutral-300">This route is ready for migration from document PM workflows.</p></section>;
 }

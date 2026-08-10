@@ -8,6 +8,7 @@ interface ImportMetaEnv {
   readonly VITE_MSAL_REDIRECT_URI?: string;
   readonly VITE_MSAL_SILENT_REDIRECT_URI?: string;
   readonly VITE_API_AUTH_SCOPES?: string;
+  readonly VITE_GRAPH_DIRECTORY_SCOPES?: string;
 }
 
 interface ImportMeta {

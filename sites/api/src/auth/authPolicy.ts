@@ -73,6 +73,9 @@ const routePolicies: RoutePolicy[] = [
   { method: '*', route: '/v2/qbo/connect', mode: 'microsoft' },
   { method: '*', route: '/v2/qbo/options', mode: 'microsoft' },
   { method: '*', route: '/v2/qbo/settings', mode: 'microsoft' },
+  { method: 'POST', route: '/v2/customers/sync', mode: 'microsoft' },
+  // V2 company settings.
+  { method: '*', route: '/v2/company', mode: 'microsoft' },
   // Allows multiple methods for handling QB clients.
   { method: '*', route: '/api/clients', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
   // Allows multiple methods for handling QB client details.

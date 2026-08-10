@@ -18,7 +18,7 @@ const BUTTON_STYLE_CLASSES: Record<NonNullable<NorthstarButtonProperties['button
     },
     secondary: {
         light: 'border border-gray-700 bg-gray-700 text-white hover:bg-gray-800 focus:ring-2 focus:ring-gray-500/40',
-        dark: 'border border-gray-200 bg-gray-200 text-black hover:bg-white focus:ring-2 focus:ring-white/40',
+        dark: 'border border-gray-200 bg-gray-200 text-black hover:bg-gray-300 focus:ring-2 focus:ring-white/40',
     },
     focused: {
         light: 'border border-primary bg-primary text-white hover:bg-primary-700 focus:ring-2 focus:ring-primary-500/40',

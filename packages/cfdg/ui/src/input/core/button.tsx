@@ -40,9 +40,9 @@ export function Button(props: ButtonProperties) {
     } = props;
 
     const sizeClasses: Record<InputSize, string> = {
-        small: "px-2 py-1 text-sm",
-        medium: "px-3 py-2 text-base",
-        large: "px-4 py-3 text-lg",
+        small: "px-2 py-1 text-sm cursor-pointer disabled:cursor-not-allowed",
+        medium: "px-3 py-2 text-base cursor-pointer disabled:cursor-not-allowed",
+        large: "px-4 py-3 text-lg cursor-pointer disabled:cursor-not-allowed",
     };
 
     /** Compiled CSS classes for the button element based on the color mode. */

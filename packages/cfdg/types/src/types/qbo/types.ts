@@ -167,6 +167,9 @@ export type QboSettings = {
     /** Default expense account for Stripe fees */
     stripeFeeExpenseAccount: QboAccount | null;
   };
+
+  /** Date of the most recent successful customer pull into Northstar. */
+  lastCustomerPullDate?: string;
 };
 
 /** QuickBooks Online app settings, excluding OAuth tokens. Use in most cases. */
@@ -174,4 +177,6 @@ export type QboAppSettings = {
   schemaVersion: QboSettings["schemaVersion"];
   connection: QboSettings["connection"];
   accountingDefaults: QboSettings["accountingDefaults"];
+  /** Date of the most recent successful customer pull into Northstar. */
+  lastCustomerPullDate?: string;
 };

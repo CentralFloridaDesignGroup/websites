@@ -54,5 +54,6 @@ export function mapQboAppSettings(settings: QboSettings): QboAppSettings {
     schemaVersion: settings.schemaVersion,
     connection: settings.connection,
     accountingDefaults: settings.accountingDefaults,
+    lastCustomerPullDate: settings.lastCustomerPullDate,
   };
 }
