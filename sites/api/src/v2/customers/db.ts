@@ -15,6 +15,8 @@ export async function upsertCustomer(
   const displayName = text(customer.DisplayName || customer.FullyQualifiedName || customer.CompanyName || `${text(customer.GivenName)} ${text(customer.FamilyName)}`);
   if (!id || !displayName) return false;
 
+  const parentId = text(customer.ParentRef?.value);
+
   const result = await db.prepare(`
     INSERT INTO qbo_customers_projects (
       qbo_id, parent_id, display_name, fully_qualified_name, company_name,
@@ -48,7 +50,7 @@ export async function upsertCustomer(
       last_synced_date = excluded.last_synced_date
   `).bind(
     id,
-    text(customer.ParentRef?.value),
+    parentId,
     displayName,
     text(customer.FullyQualifiedName),
     text(customer.CompanyName),
@@ -71,6 +73,30 @@ export async function upsertCustomer(
     text(customer.MetaData?.LastUpdatedTime),
     syncedDate,
   ).run();
+
+  if (parentId) {
+    await db.prepare("DELETE FROM client_extra_data WHERE qbo_id = ?").bind(id).run();
+    await db.prepare(`
+      INSERT INTO project_extra_data (qbo_id, status)
+      VALUES (?, 'proposal')
+      ON CONFLICT(qbo_id) DO UPDATE SET
+        status = CASE
+          WHEN project_extra_data.status IS NULL OR TRIM(project_extra_data.status) = '' THEN 'active'
+          ELSE project_extra_data.status
+        END
+    `).bind(id).run();
+  } else {
+    await db.prepare("DELETE FROM project_extra_data WHERE qbo_id = ?").bind(id).run();
+    await db.prepare(`
+      INSERT INTO client_extra_data (qbo_id, status)
+      VALUES (?, 'active')
+      ON CONFLICT(qbo_id) DO UPDATE SET
+        status = CASE
+          WHEN client_extra_data.status IS NULL OR TRIM(client_extra_data.status) = '' THEN 'active'
+          ELSE client_extra_data.status
+        END
+    `).bind(id).run();
+  }
 
   return result.success;
 }

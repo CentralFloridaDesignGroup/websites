@@ -74,6 +74,17 @@ const routePolicies: RoutePolicy[] = [
   { method: '*', route: '/v2/qbo/options', mode: 'microsoft' },
   { method: '*', route: '/v2/qbo/settings', mode: 'microsoft' },
   { method: 'POST', route: '/v2/customers/sync', mode: 'microsoft' },
+  // V2 Northstar client and project list/detail routes.
+  { method: '*', route: '/v2/clients', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: '*', route: '/v2/clients/:id', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: '*', route: '/v2/clients/:id/extra-data', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: '*', route: '/v2/clients/:id/projects', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: '*', route: '/v2/clients/:id/status', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: '*', route: '/v2/projects', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: '*', route: '/v2/projects/:id', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: '*', route: '/v2/projects/:id/extra-data', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: '*', route: '/v2/projects/:id/client', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: '*', route: '/v2/projects/:id/status', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
   // V2 company settings.
   { method: '*', route: '/v2/company', mode: 'microsoft' },
   // Allows multiple methods for handling QB clients.

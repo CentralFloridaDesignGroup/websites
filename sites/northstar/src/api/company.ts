@@ -18,8 +18,16 @@ export async function updateCompanySettings(newSettings: CompanySettings): Promi
     body: JSON.stringify({ general: newSettings.general }),
   });
 
-  if (newSettings.qboSettings) {
-    await updateQboSettings(newSettings.qboSettings);
+  // The general settings endpoint is independent from QBO. A settings row may
+  // contain an empty or legacy QBO object before the OAuth connection exists;
+  // only send QBO defaults after a real connection has been established.
+  const qboSettings = newSettings.qboSettings;
+  if (
+    qboSettings?.connection?.connectedDate &&
+    qboSettings.connection.realmId &&
+    qboSettings.connection.environment
+  ) {
+    await updateQboSettings(qboSettings);
   }
 
   const response = await getCompanySettings();

@@ -1,10 +1,18 @@
 import { normalizeString } from "cfdg/scripts";
 import { getMsalSilentRedirectUri, msalInstance } from "../auth/msalConfig";
 
-function getApiBaseUrl(): string {
+/** 
+ * Gets the base URL for the Northstar API. 
+ * @returns The base URL for the Northstar API, or a default value if not configured.
+ */
+export function getApiBaseUrl(): string {
   return normalizeString(import.meta.env.VITE_API_BASE_URL) || "https://api.whitepointsurvey.com";
 }
 
+/** 
+ * Gets the authentication scopes for the Northstar API.
+ * @returns An array of authentication scopes.
+ */
 function getApiScopes(): string[] {
   const scopes = normalizeString(import.meta.env.VITE_API_AUTH_SCOPES)
     .split(/[ ,]+/)
@@ -18,6 +26,23 @@ function getApiScopes(): string[] {
   return scopes;
 }
 
+/** Error raised when a Northstar API request returns a non-success status. */
+export class NorthstarApiError extends Error {
+  /** The HTTP status code returned by the Northstar API. */
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "NorthstarApiError";
+    this.status = status;
+  }
+}
+
+/** 
+ * Gets an access token for the Northstar API using the active Microsoft account. 
+ * @returns A promise that resolves to the access token string.
+ * @throws An error if no active account is found or if token acquisition fails.
+ */
 async function getAccessToken(): Promise<string> {
   const account = msalInstance.getActiveAccount() ?? msalInstance.getAllAccounts()[0];
   if (!account) {
@@ -38,18 +63,13 @@ async function getAccessToken(): Promise<string> {
   return token;
 }
 
-/** Error raised when a Northstar API request returns a non-success status. */
-export class NorthstarApiError extends Error {
-  readonly status: number;
-
-  constructor(message: string, status: number) {
-    super(message);
-    this.name = "NorthstarApiError";
-    this.status = status;
-  }
-}
-
-/** Sends an authenticated request to the Northstar API and parses its JSON response. */
+/** 
+ * Sends an authenticated request to the Northstar API and parses its JSON response.
+ * @param path - The API endpoint path.
+ * @param init - The fetch request initialization options.
+ * @returns A promise that resolves to the parsed JSON response.
+ * @throws NorthstarApiError if the response status is not successful.
+ */
 export async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> {
   const response = await fetch(`${getApiBaseUrl()}${path}`, {
     ...init,

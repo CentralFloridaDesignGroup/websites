@@ -11,6 +11,8 @@ import { NorthstarLayout } from "./components/NorthstarLayout";
 
 const HomePage = lazy(() => import("./pages/home").then((module) => ({ default: module.HomePage })));
 const CompanySettingsPage = lazy(() => import("./pages/companySettings/companySettings").then((module) => ({ default: module.CompanySettingsPage })));
+const ClientsPage = lazy(() => import("./pages/clients/list").then((module) => ({ default: module.ClientsPage })));
+const ProjectsPage = lazy(() => import("./pages/projects/list").then((module) => ({ default: module.ProjectsPage })));
 
 function RouteLoading() { return <div className="flex min-h-[12rem] items-center justify-center text-sm text-neutral-600 dark:text-neutral-300">Loading...</div>; }
 
@@ -31,8 +33,8 @@ const router = createBrowserRouter([
         { path: "settings", element: <PlaceholderPage title="User Settings" /> },
         { element: <ProtectedRoutes allowedGroupIds={PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS} />, children: [
           { path: "invoices", element: <PlaceholderPage title="Invoices" /> },
-          { path: "clients", element: <PlaceholderPage title="Clients" /> },
-          { path: "projects", element: <PlaceholderPage title="Projects" /> },
+          { path: "clients", element: <ClientsPage /> },
+          { path: "projects", element: <ProjectsPage /> },
         ] },
       ] },
     ],

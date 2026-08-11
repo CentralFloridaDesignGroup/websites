@@ -113,6 +113,30 @@ export type {
 
 // #region V2 exports
 
+export type {
+  NorthstarPageSize,
+  NorthstarPagination,
+  ListOptions
+} from "./pagination";
+
+export type {
+  ClientExtraData,
+  ClientExtraDataRow,
+  ClientListResponse,
+  ClientStatus,
+  Client,
+  ClientListItem,
+  NorthstarClient
+} from "./client/types";
+
+export type {
+  NorthstarProject,
+  ProjectExtraData,
+  ProjectExtraDataRow,
+  ProjectListItem,
+  ProjectListResponse,
+} from "./project";
+
 // Quickbooks Online Exports
 export type {
   QboCustomer,
@@ -135,6 +159,8 @@ export type {
   QboStatusResponse,
   QboOptionsResponse,
 } from "./qbo/http";
+
+export { mapQboCustomerRow } from "./qbo/mappers";
 
 export type {
   GeneralSettings,

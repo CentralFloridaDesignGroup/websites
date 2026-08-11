@@ -81,24 +81,7 @@ CREATE TABLE IF NOT EXISTS project_extra_data (
 	geolocation TEXT,
 	CONSTRAINT fk_qbo_id FOREIGN KEY (qbo_id) REFERENCES qbo_customers_projects(qbo_id)
 );
-CREATE TABLE IF NOT EXISTS project_phases (
-    id INTEGER PRIMARY KEY,
-    qbo_id TEXT,
-    name TEXT,
-    description TEXT,
-    bill_type TEXT,
-    status TEXT,
-    contract_cents INTEGER,
-    billed_percent TEXT,
-    billed_cents INTEGER,
-    paid_percent TEXT,
-    paid_cents INTEGER,
-    created_time DATETIME,
-    updated_time DATETIME,
-    created_id TEXT,
-    updated_id TEXT,
-    CONSTRAINT fk_qbo_id FOREIGN KEY (qbo_id) REFERENCES qbo_customers_projects(qbo_id)
-);
+
 CREATE TABLE IF NOT EXISTS record_ledger (
 	id INTEGER PRIMARY KEY,
 	-- Reference ID to subject table. Not FK'ed because it can be any table.
@@ -110,6 +93,7 @@ CREATE TABLE IF NOT EXISTS record_ledger (
 	log_date DATETIME,
 	log_user TEXT
 );
+
 CREATE INDEX IF NOT EXISTS idx_client_files_active ON client_files(active);
 CREATE INDEX IF NOT EXISTS idx_client_files_qbo_id ON client_files(qbo_id);
 CREATE INDEX IF NOT EXISTS idx_client_files_qbo_id_active ON client_files(qbo_id, active);
@@ -123,9 +107,6 @@ CREATE INDEX IF NOT EXISTS idx_project_extra_data_status ON project_extra_data(s
 CREATE INDEX IF NOT EXISTS idx_record_ledger_log_user ON record_ledger(log_user);
 CREATE INDEX IF NOT EXISTS idx_record_ledger_ref_id ON record_ledger(ref_id);
 CREATE INDEX IF NOT EXISTS idx_record_ledger_function ON record_ledger(function);
-CREATE INDEX IF NOT EXISTS idx_project_phases_qbo_id ON project_phases(qbo_id);
-CREATE INDEX IF NOT EXISTS idx_project_phases_qbo_id_status ON project_phases(qbo_id, status); --Index for filtering by qbo_id and status
-CREATE INDEX IF NOT EXISTS idx_project_phases_bill_type ON project_phases(bill_type); --Index for filtering by bill_type
 
 --for now, create a company_settings row with id=1 to hold the QBO settings blob. This will be updated later when the user connects to QBO.
 INSERT INTO company_settings (id, general_settings, qbo_settings) VALUES (1, '{}', '{}') ON CONFLICT(id) DO NOTHING;
