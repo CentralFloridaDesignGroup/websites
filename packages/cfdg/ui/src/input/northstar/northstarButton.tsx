@@ -4,37 +4,42 @@ import type { ColorClassNamesFor, ColorMode } from 'cfdg/types';
 
 export type NorthstarButtonProperties = ButtonProperties & {
     /** The style of the button.
-     * - `Primary`: Black with white text or light with black text, typically used for main actions.
-     * - `Secondary`: gray with white text or light gray with black text, typically used for secondary actions.
-     * - `Focused`: Primary with white text or light Primary with black text, typically used for focused actions.
+     * - `Default`: Neutral white/gray treatment for standard actions.
+     * - `Primary`: Northstar navy, typically used for main actions.
+     * - `Secondary`: Soft teal/blue treatment for supporting actions.
+     * - `Focused`: Northstar teal, used for the most prominent action in a section.
      */
-    buttonStyle?: 'primary' | 'secondary' | 'focused';
+    buttonStyle?: 'default' | 'primary' | 'secondary' | 'focused';
 }
 
 const BUTTON_STYLE_CLASSES: Record<NonNullable<NorthstarButtonProperties['buttonStyle']>, ColorClassNamesFor<ColorMode>> = {
+    default: {
+        light: 'border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-100 focus:ring-[#173244]/30',
+        dark: 'border-neutral-600 bg-neutral-800 text-neutral-100 hover:bg-neutral-700 focus:ring-[#9cc4c9]/30',
+    },
     primary: {
-        light: 'border border-black bg-black text-white hover:bg-gray-800 focus:ring-2 focus:ring-black/30',
-        dark: 'border border-gray-100 bg-gray-100 text-black hover:bg-white focus:ring-2 focus:ring-white/40',
+        light: 'border-black bg-black text-white hover:bg-gray-800 focus:ring-black/30',
+        dark: 'border-black bg-black text-white hover:bg-gray-800 focus:ring-black/30',
     },
     secondary: {
-        light: 'border border-gray-700 bg-gray-700 text-white hover:bg-gray-800 focus:ring-2 focus:ring-gray-500/40',
-        dark: 'border border-gray-200 bg-gray-200 text-black hover:bg-gray-300 focus:ring-2 focus:ring-white/40',
+        light: 'border-gray-700 bg-gray-700 text-white hover:bg-gray-800 focus:ring-gray-500/40',
+        dark: 'border-gray-700 bg-gray-700 text-white hover:bg-gray-800 focus:ring-gray-500/40',
     },
     focused: {
-        light: 'border border-primary bg-primary text-white hover:bg-primary-700 focus:ring-2 focus:ring-primary-500/40',
-        dark: 'border border-primary-200 bg-primary-200 text-black hover:bg-primary-100 focus:ring-2 focus:ring-primary-200/50',
+        light: 'border-primary bg-primary text-white hover:bg-primary-700 focus:ring-primary-500/40',
+        dark: 'border-primary bg-primary text-white hover:bg-primary-700 focus:ring-primary-500/40',
     },
 };
 
 export function NorthstarButton(props: NorthstarButtonProperties) {
     const {
-        buttonStyle = 'primary',
+        buttonStyle = 'default',
         className,
         colorMode = 'auto',
         ...rest
     } = props;
 
-    const baseClasses = 'inline-flex items-center justify-center gap-2 rounded-none font-semibold transition-colors focus:outline-none disabled:cursor-not-allowed disabled:opacity-60';
+    const baseClasses = 'inline-flex items-center justify-center gap-2 rounded border px-3 py-2 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60';
     const styleClasses = BUTTON_STYLE_CLASSES[buttonStyle];
     const buttonClasses: ColorClassNamesFor<ColorMode> = typeof className === 'string' ? {
         light: `${baseClasses} ${styleClasses.light} ${className}`,

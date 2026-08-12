@@ -26,6 +26,7 @@ export {
   parseJsonBody,
   validateInt,
   getIsoStringNow,
+  formatAddress,
 } from "./api";
 
 export { generateUUID, generateRandomString } from "./crypto";

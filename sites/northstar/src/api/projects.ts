@@ -1,4 +1,4 @@
-import type { NorthstarClient, NorthstarPageSize, NorthstarProject, ProjectExtraData, ProjectListResponse } from "cfdg/types";
+import type { NorthstarClient, NorthstarPageSize, NorthstarProject, Phase, PhaseCreatePayload, PhaseSummaryResponse, PhaseUpdatePayload, ProjectExtraData, ProjectListResponse } from "cfdg/types";
 import { requestJson } from "./client";
 
 type ListOptions = { page: number; pageSize: NorthstarPageSize; direction: "asc" | "desc"; clientId?: string };
@@ -35,4 +35,35 @@ export async function updateProjectStatus(id: string, status: ProjectExtraData["
     body: JSON.stringify({ status }),
   });
   return response.extraData;
+}
+
+/** Loads the hierarchical phase summary for a Northstar project. */
+export async function fetchProjectPhases(id: string): Promise<PhaseSummaryResponse> {
+  return requestJson<PhaseSummaryResponse>(`/v2/projects/${encodeURIComponent(id)}/phases`);
+}
+
+/** Creates a top-level or child phase for a Northstar project. */
+export async function createProjectPhase(id: string, payload: PhaseCreatePayload): Promise<Phase> {
+  const response = await requestJson<{ phase: Phase }>(`/v2/projects/${encodeURIComponent(id)}/phases`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  return response.phase;
+}
+
+/** Updates editable metadata and accounting values for a phase. */
+export async function updateProjectPhase(id: string, phaseId: string, payload: PhaseUpdatePayload): Promise<Phase> {
+  const response = await requestJson<{ phase: Phase }>(`/v2/projects/${encodeURIComponent(id)}/phases/${encodeURIComponent(phaseId)}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+  return response.phase;
+}
+
+/** Soft-deletes a phase and its descendants from the project summary. */
+export async function deleteProjectPhase(id: string, phaseId: string): Promise<Phase> {
+  const response = await requestJson<{ phase: Phase }>(`/v2/projects/${encodeURIComponent(id)}/phases/${encodeURIComponent(phaseId)}`, {
+    method: "DELETE",
+  });
+  return response.phase;
 }

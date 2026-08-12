@@ -137,6 +137,15 @@ export type {
   ProjectListResponse,
 } from "./project";
 
+export type {
+  PhaseBillType,
+  PhaseAccounting,
+  Phase,
+  PhaseCreatePayload,
+  PhaseUpdatePayload,
+  PhaseSummaryResponse,
+} from "./project";
+
 // Quickbooks Online Exports
 export type {
   QboCustomer,

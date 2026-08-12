@@ -142,4 +142,10 @@ export function getIsoStringNow(): string {
   return new Date().toISOString()
 }
 
+export function formatAddress(address?: { line1?: string; line2?: string; city?: string; state?: string; postalCode?: string; country?: string }): string {
+  if (!address) return '';
+  const { line1, line2, city, state, postalCode, country } = address;
+  const parts = [line1, line2, city, state, postalCode, country].filter(Boolean);
+  return parts.join(', ');
+}
 // #endregion

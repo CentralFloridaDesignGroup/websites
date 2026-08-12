@@ -85,6 +85,8 @@ const routePolicies: RoutePolicy[] = [
   { method: '*', route: '/v2/projects/:id/extra-data', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
   { method: '*', route: '/v2/projects/:id/client', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
   { method: '*', route: '/v2/projects/:id/status', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: '*', route: '/v2/projects/:id/phases', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: '*', route: '/v2/projects/:id/phases/:phaseId', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
   // V2 company settings.
   { method: '*', route: '/v2/company', mode: 'microsoft' },
   // Allows multiple methods for handling QB clients.
