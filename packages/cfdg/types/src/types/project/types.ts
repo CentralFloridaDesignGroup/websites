@@ -3,7 +3,10 @@ import type { ProjectStatus } from "../projectManagement";
 import type { NorthstarPagination } from "../pagination";
 
 /** Northstar project record backed by a child QBO customer. */
-export type NorthstarProject = QboCustomer;
+export type NorthstarProject = QboCustomer & {
+  /** Purchase order used as the source for new invoice snapshots. */
+  purchaseOrder: string;
+};
 
 /** Northstar project extra data stored separately from the QBO cache. */
 export type ProjectExtraData = {
@@ -11,6 +14,8 @@ export type ProjectExtraData = {
   qboId: string;
   /** Internal project lifecycle status. */
   status: ProjectStatus;
+  purchaseOrder: string;
+  projectManagerId: string | null;
 };
 
 /** Project row returned by a paginated list endpoint. */
@@ -33,4 +38,5 @@ export type ProjectListResponse = {
 export type ProjectExtraDataRow = {
   qbo_id?: unknown;
   status?: unknown;
+  purchase_order?: unknown;
 };

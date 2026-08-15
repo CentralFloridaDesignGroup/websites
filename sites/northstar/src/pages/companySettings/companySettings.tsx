@@ -11,6 +11,7 @@ type CompanyPage = "general" | "qbo";
 export function CompanySettingsPage() {
     const [currentPage, setCurrentPage] = useState<CompanyPage>("general");
     const [pendingChanges, setPendingChanges] = useState(true);
+    const [errors, setErrors] = useState<Record<string, string> | undefined>(undefined);
 
 
     const { settings, settingsLoading, settingsSaving, settingsError, refresh, updateSettings } = useCompanySettings();
@@ -20,6 +21,11 @@ export function CompanySettingsPage() {
         { key: "general", label: "General" },
         { key: "qbo", label: "QuickBooks Online" },
     ];
+
+    useEffect(() => {
+        const pageTitle = SECTIONS.find(section => section.key === currentPage)?.label ?? "Company Settings";
+        document.title = `${pageTitle} Settings - Northstar`;
+    }, [currentPage]);
 
     useEffect(() => {
         if (settings && !localSettings) {
@@ -38,6 +44,48 @@ export function CompanySettingsPage() {
 
     async function saveChanges() {
         if (!localSettings) return;
+
+        setErrors(undefined);
+
+        // Validate the local settings before saving
+        const validationErrors: Record<string, string> = {};
+        if (!localSettings.general.fullName)
+            validationErrors["general.fullName"] = "Full company name is required.";
+
+        if (!localSettings.general.shortName)
+            validationErrors["general.shortName"] = "Short company name is required.";
+
+        if (!localSettings.general.invoiceBranding.name)
+            validationErrors["general.invoiceBranding.name"] = "Invoice company name is required.";
+
+        if (!localSettings.general.invoiceBranding.phone)
+            validationErrors["general.invoiceBranding.phone"] = "Invoice telephone number is required.";
+
+        if (!localSettings.general.invoiceNumbering.invoiceTemplate)
+            validationErrors["general.invoiceNumbering.invoiceTemplate"] = "Invoice number template is required.";
+
+        if (!localSettings.general.invoiceNumbering.bundleTemplate)
+            validationErrors["general.invoiceNumbering.bundleTemplate"] = "Invoice bundle template is required.";
+
+        if (!localSettings.general.invoiceNumbering.startingSequence ||
+            localSettings.general.invoiceNumbering.startingSequence <= 0)
+            validationErrors["general.invoiceNumbering.startingSequence"] = "Starting sequence must be a positive number.";
+
+        if (localSettings.general.invoiceNumbering.resetEachYear &&
+            (!localSettings.general.invoiceNumbering.invoiceTemplate.includes("YYYY") &&
+                !localSettings.general.invoiceNumbering.invoiceTemplate.includes("YY")))
+            validationErrors["general.invoiceNumbering.invoiceTemplate"] = "Invoice template must include 'YYYY' or 'YY' if reset each year is enabled.";
+
+        if (localSettings.general.invoiceNumbering.resetEachYear &&
+            (!localSettings.general.invoiceNumbering.bundleTemplate.includes("YYYY") &&
+                !localSettings.general.invoiceNumbering.bundleTemplate.includes("YY")))
+            validationErrors["general.invoiceNumbering.bundleTemplate"] = "Bundle template must include 'YYYY' or 'YY' if reset each year is enabled.";
+
+        if (Object.keys(validationErrors).length > 0) {
+            setErrors(validationErrors);
+            return;
+        }
+
         const saved = await updateSettings(localSettings);
         if (saved) setPendingChanges(false);
     }
@@ -120,7 +168,7 @@ export function CompanySettingsPage() {
                     ))}
                 </div>
                 {currentPage === "general" && (
-                    <GeneralPage settings={localSettings} onChange={handleSettingsChange} />
+                    <GeneralPage settings={localSettings} errors={errors} onChange={handleSettingsChange} />
                 )}
                 {currentPage === "qbo" && (
                     <QboPage settings={localSettings} onChange={handleSettingsChange} onDisconnected={() => void handleQboDisconnected()} />

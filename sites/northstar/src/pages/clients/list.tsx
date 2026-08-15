@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import type { ClientExtraData, ClientListItem, NorthstarClient, NorthstarPageSize, NorthstarPagination, ProjectListItem } from "cfdg/types";
+import type { ClientExtraData, ClientListItem, Contact, NorthstarClient, NorthstarPageSize, NorthstarPagination, ProjectListItem } from "cfdg/types";
 import { ArrowLeft, FolderKanban, MailPlus, Plus, RefreshCw, Search, SquareArrowOutUpRight } from "lucide-react";
-import { fetchClient, fetchClientExtraData, fetchClientProjects, fetchClients } from "../../api/clients";
+import { createClientContact, fetchClient, fetchClientContacts, fetchClientExtraData, fetchClientProjects, fetchClients, updateClientContact } from "../../api/clients";
 import { NorthstarApiError } from "../../api/client";
 import { PaginationControls, PropertyList, RecordStatus, SortHeading } from "../../components/NorthstarRecords";
 
@@ -21,6 +21,10 @@ export function ClientsPage() {
   const [selectedClient, setSelectedClient] = useState<NorthstarClient | null>(null);
   const [extraData, setExtraData] = useState<ClientExtraData | null>(null);
   const [projects, setProjects] = useState<ProjectListItem[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [contactsLoading, setContactsLoading] = useState(false);
+  const [contactDraft, setContactDraft] = useState<Contact | null>(null);
+  const [contactSaving, setContactSaving] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [extraLoading, setExtraLoading] = useState(false);
   const [relationshipLoading, setRelationshipLoading] = useState(false);
@@ -60,6 +64,7 @@ export function ClientsPage() {
       setSelectedClient(null);
       setExtraData(null);
       setProjects([]);
+      setContacts([]);
       setNotFound(false);
       setDetailError("");
       return;
@@ -71,9 +76,11 @@ export function ClientsPage() {
     setSelectedClient(null);
     setExtraData(null);
     setProjects([]);
+    setContacts([]);
     setNotFound(false);
     setDetailError("");
-    setActionNotice(action === "create-contact" ? "Contact creation is queued for the next Northstar workflow slice." : action === "report" ? "Quick reporting is queued for the next Northstar workflow slice." : "");
+    setContactDraft(null);
+    setActionNotice(action === "report" ? "Quick reporting is queued for the next Northstar workflow slice." : "");
 
     void fetchClient(id)
       .then((client) => {
@@ -81,6 +88,7 @@ export function ClientsPage() {
         setSelectedClient(client);
         setDetailLoading(false);
         setExtraLoading(true);
+        setContactsLoading(true);
         void fetchClientExtraData(id)
           .then((data) => { if (!cancelled) setExtraData(data); })
           .catch((error: unknown) => { if (!cancelled) setDetailError(`Client status failed to load: ${String(error)}`); })
@@ -90,6 +98,10 @@ export function ClientsPage() {
           .then((related) => { if (!cancelled) setProjects(related); })
           .catch((error: unknown) => { if (!cancelled) setDetailError(`Client projects failed to load: ${String(error)}`); })
           .finally(() => { if (!cancelled) setRelationshipLoading(false); });
+        void fetchClientContacts(id)
+          .then((data) => { if (!cancelled) { setContacts(data); if (action === "create-contact") setContactDraft({ id: "", name: "", email: "", phone: "", title: "", pointOfContact: false, receiveInvoices: false, active: true }); } })
+          .catch((error: unknown) => { if (!cancelled) setDetailError(`Client contacts failed to load: ${String(error)}`); })
+          .finally(() => { if (!cancelled) setContactsLoading(false); });
       })
       .catch((error: unknown) => {
         if (cancelled) return;
@@ -127,6 +139,21 @@ export function ClientsPage() {
     setPagination((current) => ({ ...current, page: 1, pageSize }));
   }
 
+  function newContact() {
+    setContactDraft({ id: "", name: "", email: "", phone: "", title: "", pointOfContact: false, receiveInvoices: false, active: true });
+  }
+
+  async function saveContact(contact: Contact) {
+    if (!id) return;
+    setContactSaving(true);
+    try {
+      const saved = contact.id ? await updateClientContact(id, contact) : await createClientContact(id, contact);
+      setContacts((current) => contact.id ? current.map((item) => item.id === saved.id ? saved : item) : [...current, saved]);
+      setContactDraft(null);
+    } catch (error: unknown) { setActionNotice(String(error)); }
+    finally { setContactSaving(false); }
+  }
+
   if (id) {
     return (
       <div className="grid gap-4 text-neutral-950 dark:text-neutral-50">
@@ -138,7 +165,7 @@ export function ClientsPage() {
               <h1 className="mt-1 text-2xl font-semibold tracking-tight">{selectedClient?.displayName || (detailLoading ? "Loading client" : "Client detail")}</h1>
             </div>
           </div>
-          {selectedClient && <div className="flex flex-wrap gap-2"><ActionButton label="Create Contact" icon={<MailPlus className="size-4" />} onClick={() => setActionNotice("Contact creation is queued for the next Northstar workflow slice.")} /><ActionButton label="Create Project" icon={<Plus className="size-4" />} onClick={() => navigate(`/projects?clientId=${encodeURIComponent(selectedClient.id)}&action=create`)} primary /><ActionButton label="Quick Report" icon={<Search className="size-4" />} onClick={() => navigate(`/quick-reports?clientId=${encodeURIComponent(selectedClient.id)}`)} /></div>}
+          {selectedClient && <div className="flex flex-wrap gap-2"><ActionButton label="Create Contact" icon={<MailPlus className="size-4" />} onClick={newContact} /><ActionButton label="Create Project" icon={<Plus className="size-4" />} onClick={() => navigate(`/projects?clientId=${encodeURIComponent(selectedClient.id)}&action=create`)} primary /><ActionButton label="Quick Report" icon={<Search className="size-4" />} onClick={() => navigate(`/quick-reports?clientId=${encodeURIComponent(selectedClient.id)}`)} /></div>}
         </div>
         {detailLoading && <LoadingPanel label="Loading client record..." />}
         {notFound && <EmptyPanel label="NO ID FOUND" />}
@@ -151,6 +178,7 @@ export function ClientsPage() {
               <span className="text-xs text-neutral-500 dark:text-neutral-400">Base record loaded independently from client extra data</span>
             </div>
             <PropertyList properties={clientProperties} />
+            <ContactList contacts={contacts} loading={contactsLoading} draft={contactDraft} onEdit={setContactDraft} onDraftChange={setContactDraft} onSave={saveContact} onCancel={() => setContactDraft(null)} saving={contactSaving} />
             <section className="rounded border border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900">
               <div className="flex items-center justify-between gap-3 border-b border-neutral-200 px-3 py-2.5 dark:border-neutral-700"><h2 className="flex items-center gap-2 text-sm font-semibold"><FolderKanban className="size-4 text-[#607d8b]" />Projects</h2><span className="text-xs text-neutral-500">{relationshipLoading ? "Loading..." : `${projects.length} linked`}</span></div>
               {projects.length === 0 && !relationshipLoading ? <p className="px-3 py-5 text-sm text-neutral-500">No projects are linked to this client.</p> : <div className="divide-y divide-neutral-200 dark:divide-neutral-700">{projects.map((project) => <Link key={project.id} to={`/projects?id=${encodeURIComponent(project.id)}`} className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm transition hover:bg-neutral-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#173244]/30 dark:hover:bg-neutral-800"><span className="font-semibold">{project.fullName}</span><RecordStatus value={project.status} /></Link>)}</div>}
@@ -179,6 +207,24 @@ export function ClientsPage() {
 function formatAddress(line1: string, line2: string, city: string, state: string, postalCode: string) {
   return [line1, line2, [city, state].filter(Boolean).join(", "), postalCode].filter(Boolean).join(" · ");
 }
+
+function ContactList({ contacts, loading, draft, onEdit, onDraftChange, onSave, onCancel, saving }: { contacts: Contact[]; loading: boolean; draft: Contact | null; onEdit: (contact: Contact) => void; onDraftChange: (contact: Contact) => void; onSave: (contact: Contact) => void; onCancel: () => void; saving: boolean }) {
+  return <section className="rounded border border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900">
+    <div className="flex items-center justify-between gap-3 border-b border-neutral-200 px-3 py-2.5 dark:border-neutral-700"><h2 className="text-sm font-semibold">Contacts</h2><span className="text-xs text-neutral-500">{loading ? "Loading..." : `${contacts.length} total`}</span></div>
+    {draft && <ContactForm contact={draft} onChange={onDraftChange} onSave={onSave} onCancel={onCancel} saving={saving} />}
+    {!loading && contacts.length === 0 && !draft && <p className="px-3 py-5 text-sm text-neutral-500">No contacts yet. Add a contact to make invoice and project assignments easier.</p>}
+    <div className="divide-y divide-neutral-200 dark:divide-neutral-700">{contacts.map((contact) => <div key={contact.id} className="flex flex-wrap items-center justify-between gap-3 px-3 py-3 text-sm"><div><p className="font-semibold">{contact.name}{contact.title ? <span className="ml-2 font-normal text-neutral-500">{contact.title}</span> : null}</p><p className="text-neutral-600 dark:text-neutral-300">{contact.email}{contact.phone ? ` · ${contact.phone}` : ""}</p><div className="mt-1 flex flex-wrap gap-1.5 text-[0.68rem] uppercase tracking-wide"><Badge active={contact.pointOfContact}>Point of contact</Badge><Badge active={contact.receiveInvoices}>Invoices</Badge><Badge active={contact.active}>Active</Badge></div></div><button type="button" onClick={() => onEdit(contact)} className="rounded border border-neutral-300 px-2 py-1 text-xs font-semibold hover:bg-neutral-100 dark:border-neutral-600 dark:hover:bg-neutral-800">Edit</button></div>)}</div>
+  </section>;
+}
+
+function ContactForm({ contact, onChange, onSave, onCancel, saving }: { contact: Contact; onChange: (contact: Contact) => void; onSave: (contact: Contact) => void; onCancel: () => void; saving: boolean }) {
+  const inputClass = "rounded border border-neutral-300 bg-white px-2 py-1.5 text-sm dark:border-neutral-600 dark:bg-neutral-800";
+  const update = (changes: Partial<Contact>) => onChange({ ...contact, ...changes });
+  return <div className="grid gap-3 border-b border-neutral-200 bg-neutral-50 p-3 dark:border-neutral-700 dark:bg-neutral-800"><div className="grid gap-3 md:grid-cols-2"><label className="grid gap-1 text-xs font-semibold">Name<input autoFocus className={inputClass} value={contact.name} onChange={(event) => update({ name: event.target.value })} /></label><label className="grid gap-1 text-xs font-semibold">Email<input className={inputClass} type="email" value={contact.email} onChange={(event) => update({ email: event.target.value })} /></label><label className="grid gap-1 text-xs font-semibold">Phone <span className="font-normal text-neutral-500">(optional)</span><input className={inputClass} value={contact.phone || ""} onChange={(event) => update({ phone: event.target.value })} /></label><label className="grid gap-1 text-xs font-semibold">Title <span className="font-normal text-neutral-500">(optional)</span><input className={inputClass} value={contact.title || ""} onChange={(event) => update({ title: event.target.value })} /></label></div><div className="flex flex-wrap gap-4 text-sm"><Check label="Point of contact" checked={contact.pointOfContact} onChange={(checked) => update({ pointOfContact: checked })} /><Check label="Receive invoices" checked={contact.receiveInvoices} onChange={(checked) => update({ receiveInvoices: checked })} /><Check label="Active" checked={contact.active} onChange={(checked) => update({ active: checked })} /></div><div className="flex gap-2"><button type="button" disabled={saving} onClick={() => onSave(contact)} className="rounded bg-[#173244] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50">{saving ? "Saving..." : "Save contact"}</button><button type="button" disabled={saving} onClick={onCancel} className="rounded border border-neutral-300 px-3 py-1.5 text-sm dark:border-neutral-600">Cancel</button></div></div>;
+}
+
+function Check({ label, checked, onChange }: { label: string; checked: boolean; onChange: (value: boolean) => void }) { return <label className="inline-flex items-center gap-2"><input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />{label}</label>; }
+function Badge({ active, children }: { active: boolean; children: ReactNode }) { return <span className={`rounded px-1.5 py-0.5 ${active ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200" : "bg-neutral-100 text-neutral-400 dark:bg-neutral-800"}`}>{children}</span>; }
 
 function ActionButton({ label, icon, onClick, primary = false }: { label: string; icon: ReactNode; onClick: () => void; primary?: boolean }) {
   return <button type="button" onClick={onClick} className={`inline-flex items-center gap-1.5 rounded border px-2 py-1.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#173244]/30 ${primary ? "border-[#173244] bg-[#173244] text-white hover:bg-[#24495d] dark:border-[#9cc4c9] dark:bg-[#9cc4c9] dark:text-[#10262f]" : "border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-100 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700"}`}><span>{icon}</span>{label}</button>;

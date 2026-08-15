@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import type { Phase, PhaseBillType, PhaseCreatePayload, PhaseUpdatePayload } from "cfdg/types";
+import type { EntraUserAccount, Phase, PhaseBillType, PhaseCreatePayload, PhaseUpdatePayload } from "cfdg/types";
 import { Edit3, Minus, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { NorthstarButton, NorthstarDropdown, NorthstarTextbox } from "cfdg/ui/input";
 import { createProjectPhase, deleteProjectPhase, fetchProjectPhases, updateProjectPhase } from "../../../api/projects";
@@ -47,7 +47,7 @@ function getColorClass(label: string, value: number): string {
 };
 
 /** Renders and manages the phase tree for a Northstar project. */
-export function ProjectPhaseSummary({ projectId }: { projectId: string }) {
+export function ProjectPhaseSummary({ projectId, managers }: { projectId: string; managers: EntraUserAccount[] }) {
   const [phases, setPhases] = useState<Phase[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -190,7 +190,18 @@ export function ProjectPhaseSummary({ projectId }: { projectId: string }) {
 
     {notice && <p className="rounded border border-sky-300 bg-sky-50 px-3 py-2 text-sm text-sky-900 dark:border-sky-700 dark:bg-sky-950 dark:text-sky-100">{notice}</p>}
     {error && <p className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-700 dark:bg-red-950 dark:text-red-100">{error}</p>}
-    {formOpen && <PhaseForm form={form} setForm={setForm} phaseOptions={phaseOptions} editing={Boolean(editingId)} saving={saving} onCancel={() => setFormOpen(false)} onSubmit={save} />}
+    {formOpen && (
+      <PhaseForm
+        form={form}
+        setForm={setForm}
+        phaseOptions={phaseOptions}
+        managers={managers}
+        editing={Boolean(editingId)}
+        saving={saving}
+        onCancel={() => setFormOpen(false)}
+        onSubmit={save}
+      />
+    )}
     {loading ?
       <p className="py-5 text-sm text-neutral-500 dark:text-neutral-400">Loading phases...</p> :
       phases.length === 0 ?
@@ -291,7 +302,16 @@ function PhaseRow({ phase, depth, disabled, onCreateChild, onEdit, onDelete }: {
   </>;
 }
 
-function PhaseForm({ form, setForm, phaseOptions, editing, saving, onCancel, onSubmit }: { form: PhaseFormState; setForm: (value: PhaseFormState) => void; phaseOptions: Array<{ id: string; label: string }>; editing: boolean; saving: boolean; onCancel: () => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void }) {
+function PhaseForm({ form, setForm, phaseOptions, managers, editing, saving, onCancel, onSubmit }: {
+  form: PhaseFormState;
+  setForm: (value: PhaseFormState) => void;
+  phaseOptions: Array<{ id: string; label: string }>;
+  managers: EntraUserAccount[];
+  editing: boolean;
+  saving: boolean;
+  onCancel: () => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+}) {
   return <form onSubmit={onSubmit} className="grid gap-3 rounded border border-neutral-200 bg-white p-3 dark:border-neutral-700 dark:bg-neutral-900">
     <div className="flex items-center justify-between">
       <h3 className="font-semibold">{editing ? "Edit Phase" : "Create Phase"}</h3>
@@ -361,14 +381,22 @@ function PhaseForm({ form, setForm, phaseOptions, editing, saving, onCancel, onS
         disabled={saving}
         onChange={(event) => setForm({ ...form, retainerCost: event.target.value })}
       />
-      {/* TODO: Change to a dropdown of potential project managers and, if the project has a project manager, preset to that value. */}
-      <NorthstarTextbox
-        field="projectManagerId"
-        label="Project manager ID"
-        value={form.projectManagerId}
-        disabled={saving}
-        onChange={(event) => setForm({ ...form, projectManagerId: event.target.value })}
-      />
+      <label className="grid gap-1 text-sm font-medium text-gray-900 dark:text-gray-100">
+        Internal project manager
+        <select
+          value={form.projectManagerId}
+          disabled={saving}
+          onChange={(event) => setForm({ ...form, projectManagerId: event.target.value })}
+          className="block w-full border bg-transparent px-2 py-2 text-sm font-normal"
+        >
+          <option value="">Use project manager</option>
+          {managers.map((manager) => (
+            <option key={manager.id} value={manager.id}>
+              {manager.displayName}{manager.jobTitle ? ` · ${manager.jobTitle}` : ""}
+            </option>
+          ))}
+        </select>
+      </label>
     </div>
     <NorthstarTextbox
       field="description"

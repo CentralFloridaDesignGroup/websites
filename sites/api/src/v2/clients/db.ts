@@ -2,6 +2,26 @@ import type { ClientStatus, ListOptions } from "cfdg/types";
 
 type DbRow = Record<string, unknown>;
 
+/** Lists all contacts for a client, including inactive contacts for editing. */
+export async function listClientContacts(db: D1Database, qboId: string): Promise<DbRow[]> {
+  const result = await db.prepare("SELECT * FROM client_contacts WHERE qbo_customer_id = ? ORDER BY active DESC, name COLLATE NOCASE ASC, id ASC").bind(qboId).all<DbRow>();
+  return result.results || [];
+}
+
+/** Creates a client contact and returns the inserted row. */
+export async function createClientContact(db: D1Database, qboId: string, contact: { name: string; email: string; phone: string; title: string; pointOfContact: boolean; receiveInvoices: boolean; active: boolean }, now: string): Promise<DbRow> {
+  const result = await db.prepare(`INSERT INTO client_contacts (qbo_customer_id, name, email, phone, title, point_of_contact, receive_invoices, active, created_date, updated_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+    .bind(qboId, contact.name, contact.email, contact.phone, contact.title, contact.pointOfContact ? 1 : 0, contact.receiveInvoices ? 1 : 0, contact.active ? 1 : 0, now, now).run();
+  return (await db.prepare("SELECT * FROM client_contacts WHERE id = ?").bind(result.meta.last_row_id).first<DbRow>()) || {};
+}
+
+/** Updates a client contact and returns the updated row, or null when it is not owned by the client. */
+export async function updateClientContact(db: D1Database, qboId: string, id: string, contact: { name: string; email: string; phone: string; title: string; pointOfContact: boolean; receiveInvoices: boolean; active: boolean }, now: string): Promise<DbRow | null> {
+  await db.prepare(`UPDATE client_contacts SET name = ?, email = ?, phone = ?, title = ?, point_of_contact = ?, receive_invoices = ?, active = ?, updated_date = ? WHERE id = ? AND qbo_customer_id = ?`)
+    .bind(contact.name, contact.email, contact.phone, contact.title, contact.pointOfContact ? 1 : 0, contact.receiveInvoices ? 1 : 0, contact.active ? 1 : 0, now, id, qboId).run();
+  return db.prepare("SELECT * FROM client_contacts WHERE id = ? AND qbo_customer_id = ?").bind(id, qboId).first<DbRow>();
+}
+
 const clientWhere = "(customer.parent_id IS NULL OR TRIM(customer.parent_id) = '')";
 const nameOrder = "CASE WHEN TRIM(customer.display_name) <> '' THEN customer.display_name ELSE customer.fully_qualified_name END";
 

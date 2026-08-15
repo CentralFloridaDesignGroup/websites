@@ -1,9 +1,12 @@
 import type { QboAppSettings } from "../qbo/types";
+import type { InvoiceBrandingSnapshot, InvoiceNumberingSettings } from "../invoiceV2";
 
 /** The general settings for a company. */
 export type GeneralSettings = {
   fullName: string;
   shortName: string;
+  invoiceBranding: InvoiceBrandingSnapshot;
+  invoiceNumbering: InvoiceNumberingSettings;
 };
 
 

@@ -59,3 +59,10 @@ export type PhaseUpdatePayload = {
 export type PhaseSummaryResponse = {
   phases: Phase[];
 };
+
+/** A client contact assigned as a project's point of contact. */
+export type ProjectContact = {
+  id: string;
+  name: string;
+  email: string;
+};

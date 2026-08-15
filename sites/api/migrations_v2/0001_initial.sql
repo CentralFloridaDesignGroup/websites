@@ -76,6 +76,7 @@ CREATE TABLE IF NOT EXISTS project_extra_data (
 	id INTEGER PRIMARY KEY,
 	qbo_id TEXT,
 	status TEXT,
+	purchase_order TEXT,
 	project_manager TEXT,
 	parcel_id TEXT,
 	geolocation TEXT,

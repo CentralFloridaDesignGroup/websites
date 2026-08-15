@@ -1,4 +1,15 @@
-import type { NorthstarClient, NorthstarPageSize, NorthstarProject, Phase, PhaseCreatePayload, PhaseSummaryResponse, PhaseUpdatePayload, ProjectExtraData, ProjectListResponse } from "cfdg/types";
+import type {
+  NorthstarClient,
+  NorthstarPageSize,
+  NorthstarProject,
+  Phase,
+  PhaseCreatePayload,
+  PhaseSummaryResponse,
+  PhaseUpdatePayload,
+  ProjectContact,
+  ProjectExtraData,
+  ProjectListResponse,
+} from "cfdg/types";
 import { requestJson } from "./client";
 
 type ListOptions = { page: number; pageSize: NorthstarPageSize; direction: "asc" | "desc"; clientId?: string };
@@ -35,6 +46,43 @@ export async function updateProjectStatus(id: string, status: ProjectExtraData["
     body: JSON.stringify({ status }),
   });
   return response.extraData;
+}
+
+/** Updates the project purchase order used as the source for new invoice snapshots. */
+export async function updateProjectPurchaseOrder(id: string, purchaseOrder: string): Promise<ProjectExtraData> {
+  const response = await requestJson<{ extraData: ProjectExtraData }>(`/v2/projects/${encodeURIComponent(id)}/extra-data`, {
+    method: "PUT",
+    body: JSON.stringify({ purchaseOrder }),
+  });
+  return response.extraData;
+}
+
+export async function updateProjectCore(
+  id: string,
+  payload: {
+    projectManagerId: string;
+    status: ProjectExtraData["status"];
+    purchaseOrder: string;
+    address: { line1: string; line2: string; city: string; state: string; postalCode: string };
+  },
+): Promise<{ project: NorthstarProject; extraData: ProjectExtraData }> {
+  return requestJson<{ project: NorthstarProject; extraData: ProjectExtraData }>(
+    `/v2/projects/${encodeURIComponent(id)}/core`,
+    { method: "PUT", body: JSON.stringify(payload) },
+  );
+}
+
+export async function fetchProjectContacts(id: string): Promise<ProjectContact[]> {
+  const response = await requestJson<{ contacts: ProjectContact[] }>(`/v2/projects/${encodeURIComponent(id)}/contacts`);
+  return response.contacts;
+}
+
+export async function updateProjectContacts(id: string, contactIds: string[]): Promise<ProjectContact[]> {
+  const response = await requestJson<{ contacts: ProjectContact[] }>(
+    `/v2/projects/${encodeURIComponent(id)}/contacts`,
+    { method: "PUT", body: JSON.stringify({ contactIds }) },
+  );
+  return response.contacts;
 }
 
 /** Loads the hierarchical phase summary for a Northstar project. */

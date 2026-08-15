@@ -28,3 +28,13 @@ export {
     NorthstarDropdown,
     type NorthstarDropdownProperties
 } from './northstar/northstarDropdown';
+
+export {
+    Checkbox,
+    type CheckboxProperties
+} from './core/checkbox';
+
+export {
+    NorthstarCheckbox,
+    type NorthstarCheckboxProperties
+} from './northstar/northstarCheckbox';

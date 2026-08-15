@@ -30,7 +30,7 @@ export function Checkbox({
     id,
     ...inputProps
 }: CheckboxProperties): React.JSX.Element {
-    const [internalChecked, setInternalChecked] = useState(defaultChecked ?? false);
+    const [internalChecked, setInternalChecked] = useState(checked ?? defaultChecked ?? false);
     const isChecked = checked ?? internalChecked;
     const inputId = id ?? inputProps.name ?? label?.toLowerCase().replace(/\s+/g, "-") ?? "checkbox";
 

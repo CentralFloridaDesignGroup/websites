@@ -5,13 +5,13 @@ import type { NorthstarPagination } from "../pagination";
 export type ClientStatus = "active" | "inactive" | "suspended" | "prospect" | "archived";
 
 export type Contact = {
-  firstName: string;
-  middleName?: string;
-  lastName: string;
-  email?: string;
+  id: string;
+  name: string;
+  email: string;
   phone?: string;
   title?: string;
-  sendInvoices?: boolean;
+  pointOfContact: boolean;
+  receiveInvoices: boolean;
   active: boolean;
 }
 

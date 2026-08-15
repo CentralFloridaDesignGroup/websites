@@ -1,26 +1,58 @@
 import { useEffect, useState } from "react";
-import { ProjectExtraData, QboCustomer } from 'cfdg/types';
+import { Link } from "react-router-dom";
+import type {
+    Contact,
+    EntraUserAccount,
+    NorthstarClient,
+    NorthstarProject,
+    ProjectContact,
+    ProjectExtraData,
+} from 'cfdg/types';
 import { NorthstarButton } from "cfdg/ui/input";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { EmptyPanel, ErrorPanel } from "./handler";
 import { ProjectPhaseSummary } from "./subcomponents/ProjectPhaseSummary";
-import { fetchProject, fetchProjectClient, fetchProjectExtraData } from "../../api/projects";
-import { ProjectCoreInformation } from "./subcomponents/ProjectCoreInformation";
+import { fetchClientContacts } from "../../api/clients";
+import { fetchEligibleProjectManagers } from "../../api/entra";
+import { fetchProject, fetchProjectClient, fetchProjectContacts, fetchProjectExtraData, updateProjectContacts, updateProjectCore } from "../../api/projects";
+import { ProjectCoreInformation, type CoreDraft } from "./subcomponents/ProjectCoreInformation";
 
 export type ProjectDetailViewProps = {
     id: string;
 };
 
 export function ProjectDetailView({ id }: ProjectDetailViewProps) {
-    const [project, setProject] = useState<QboCustomer | null>(null);
+    const [project, setProject] = useState<NorthstarProject | null>(null);
     const [extraData, setExtraData] = useState<ProjectExtraData | null>(null);
-    const [client, setClient] = useState<QboCustomer | null>(null);
+    const [client, setClient] = useState<NorthstarClient | null>(null);
     const [loadingMain, setLoadingMain] = useState<boolean>(true);
     const [loadingExtra, setLoadingExtra] = useState<boolean>(true);
     const [loadingClient, setLoadingClient] = useState<boolean>(true);
     const [saving, setSaving] = useState<boolean>(false);
     const [editing, setEditing] = useState<boolean>(false);
     const [error, setError] = useState<string[]>([]);
+    const [clientContacts, setClientContacts] = useState<Contact[]>([]);
+    const [assignedContacts, setAssignedContacts] = useState<ProjectContact[]>([]);
+    const [managers, setManagers] = useState<EntraUserAccount[]>([]);
+    const [coreDraft, setCoreDraft] = useState<CoreDraft | null>(null);
+
+    useEffect(() => {
+        if (!editing && project && extraData) {
+            setCoreDraft({
+                address: {
+                    line1: project.shipAddrLine1,
+                    line2: project.shipAddrLine2,
+                    city: project.shipAddrCity,
+                    state: project.shipAddrState,
+                    postalCode: project.shipAddrPostalCode,
+                },
+                projectManagerId: extraData.projectManagerId || "",
+                contactIds: assignedContacts.map((contact) => contact.id),
+                status: extraData.status,
+                purchaseOrder: extraData.purchaseOrder,
+            });
+        }
+    }, [assignedContacts, editing, extraData, project]);
 
     useEffect(() => {
         if (project) {
@@ -47,6 +79,10 @@ export function ProjectDetailView({ id }: ProjectDetailViewProps) {
         setLoadingMain(true);
         setLoadingExtra(true);
         setLoadingClient(true);
+        setClientContacts([]);
+        setAssignedContacts([]);
+        setCoreDraft(null);
+        setError([]);
         const projectInfo = fetchProject(id)
             .then((data) => {
                 if (!cancelled) {
@@ -78,6 +114,11 @@ export function ProjectDetailView({ id }: ProjectDetailViewProps) {
                 if (!cancelled) {
                     setClient(data);
                     setLoadingClient(false);
+                    if (data) {
+                        void fetchClientContacts(data.id)
+                            .then(setClientContacts)
+                            .catch((err: unknown) => setError((prev) => [...prev, `Failed to load client contacts: ${String(err)}`]));
+                    }
                 }
             })
             .catch((err) => {
@@ -86,13 +127,27 @@ export function ProjectDetailView({ id }: ProjectDetailViewProps) {
                     setLoadingClient(false);
                 }
             });
+        const assigned = fetchProjectContacts(id)
+            .then(setAssignedContacts)
+            .catch((err: unknown) => setError((prev) => [...prev, `Failed to load project contacts: ${String(err)}`]));
+        const eligibleManagers = fetchEligibleProjectManagers()
+            .then(setManagers)
+            .catch((err: unknown) => setError((prev) => [...prev, `Failed to load project managers: ${String(err)}`]));
 
-        await Promise.all([projectInfo, projectExtraInfo, relatedClient]);
+        await Promise.all([projectInfo, projectExtraInfo, relatedClient, assigned, eligibleManagers]);
     };
 
-    function onEdit(core: QboCustomer | null, extra: ProjectExtraData | null) {
-        // Implement edit logic here
-        console.log("Edit action triggered for project:", core, extra);
+    async function saveCore(draft: CoreDraft) {
+        setSaving(true);
+        try {
+            const [updated, contacts] = await Promise.all([updateProjectCore(id, draft), updateProjectContacts(id, draft.contactIds)]);
+            setProject(updated.project);
+            setExtraData(updated.extraData);
+            setAssignedContacts(contacts);
+            setEditing(false);
+        } catch (err: unknown) {
+            setError((prev) => [...prev, `Failed to save project details: ${String(err)}`]);
+        } finally { setSaving(false); }
     }
 
     function onCloseout() {
@@ -124,16 +179,19 @@ export function ProjectDetailView({ id }: ProjectDetailViewProps) {
                     </div>
                 </div>
                 {project && <div className="flex flex-wrap gap-2">
-                    {editing &&
+                    {editing && (
                         <NorthstarButton
                             field="save-project"
                             size="small"
                             buttonStyle="focused"
-                            onClick={() => { }}
+                            disabled={saving || !coreDraft}
+                            onClick={() => {
+                                if (coreDraft) void saveCore(coreDraft);
+                            }}
                         >
-                            Save Changes
+                            Save Project
                         </NorthstarButton>
-                    }
+                    )}
                     <NorthstarButton
                         field="edit-project"
                         buttonStyle={editing ? "secondary" : "focused"}
@@ -157,6 +215,12 @@ export function ProjectDetailView({ id }: ProjectDetailViewProps) {
                         <CheckCircle2 className="size-4" />
                         Closeout
                     </NorthstarButton>
+                    <Link
+                        className="inline-flex items-center justify-center rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium dark:border-neutral-600"
+                        to={`/invoices?projectId=${encodeURIComponent(id)}`}
+                    >
+                        Invoices
+                    </Link>
                 </div>}
             </div>
             {error.length > 0 && <ErrorPanel message={error} />}
@@ -168,12 +232,16 @@ export function ProjectDetailView({ id }: ProjectDetailViewProps) {
                         projectExtraData: extraData,
                         projectClient: client
                     }}
+                    clientContacts={clientContacts}
+                    assignedContacts={assignedContacts}
+                    managers={managers}
+                    draft={coreDraft}
                     loading={loadingMain || loadingExtra || loadingClient}
                     editing={editing}
                     saving={saving}
-                    onEdit={onEdit} />
+                    onDraftChange={setCoreDraft} />
 
-                {project && !loadingMain && <ProjectPhaseSummary projectId={project.id} />}
+                {project && !loadingMain && <ProjectPhaseSummary projectId={project.id} managers={managers} />}
             </div>
         </div>
     );

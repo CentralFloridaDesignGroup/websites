@@ -1,5 +1,6 @@
 import type {
   ClientExtraData,
+  Contact,
   ClientListItem,
   ClientListResponse,
   ListOptions,
@@ -71,6 +72,21 @@ export async function updateClientStatus(
     },
   );
   return response.extraData;
+}
+
+export async function fetchClientContacts(id: string): Promise<Contact[]> {
+  const response = await requestJson<{ contacts: Contact[] }>(`/v2/clients/${encodeURIComponent(id)}/contacts`);
+  return response.contacts;
+}
+
+export async function createClientContact(id: string, contact: Omit<Contact, "id">): Promise<Contact> {
+  const response = await requestJson<{ contact: Contact }>(`/v2/clients/${encodeURIComponent(id)}/contacts`, { method: "POST", body: JSON.stringify(contact) });
+  return response.contact;
+}
+
+export async function updateClientContact(id: string, contact: Contact): Promise<Contact> {
+  const response = await requestJson<{ contact: Contact }>(`/v2/clients/${encodeURIComponent(id)}/contacts/${encodeURIComponent(contact.id)}`, { method: "PUT", body: JSON.stringify(contact) });
+  return response.contact;
 }
 
 export type { ClientListItem };

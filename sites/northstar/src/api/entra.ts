@@ -1,7 +1,17 @@
 import { InteractionRequiredAuthError } from "@azure/msal-browser";
 import { getMsalSilentRedirectUri, msalInstance } from "../auth/msalConfig";
+import type { EntraUserAccount } from "cfdg/types";
+import { PROJECT_MANAGER_GROUP_ID } from "cfdg/types/constants";
 
 type GraphGroup = { id?: string };
+type GraphUser = {
+  id?: string;
+  displayName?: string;
+  mail?: string;
+  userPrincipalName?: string;
+  accountEnabled?: boolean;
+  jobTitle?: string;
+};
 type GraphCollection<T> = { value?: T[]; "@odata.nextLink"?: string };
 
 function normalizeString(value: unknown): string { return String(value ?? "").trim(); }
@@ -56,4 +66,26 @@ export function isGraphInteractionRequired(error: unknown): boolean { return isI
 export async function fetchSignedInUserGroupIds(options: { interactive?: boolean } = {}): Promise<string[]> {
   const groups = await graphGetAll<GraphGroup>("/me/memberOf/microsoft.graph.group?$select=id&$top=999", options.interactive ?? false);
   return groups.map((group) => normalizeString(group.id)).filter(Boolean);
+}
+
+/** Fetches active users from the configured project-manager group for assignment dropdowns. */
+export async function fetchEligibleProjectManagers(): Promise<EntraUserAccount[]> {
+  const groupId = import.meta.env.VITE_ENTRA_PROJECT_MANAGER_GROUP_ID || PROJECT_MANAGER_GROUP_ID;
+  const users = await graphGetAll<GraphUser>(
+    `/groups/${encodeURIComponent(groupId)}/transitiveMembers/microsoft.graph.user?$select=id,displayName,mail,userPrincipalName,accountEnabled,jobTitle&$top=999`,
+    true,
+  );
+  return users
+    .filter((user) => user.accountEnabled === true && normalizeString(user.id))
+    .map((user) => ({
+      id: normalizeString(user.id),
+      displayName: normalizeString(user.displayName || user.userPrincipalName || user.mail),
+      mail: normalizeString(user.mail),
+      userPrincipalName: normalizeString(user.userPrincipalName),
+      accountEnabled: true,
+      jobTitle: normalizeString(user.jobTitle),
+      groupIds: [],
+      groupNames: [],
+    }))
+    .sort((left, right) => left.displayName.localeCompare(right.displayName));
 }

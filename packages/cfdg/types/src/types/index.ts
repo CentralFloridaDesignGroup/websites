@@ -126,7 +126,8 @@ export type {
   ClientStatus,
   Client,
   ClientListItem,
-  NorthstarClient
+  NorthstarClient,
+  Contact
 } from "./client/types";
 
 export type {
@@ -143,8 +144,29 @@ export type {
   Phase,
   PhaseCreatePayload,
   PhaseUpdatePayload,
+  ProjectContact,
   PhaseSummaryResponse,
 } from "./project";
+
+export type {
+  InvoiceAddressSnapshot,
+  InvoiceBrandingSnapshot,
+  InvoiceNumberingSettings,
+  InvoiceLineItemV2,
+  InvoiceV2,
+  InvoiceV2LineItemInput,
+  InvoiceV2CreatePayload,
+  InvoiceV2UpdatePayload,
+  InvoiceV2ListResponse,
+  InvoiceBundle,
+  InvoiceBundleCreatePayload,
+  InvoiceBundleUpdatePayload,
+  InvoiceBundleListResponse,
+  InvoiceV2Status,
+  InvoiceV2DueType,
+  InvoiceV2LineType,
+  InvoiceV2QboSyncStatus,
+} from "./invoiceV2";
 
 // Quickbooks Online Exports
 export type {

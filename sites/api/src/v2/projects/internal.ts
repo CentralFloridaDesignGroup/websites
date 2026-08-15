@@ -6,7 +6,7 @@ type UnknownRow = Record<string, unknown>;
 
 /** Maps a cached QBO row into a Northstar project. */
 export function mapProjectRow(row: UnknownRow): NorthstarProject {
-  return mapQboCustomerRow(row);
+  return { ...mapQboCustomerRow(row), purchaseOrder: normalizeString(row.purchase_order) };
 }
 
 /** Maps a project list row, including its parent client and lifecycle status. */
@@ -22,7 +22,12 @@ export function mapProjectListRow(row: UnknownRow): ProjectListItem {
 
 /** Maps project extra data and applies the API's defensive default. */
 export function mapProjectExtraData(row: UnknownRow, qboId: string): ProjectExtraData {
-  return { qboId: normalizeString(row.qbo_id) || qboId, status: normalizeProjectStatus(row.status) };
+  return {
+    qboId: normalizeString(row.qbo_id) || qboId,
+    status: normalizeProjectStatus(row.status),
+    purchaseOrder: normalizeString(row.purchase_order),
+    projectManagerId: normalizeString(row.project_manager) || null,
+  };
 }
 
 function normalizeProjectStatus(value: unknown): ProjectListItem["status"] {

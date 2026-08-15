@@ -65,5 +65,6 @@ export async function requestJson<T>(path: string, init: RequestInit = {}): Prom
     throw new NorthstarApiError(message || `Northstar API request failed (${response.status}).`, response.status);
   }
 
+  if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;
 }

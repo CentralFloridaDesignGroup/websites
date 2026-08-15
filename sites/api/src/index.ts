@@ -16,6 +16,7 @@ import { customersApi } from './v2/customers/hono'
 import { clientsApi } from './v2/clients/hono'
 import { projectsApi } from './v2/projects/hono'
 import { phasesApi } from './v2/phases/hono'
+import { invoicesApi } from './v2/invoices/hono'
 
 const app = new Hono<HonoEnv>()
 
@@ -73,6 +74,7 @@ app.route('/', customersApi())
 app.route('/', clientsApi())
 app.route('/', projectsApi())
 app.route('/', phasesApi())
+app.route('/', invoicesApi())
 
 app.post('/api/email/transactionEmail', async (context) => {
   return handleTransactionEmail(context.req.raw, context.env)
