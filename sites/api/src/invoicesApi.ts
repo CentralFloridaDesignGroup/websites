@@ -1495,6 +1495,7 @@ async function notifyAccountingPaymentSubmitted(db: D1Database, env: HonoEnv['Bi
     ).run()
   } catch (error: unknown) {
     console.error('Error sending accounting payment notification:', error)
+    throw error
   }
 }
 
@@ -1584,6 +1585,7 @@ function escapeHtml(value: unknown): string {
 function stripeLedgerMethod(paymentMethodType: unknown): Pick<StripePaymentDetails, 'method' | 'paymentMethodResolved'> {
   switch (normalizeString(paymentMethodType).toLowerCase()) {
     case 'card':
+    case 'link':
       return { method: 'Credit Card', paymentMethodResolved: true }
     case 'us_bank_account':
       return { method: 'ACH', paymentMethodResolved: true }
@@ -1928,6 +1930,53 @@ async function markPayoutPaymentsReconciled(db: D1Database, payoutId: string, ba
   }
 }
 
+async function refreshPayoutPaymentDetails(db: D1Database, payoutId: string, balanceTransactions: StripeBalanceTransaction[]): Promise<void> {
+  const date = nowIso()
+  for (const transaction of balanceTransactions) {
+    const balanceTransactionId = normalizeString(transaction.id)
+    if (!balanceTransactionId) continue
+    const sourceId = getExpandedId(transaction.source)
+    const grossCents = normalizeAmountCents(transaction.amount)
+    const feeCents = normalizeAmountCents(transaction.fee)
+    const netCents = normalizeAmountCents(transaction.net)
+    await db.prepare(
+      `UPDATE invoice_payments
+       SET stripe_balance_transaction_id = ?,
+           gross_cents = CASE WHEN ? > 0 THEN ? ELSE gross_cents END,
+           fee_cents = ?,
+           net_cents = CASE WHEN ? > 0 THEN ? ELSE MAX(0, gross_cents - ?) END,
+           stripe_payout_id = ?,
+           stripe_payout_status = 'reconciled',
+           stripe_payout_reconciled_date = ?,
+           accounting_sync_state = json_patch(COALESCE(NULLIF(accounting_sync_state, ''), '{}'), ?),
+           updated_date = ?
+       WHERE status = 'succeeded'
+         AND (stripe_balance_transaction_id = ? OR (? != '' AND stripe_charge_id = ?))`
+    ).bind(
+      balanceTransactionId,
+      grossCents,
+      grossCents,
+      feeCents,
+      netCents,
+      netCents,
+      feeCents,
+      payoutId,
+      date,
+      paymentSyncState({
+        stripeBalanceTransactionId: balanceTransactionId,
+        stripePayoutId: payoutId,
+        stripePayoutStatus: 'reconciled',
+        stripePayoutReconciledDate: date,
+        stripeDetailsStatus: 'complete',
+      }),
+      date,
+      balanceTransactionId,
+      sourceId,
+      sourceId
+    ).run()
+  }
+}
+
 async function handleStripePayoutPaid(db: D1Database, env: HonoEnv['Bindings'], payout: StripePayout): Promise<void> {
   const payoutId = normalizeString(payout.id)
   if (!payoutId) return
@@ -1949,6 +1998,7 @@ async function handleStripePayoutReconciled(db: D1Database, env: HonoEnv['Bindin
   if (!payoutId) return
   await upsertStripePayout(db, payout, 'reconciled')
   const balanceTransactions = await listStripePayoutBalanceTransactions(env, payoutId)
+  await refreshPayoutPaymentDetails(db, payoutId, balanceTransactions)
   const balanceTransactionIds = balanceTransactions.map((transaction) => normalizeString(transaction.id)).filter(Boolean)
   await markPayoutPaymentsReconciled(db, payoutId, balanceTransactionIds)
   const payoutPayments = await fetchPaymentsForStripeBalanceTransactions(db, balanceTransactionIds)
@@ -1999,7 +2049,7 @@ async function markInvoicePaidFromStripe(db: D1Database, env: HonoEnv['Bindings'
     const stripeDetails = await getStripePaymentDetails(env, paymentIntentId)
       .catch(() => pendingStripePaymentDetails(invoice?.totalCents || 0))
     const grossCents = stripeDetails.grossCents || invoice?.totalCents || 0
-    const savedPayment = await upsertInvoicePayment(db, {
+    await upsertInvoicePayment(db, {
       invoiceId,
       kind: 'payment',
       status: 'succeeded',
@@ -2028,7 +2078,7 @@ async function markInvoicePaidFromStripe(db: D1Database, env: HonoEnv['Bindings'
     const syncedInvoice = await fetchInvoiceById(db, invoiceId)
     const payment = await fetchInvoicePaymentByStripe(db, sessionId, paymentIntentId)
     if (syncedInvoice && payment) {
-      await notifyAccountingPaymentSubmitted(db, env, syncedInvoice, savedPayment)
+      await notifyAccountingPaymentSubmitted(db, env, syncedInvoice, payment)
       if (stripeDetails.paymentMethodResolved) {
         await trySyncInvoicePaymentToQbo(db, env, syncedInvoice, payment)
       }
@@ -2042,7 +2092,7 @@ async function markInvoicePaidFromStripe(db: D1Database, env: HonoEnv['Bindings'
       const stripeDetails = await getStripePaymentDetails(env, paymentIntentId)
         .catch(() => pendingStripePaymentDetails(invoice.totalCents))
       const grossCents = stripeDetails.grossCents || invoice.totalCents
-      const savedPayment = await upsertInvoicePayment(db, {
+      await upsertInvoicePayment(db, {
         invoiceId: invoice.id,
         kind: 'payment',
         status: 'succeeded',
@@ -2070,7 +2120,7 @@ async function markInvoicePaidFromStripe(db: D1Database, env: HonoEnv['Bindings'
       const syncedInvoice = await fetchInvoiceById(db, invoice.id)
       const payment = await fetchInvoicePaymentByStripe(db, sessionId, paymentIntentId)
       if (syncedInvoice && payment) {
-        await notifyAccountingPaymentSubmitted(db, env, syncedInvoice, savedPayment)
+        await notifyAccountingPaymentSubmitted(db, env, syncedInvoice, payment)
         if (stripeDetails.paymentMethodResolved) {
           await trySyncInvoicePaymentToQbo(db, env, syncedInvoice, payment)
         }
@@ -2093,7 +2143,7 @@ async function markInvoicePaidFromStripePaymentIntent(db: D1Database, env: HonoE
   const stripeDetails = await getStripePaymentDetails(env, paymentIntentId)
     .catch(() => pendingStripePaymentDetails(normalizeAmountCents(paymentIntent.amount_received || paymentIntent.amount) || invoice.totalCents))
   const grossCents = stripeDetails.grossCents || normalizeAmountCents(paymentIntent.amount_received || paymentIntent.amount) || invoice.totalCents
-  const savedPayment = await upsertInvoicePayment(db, {
+  await upsertInvoicePayment(db, {
     invoiceId: invoice.id,
     kind: 'payment',
     status: 'succeeded',
@@ -2120,7 +2170,7 @@ async function markInvoicePaidFromStripePaymentIntent(db: D1Database, env: HonoE
   const syncedInvoice = await fetchInvoiceById(db, invoice.id)
   const payment = await fetchInvoicePaymentByStripe(db, '', paymentIntentId)
   if (syncedInvoice && payment) {
-    await notifyAccountingPaymentSubmitted(db, env, syncedInvoice, savedPayment)
+    await notifyAccountingPaymentSubmitted(db, env, syncedInvoice, payment)
     if (stripeDetails.paymentMethodResolved) {
       await trySyncInvoicePaymentToQbo(db, env, syncedInvoice, payment)
     }

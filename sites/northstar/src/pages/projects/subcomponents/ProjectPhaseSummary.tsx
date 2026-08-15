@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import type { Phase, PhaseBillType, PhaseCreatePayload, PhaseUpdatePayload } from "cfdg/types";
-import { Edit3, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { Edit3, Minus, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { NorthstarButton, NorthstarDropdown, NorthstarTextbox } from "cfdg/ui/input";
 import { createProjectPhase, deleteProjectPhase, fetchProjectPhases, updateProjectPhase } from "../../../api/projects";
 
 const BILL_TYPES: Array<{ value: PhaseBillType; label: string }> = [
   { value: "fixedFee", label: "Fixed fee" },
-  { value: "timeAndMaterials", label: "Time and materials" },
+  { value: "timeAndMaterials", label: "Time and Materials" },
   { value: "nonBillable", label: "Non-billable" },
 ];
 
@@ -34,6 +34,16 @@ const EMPTY_FORM: PhaseFormState = {
   contractCost: "0",
   retainerCost: "0",
   projectManagerId: "",
+};
+
+function getColorClass(label: string, value: number): string {
+  switch (label) {
+    case "Contract": return "text-blue-700 dark:text-blue-300";
+    case "Retainer": return "text-purple-700 dark:text-purple-300";
+    case "Billed": return "text-green-700 dark:text-green-300";
+    case "Income": return value < 0 ? "text-red-700 dark:text-red-300" : "text-emerald-700 dark:text-emerald-300";
+    default: return "text-neutral-950 dark:text-neutral-50";
+  }
 };
 
 /** Renders and manages the phase tree for a Northstar project. */
@@ -152,15 +162,8 @@ export function ProjectPhaseSummary({ projectId }: { projectId: string }) {
   }
 
   return <section className="grid gap-4 rounded-md border border-neutral-300 bg-neutral-50 p-4 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-    <div className="grid grid-cols-1 md:grid-cols-6 items-center gap-2 border-b border-neutral-300 pb-2 dark:border-neutral-700">
-      <div className="flex flex-col items-start">
-        <h2 className="text-lg font-semibold">Phase Summary</h2>
-        <p className="">{phases.length} Phase{phases.length !== 1 ? "s" : ""}</p>
-      </div>
-      <CostSummaryCard label="Contract" value={costSummary.contractCost} />
-      <CostSummaryCard label="Retainer" value={costSummary.retainerCost} />
-      <CostSummaryCard label="Billed" value={costSummary.billedAmount} />
-      <CostSummaryCard label="Income" value={costSummary.incomeAmount} />
+    <div className="flex flex-col items-center md:items-start gap-2 md:flex-row md:items-center md:justify-between">
+      <h2 className="text-lg font-semibold">Phase Summary</h2>
       <div className="flex gap-2 md:justify-end">
         <NorthstarButton
           onClick={() => void loadPhases()}
@@ -177,6 +180,13 @@ export function ProjectPhaseSummary({ projectId }: { projectId: string }) {
         </NorthstarButton>
       </div>
     </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 items-center gap-2 border-b border-neutral-300 pb-2 dark:border-neutral-700">
+
+      <CostSummaryCard label="Contract" value={costSummary.contractCost} />
+      <CostSummaryCard label="Retainer" value={costSummary.retainerCost} />
+      <CostSummaryCard label="Billed" value={costSummary.billedAmount} />
+      <CostSummaryCard label="Income" value={costSummary.incomeAmount} />
+    </div>
 
     {notice && <p className="rounded border border-sky-300 bg-sky-50 px-3 py-2 text-sm text-sky-900 dark:border-sky-700 dark:bg-sky-950 dark:text-sky-100">{notice}</p>}
     {error && <p className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-700 dark:bg-red-950 dark:text-red-100">{error}</p>}
@@ -185,71 +195,99 @@ export function ProjectPhaseSummary({ projectId }: { projectId: string }) {
       <p className="py-5 text-sm text-neutral-500 dark:text-neutral-400">Loading phases...</p> :
       phases.length === 0 ?
         <p className="py-5 text-sm text-neutral-500 dark:text-neutral-400">No phases have been created for this project.</p> :
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-neutral-300 text-left dark:border-neutral-700">
-                <th className="px-2 py-2">Phase</th>
-                <th className="px-2 py-2">Type</th>
-                <th className="px-2 py-2">Status</th>
-                <th className="px-2 py-2 text-right">Contract</th>
-                <th className="px-2 py-2 text-right">Retainer</th>
-                <th className="px-2 py-2 text-right">Billed</th>
-                <th className="px-2 py-2 text-right">Income</th>
-                <th className="px-2 py-2 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {phases.map((phase) =>
-                <PhaseRow key={phase.id} phase={phase} depth={0} disabled={saving} onCreateChild={openCreate} onEdit={openEdit} onDelete={deletePhase} />
-              )}
-            </tbody>
-          </table>
+        <div className="flex flex-col gap-2">
+          {phases.map((phase) =>
+            <PhaseRow key={phase.id} phase={phase} depth={0} disabled={saving} onCreateChild={openCreate} onEdit={openEdit} onDelete={deletePhase} />
+          )}
         </div>
     }
   </section>;
 }
 
 function PhaseRow({ phase, depth, disabled, onCreateChild, onEdit, onDelete }: { phase: Phase; depth: number; disabled: boolean; onCreateChild: (parentId: string) => void; onEdit: (phase: Phase) => void; onDelete: (phase: Phase) => void }) {
+  const [showChildren, setShowChildren] = useState(false);
+  const [showDescription, setShowDescription] = useState(false);
+
+  const toggleChildren = () => setShowChildren((prev) => !prev);
+  const toggleDescription = () => setShowDescription((prev) => !prev);
+
   return <>
-    <tr className="border-b border-neutral-200 last:border-0 dark:border-neutral-700">
-      <td className="px-2 py-2" style={{ paddingLeft: `${8 + depth * 22}px` }}>
-        <div className="font-semibold">Phase {phase.phaseId}. {phase.name}</div>
-        {phase.description && <div className="text-xs text-neutral-500 dark:text-neutral-400">{phase.description}</div>}
-      </td>
-      <td className="px-2 py-2">
-        {labelForBillType(phase.billType)}
-      </td>
-      <td className="px-2 py-2">
-        <span className={phase.active && phase.billable ? "text-emerald-700 dark:text-emerald-300" : "text-neutral-500 dark:text-neutral-400"}>{phase.active ? "Active" : "Inactive"} | {phase.billable ? "Billable" : "Not billable"}</span>
-      </td>
-      <td className={`px-2 py-2 text-right ${phase.subPhases.length > 0 ? 'font-semibold italic' : ''}`}>
-        {formatMoney(phase.accounting.contractCost)}
-      </td>
-      <td className={`px-2 py-2 text-right ${phase.subPhases.length > 0 ? 'font-semibold italic' : ''}`}>
-        {formatMoney(phase.accounting.retainerCost)}
-      </td>
-      <td className={`px-2 py-2 text-right ${phase.subPhases.length > 0 ? 'font-semibold italic' : ''}`}>
-        {formatMoney(phase.accounting.billedAmount)}
-      </td>
-      <td className={`px-2 py-2 text-right ${phase.subPhases.length > 0 ? 'font-semibold italic' : ''}`}>
-        {formatMoney(phase.accounting.incomeAmount)}
-      </td>
-      <td className="px-2 py-2">
-        <div className="flex justify-end gap-1">
-          <button type="button" className="rounded border border-neutral-300 p-1.5 hover:bg-neutral-100 disabled:opacity-50 dark:border-neutral-600 dark:hover:bg-neutral-700" title="Edit phase" onClick={() => onEdit(phase)} disabled={disabled}>
-            <Edit3 className="size-3.5" />
-          </button>
-          <button type="button" className="rounded border border-neutral-300 p-1.5 hover:bg-neutral-100 disabled:opacity-50 dark:border-neutral-600 dark:hover:bg-neutral-700" title="Create child phase" onClick={() => onCreateChild(phase.id)} disabled={disabled}>
-            <Plus className="size-3.5" />
-          </button>
-          <button type="button" className="rounded border border-red-300 p-1.5 text-red-700 hover:bg-red-50 disabled:opacity-50 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-950" title="Hide phase" onClick={() => void onDelete(phase)} disabled={disabled}>
-            <Trash2 className="size-3.5" />
-          </button>
-        </div>
-      </td>
-    </tr>
-    {phase.subPhases.map((child: Phase) => <PhaseRow key={child.id} phase={child} depth={depth + 1} disabled={disabled} onCreateChild={onCreateChild} onEdit={onEdit} onDelete={onDelete} />)}
+    <div className="border-b border-neutral-300 dark:border-neutral-700 pb-4">
+      <div className="flex flex-row items-start gap-2">
+        {(depth == 0 || (depth > 0 && phase.subPhases.length > 0)) &&
+          <NorthstarButton
+            size="small"
+            onClick={toggleChildren}
+            disabled={disabled}
+            className={`${phase.subPhases.length === 0 ? "invisible" : ""} mt-1`}>
+            {showChildren ? <Minus className="size-4" /> : <Plus className="size-4" />}
+          </NorthstarButton>
+        }
+        <div className="flex flex-col w-full">
+          {/* Row 1 - Title and Cost */}
+          <div className="flex flex-col md:flex-row items-start md:justify-between">
+            <h2 className="text-xl font-semibold text-neutral-900 dark:text-neutral-50">
+              Phase {phase.phaseId}: {phase.name}
+            </h2>
+            <div className="flex gap-2">
+              <span className="text-sm text-neutral-500 dark:text-neutral-400">{labelForBillType(phase.billType)}</span>
+              <span className={`text-sm font-semibold ${phase.subPhases.length > 0 ? "italic" : ""} ${getColorClass("Contract", phase.accounting.contractCost)}`} title={`Contract cost: ${formatMoney(phase.accounting.contractCost)}\nRetainer cost: ${formatMoney(phase.accounting.retainerCost)}${phase.subPhases.length > 0 ? `\nValues based on sum of sub-phases` : ""}`}>{formatMoney(phase.accounting.contractCost)}</span>
+            </div>
+          </div>
+          {/* Row 2 - Status pills and actions */}
+          <div className="flex flex-row justify-between gap-2 mt-2">
+            <div className="flex gap-2">
+              <span className={`rounded-full px-2 py-1 text-xs font-semibold ${phase.active ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100" : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100"}`}>{phase.active ? "Active" : "Inactive"}</span>
+              <span className={`rounded-full px-2 py-1 text-xs font-semibold ${phase.billable ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100" : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100"}`}>{phase.billable ? "Billable" : "Non-billable"}</span>
+            </div>
+            <div className="flex gap-2">
+              <NorthstarButton
+                size="small"
+                onClick={() => onCreateChild(phase.id)}
+                disabled={disabled}
+                title="Create child phase"
+                aria-label="Create child phase">
+                <Plus className="size-4" />
+              </NorthstarButton>
+              <NorthstarButton
+                size="small"
+                onClick={() => onEdit(phase)}
+                disabled={disabled}
+                title="Edit phase"
+                aria-label="Edit phase">
+                <Edit3 className="size-4" />
+              </NorthstarButton>
+              <NorthstarButton
+                size="small"
+                buttonStyle="danger"
+                onClick={() => void onDelete(phase)}
+                disabled={disabled}
+                title="Delete phase"
+                aria-label="Delete phase">
+                <Trash2 className="size-4" />
+              </NorthstarButton>
+            </div>
+          </div>
+          {/* Row 3 - Description */}
+          {phase.description && <div className="mt-2 flex flex-col gap-1">
+            <NorthstarButton
+              size="small"
+              onClick={toggleDescription}
+              disabled={disabled}>
+              {showDescription ? "Hide description" : "Show description"}
+            </NorthstarButton>
+            {showDescription && <p className="text-sm text-neutral-700 dark:text-neutral-300">{phase.description}</p>}
+          </div>}
+          {/* Row 4 - Child phases */}
+          {phase.subPhases.length > 0 && showChildren &&
+            <div className="ml-2 mt-2 border-l border-neutral-300 pl-4 dark:border-neutral-700">
+              {phase.subPhases.map((subPhase) =>
+                <PhaseRow key={subPhase.id} phase={subPhase} depth={depth + 1} disabled={disabled} onCreateChild={onCreateChild} onEdit={onEdit} onDelete={onDelete} />
+              )}
+            </div>
+          }</div>
+      </div>
+    </div>
   </>;
 }
 
@@ -383,20 +421,10 @@ function labelForBillType(value: PhaseBillType): string { return BILL_TYPES.find
 function formatMoney(value: number): string { return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value); }
 
 function CostSummaryCard({ label, value }: { label: string; value: number }) {
-  const colorClass = (() => {
-    switch (label) {
-      case "Contract": return "text-blue-700 dark:text-blue-300";
-      case "Retainer": return "text-purple-700 dark:text-purple-300";
-      case "Billed": return "text-green-700 dark:text-green-300";
-      case "Income": return value < 0 ? "text-red-700 dark:text-red-300" : "text-emerald-700 dark:text-emerald-300";
-      default: return "text-neutral-950 dark:text-neutral-50";
-    }
-  });
-
   return (
-    <div className="flex flex-col items-start gap-1 px-3 py-2">
+    <div className="flex flex-col items-center gap-1 px-3 py-2">
       <span className="text-sm font-medium text-neutral-500 dark:text-neutral-400">{label}</span>
-      <span className={`text-lg font-semibold ${colorClass()}`}>{formatMoney(value)}</span>
+      <span className={`text-lg font-semibold ${getColorClass(label, value)}`}>{formatMoney(value)}</span>
     </div>
   );
-}
+};

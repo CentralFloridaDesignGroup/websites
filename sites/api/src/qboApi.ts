@@ -1046,7 +1046,9 @@ async function buildQboPaymentFields(db: D1Database, env: HonoEnv['Bindings'], p
   const referenceNumber = normalizeString(payment.referenceNumber)
   const paymentMethodId = await getQboPaymentMethodId(db, env, payment.method)
   return {
-    ...(referenceNumber ? { PaymentRefNum: referenceNumber } : {}),
+    // QuickBooks maps PaymentRefNum to doc_num, which accepts at most 21 characters.
+    // Keep longer references (such as Stripe payment-intent IDs) in PrivateNote instead.
+    ...(referenceNumber && referenceNumber.length <= 21 ? { PaymentRefNum: referenceNumber } : {}),
     ...(paymentMethodId ? { PaymentMethodRef: { value: paymentMethodId } } : {}),
   }
 }

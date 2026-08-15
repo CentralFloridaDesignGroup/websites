@@ -4,12 +4,25 @@ import type { NorthstarPagination } from "../pagination";
 /** Status stored in client extra data. */
 export type ClientStatus = "active" | "inactive" | "suspended" | "prospect" | "archived";
 
+export type Contact = {
+  firstName: string;
+  middleName?: string;
+  lastName: string;
+  email?: string;
+  phone?: string;
+  title?: string;
+  sendInvoices?: boolean;
+  active: boolean;
+}
+
 /** Northstar client extra data stored separately from the QBO cache. */
 export type ClientExtraData = {
   /** QBO customer ID shared with the base record. */
   qboId: string;
   /** Internal client status. */
   status: ClientStatus;
+  /** List of client contacts. */
+  contacts: Contact[];
 };
 
 export type Client = QboCustomer & {

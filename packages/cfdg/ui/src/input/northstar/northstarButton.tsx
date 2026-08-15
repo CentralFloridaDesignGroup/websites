@@ -9,7 +9,7 @@ export type NorthstarButtonProperties = ButtonProperties & {
      * - `Secondary`: Soft teal/blue treatment for supporting actions.
      * - `Focused`: Northstar teal, used for the most prominent action in a section.
      */
-    buttonStyle?: 'default' | 'primary' | 'secondary' | 'focused';
+    buttonStyle?: 'default' | 'primary' | 'secondary' | 'focused' | 'danger';
 }
 
 const BUTTON_STYLE_CLASSES: Record<NonNullable<NorthstarButtonProperties['buttonStyle']>, ColorClassNamesFor<ColorMode>> = {
@@ -29,6 +29,10 @@ const BUTTON_STYLE_CLASSES: Record<NonNullable<NorthstarButtonProperties['button
         light: 'border-primary bg-primary text-white hover:bg-primary-700 focus:ring-primary-500/40',
         dark: 'border-primary bg-primary text-white hover:bg-primary-700 focus:ring-primary-500/40',
     },
+    danger: {
+        light: 'border-red-600 text-red-600 hover:bg-red-600 hover:text-white focus:ring-red-500/40',
+        dark: 'border-red-600 text-red-600 hover:bg-red-600 hover:text-white focus:ring-red-500/40',
+    },
 };
 
 export function NorthstarButton(props: NorthstarButtonProperties) {
@@ -39,7 +43,7 @@ export function NorthstarButton(props: NorthstarButtonProperties) {
         ...rest
     } = props;
 
-    const baseClasses = 'inline-flex items-center justify-center gap-2 rounded border px-3 py-2 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60';
+    const baseClasses = 'inline-flex items-center justify-center gap-2 rounded border font-semibold transition-colors focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60';
     const styleClasses = BUTTON_STYLE_CLASSES[buttonStyle];
     const buttonClasses: ColorClassNamesFor<ColorMode> = typeof className === 'string' ? {
         light: `${baseClasses} ${styleClasses.light} ${className}`,

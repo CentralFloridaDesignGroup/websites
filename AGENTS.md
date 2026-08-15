@@ -63,3 +63,7 @@ There are `.md` files in `.docs/`. These are management-written goals. They are 
 If there are multiple plan files, only review files with the current Git branch name at the beginning of the file name as being relevant. For example, files starting with `cleanup_*.md` are only relevant to the `cleanup` branch. Files with `general_*.md` names apply to all branches. Branch files override any instructions conflicting with general instructions. All branch files have equal weight and contradictions require human clarification prior to moving forward.
 
 If a file has values for being goal-complete and merged, ignore the file and consider it completed. Otherwise, consider the scope of the document in decisions and recommendations. If a specific document is referenced for making a decision, reference it in your response.
+
+# MISTAKES.md file
+
+You will maintain a `MISTAKES.md` file. This file will contain a ledger of mistakes you make, what caused the mistake, the fix to correct the mistake, and any additional information needed for reference. New items will be added to the top of the ledger. For every request, you will review the `MISTAKES.md` file to ensure you are not making the same mistakes as before.
