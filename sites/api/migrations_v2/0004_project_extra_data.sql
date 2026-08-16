@@ -32,9 +32,9 @@ CREATE TABLE
                 "imported"
             )
         ),
-        purchase_order TEXT,
-        project_manager TEXT,
-        parcel_id TEXT,
+        purchase_order TEXT DEFAULT '',
+        project_manager TEXT DEFAULT '',
+        parcel_id TEXT DEFAULT '',
         geolocation TEXT DEFAULT '{}'
     );
 
@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS project_contact_assignments (
     contact_id INTEGER NOT NULL CONSTRAINT fk_contact_id REFERENCES client_contacts(id) ON DELETE CASCADE,
     role TEXT NOT NULL DEFAULT 'other' CONSTRAINT check_role CHECK (role IN ('invoicing', 'point_of_contact', 'other')),
     active INTEGER NOT NULL DEFAULT 1 CONSTRAINT check_active CHECK (active IN (0, 1)),
-    primary INTEGER NOT NULL DEFAULT 0 CONSTRAINT check_primary CHECK (primary IN (0, 1)),
+    "primary" INTEGER NOT NULL DEFAULT 0 CONSTRAINT check_primary CHECK ("primary" IN (0, 1)),
     created_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_date DATETIME NOT NULL DEFAULT ''
 );
@@ -55,4 +55,4 @@ CREATE TABLE IF NOT EXISTS project_contact_assignments (
 CREATE INDEX IF NOT EXISTS idx_project_contact_assignments_contact ON project_contact_assignments(contact_id);
 CREATE INDEX IF NOT EXISTS idx_project_contact_assignments_project ON project_contact_assignments(project_id);
 CREATE INDEX IF NOT EXISTS idx_project_contact_assignments_active ON project_contact_assignments(active);
-CREATE INDEX IF NOT EXISTS idx_project_contact_assignments_primary ON project_contact_assignments(primary);
+CREATE INDEX IF NOT EXISTS idx_project_contact_assignments_primary ON project_contact_assignments("primary");

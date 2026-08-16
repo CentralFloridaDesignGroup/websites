@@ -27,7 +27,7 @@ CREATE TABLE
     created_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_id TEXT NOT NULL,
     updated_time DATETIME,
-    updated_id TEXT,
+    updated_id TEXT
   );
 
 CREATE INDEX IF NOT EXISTS idx_phases_qbo_id ON phases (qbo_id);

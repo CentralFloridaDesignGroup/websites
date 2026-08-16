@@ -25,7 +25,7 @@ import type {
   QboServiceItem,
   QboSettings,
   QboStatusResponse,
-} from "cfdg/types";
+} from "cfdg/types/v2";
 import { mapQboAppSettings } from "cfdg/types/mappers";
 
 const QBO_STATE_PREFIX = "qbo_oauth_state:";
@@ -192,7 +192,7 @@ export function qboConnectionApi() {
       const { clientId, redirectUri } = getQboConfig(c.env);
       const state = generateRandomString(24);
       await c.env.WPS_KV_BINDING.put(`${QBO_STATE_PREFIX}${state}`, "1", {
-        expirationTtl: 600,
+        expirationTtl: 600, // 10 minutes
       });
 
       const params = new URLSearchParams();

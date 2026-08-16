@@ -22,12 +22,12 @@ export function normalizeString(value: unknown, limit?: number): string {
  * @param max - An optional maximum value. If provided, the normalized number will not be greater than this value.
  * @returns The normalized number, or 0 if the value is not finite.
  */
-export function normalizeNumber(value: unknown, min?: number, max?: number): number {
+export function normalizeNumber(value: unknown, type?: 'int' | 'float', min?: number, max?: number): number {
   const parsed = Number(value ?? 0);
   if (!Number.isFinite(parsed)) return 0;
   if (min !== undefined && parsed < min) return min;
   if (max !== undefined && parsed > max) return max;
-  return parsed;
+  return type === 'int' ? Math.floor(parsed) : parsed;
 }
 
 /**

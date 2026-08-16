@@ -1,19 +1,13 @@
 import type {
   InvoiceBundle,
-  InvoiceBundleCreatePayload,
-  InvoiceBundleListResponse,
-  InvoiceBundleUpdatePayload,
-  InvoiceV2,
-  InvoiceV2CreatePayload,
-  InvoiceV2ListResponse,
-  InvoiceV2UpdatePayload,
-  NorthstarPageSize,
-} from "cfdg/types";
+  Invoice,
+  PageSize
+} from "cfdg/types/v2";
 import { requestJson } from "./client";
 
 export type InvoiceListOptions = {
   page: number;
-  pageSize: NorthstarPageSize;
+  pageSize: PageSize;
   status?: string;
   projectId?: string;
   customerId?: string;
@@ -29,22 +23,22 @@ function listQuery(options: InvoiceListOptions): string {
   return params.toString();
 }
 
-export async function fetchInvoices(options: InvoiceListOptions): Promise<InvoiceV2ListResponse> {
-  return requestJson<InvoiceV2ListResponse>(`/v2/invoices?${listQuery(options)}`);
+export async function fetchInvoices(options: InvoiceListOptions): Promise<InvoiceListResponse> {
+  return requestJson<InvoiceListResponse>(`/v2/invoices?${listQuery(options)}`);
 }
 
-export async function fetchInvoice(id: string): Promise<InvoiceV2> {
-  const response = await requestJson<{ invoice: InvoiceV2 }>(`/v2/invoices/${encodeURIComponent(id)}`);
+export async function fetchInvoice(id: string): Promise<Invoice> {
+  const response = await requestJson<{ invoice: Invoice }>(`/v2/invoices/${encodeURIComponent(id)}`);
   return response.invoice;
 }
 
-export async function createInvoice(projectId: string, payload: InvoiceV2CreatePayload): Promise<InvoiceV2> {
-  const response = await requestJson<{ invoice: InvoiceV2 }>(`/v2/projects/${encodeURIComponent(projectId)}/invoices`, { method: "POST", body: JSON.stringify(payload) });
+export async function createInvoice(projectId: string, payload: InvoiceCreatePayload): Promise<Invoice> {
+  const response = await requestJson<{ invoice: Invoice }>(`/v2/projects/${encodeURIComponent(projectId)}/invoices`, { method: "POST", body: JSON.stringify(payload) });
   return response.invoice;
 }
 
-export async function updateInvoice(id: string, payload: InvoiceV2UpdatePayload): Promise<InvoiceV2> {
-  const response = await requestJson<{ invoice: InvoiceV2 }>(`/v2/invoices/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify(payload) });
+export async function updateInvoice(id: string, payload: InvoiceUpdatePayload): Promise<Invoice> {
+  const response = await requestJson<{ invoice: Invoice }>(`/v2/invoices/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify(payload) });
   return response.invoice;
 }
 
@@ -52,18 +46,18 @@ export async function deleteInvoice(id: string): Promise<void> {
   await requestJson<void>(`/v2/invoices/${encodeURIComponent(id)}`, { method: "DELETE" });
 }
 
-export async function activateInvoice(id: string): Promise<InvoiceV2> {
-  const response = await requestJson<{ invoice: InvoiceV2 }>(`/v2/invoices/${encodeURIComponent(id)}/activate`, { method: "POST" });
+export async function activateInvoice(id: string): Promise<Invoice> {
+  const response = await requestJson<{ invoice: Invoice }>(`/v2/invoices/${encodeURIComponent(id)}/activate`, { method: "POST" });
   return response.invoice;
 }
 
-export async function voidInvoice(id: string): Promise<InvoiceV2> {
-  const response = await requestJson<{ invoice: InvoiceV2 }>(`/v2/invoices/${encodeURIComponent(id)}/void`, { method: "POST" });
+export async function voidInvoice(id: string): Promise<Invoice> {
+  const response = await requestJson<{ invoice: Invoice }>(`/v2/invoices/${encodeURIComponent(id)}/void`, { method: "POST" });
   return response.invoice;
 }
 
-export async function retryInvoiceQboSync(id: string): Promise<InvoiceV2> {
-  const response = await requestJson<{ invoice: InvoiceV2 }>(`/v2/invoices/${encodeURIComponent(id)}/qbo-sync`, { method: "POST" });
+export async function retryInvoiceQboSync(id: string): Promise<Invoice> {
+  const response = await requestJson<{ invoice: Invoice }>(`/v2/invoices/${encodeURIComponent(id)}/qbo-sync`, { method: "POST" });
   return response.invoice;
 }
 

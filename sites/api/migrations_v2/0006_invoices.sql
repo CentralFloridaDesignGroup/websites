@@ -1,7 +1,6 @@
 -- V2 invoices are immutable client-facing billing snapshots. Drafts may be
 -- edited; activation snapshots all values needed to render the invoice without
 -- reading mutable project, phase, client, or company records.
-
 CREATE TABLE
     IF NOT EXISTS invoice_bundles (
         id INTEGER PRIMARY KEY,
@@ -29,7 +28,7 @@ CREATE TABLE
         activated_time DATETIME,
         closed_time DATETIME,
         updated_time DATETIME,
-        updated_id TEXT,
+        updated_id TEXT
     );
 
 CREATE INDEX IF NOT EXISTS idx_invoice_bundles_qbo_client_id ON invoice_bundles (qbo_client_id);
@@ -138,10 +137,10 @@ WHERE
 CREATE TABLE
     IF NOT EXISTS invoice_bundle_items (
         id INTEGER PRIMARY KEY,
-        bundle_id INTEGER NOT NULL CONSTRAINT fk_bundle_items_bundle FOREIGN KEY (bundle_id) REFERENCES invoice_bundles (id),
+        bundle_id INTEGER NOT NULL CONSTRAINT fk_bundle_items_bundle REFERENCES invoice_bundles (id) ON DELETE CASCADE,
         invoice_id INTEGER NOT NULL UNIQUE,
         created_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        created_id TEXT NOT NULL,
+        created_id TEXT NOT NULL
     );
 
 CREATE INDEX IF NOT EXISTS idx_invoice_bundle_items_bundle_id ON invoice_bundle_items (bundle_id);

@@ -1,5 +1,4 @@
 import type { QboCustomer } from "../qbo/types";
-import type { Pagination } from "../pagination";
 import { PROJECT_STATUSES } from "cfdg/types/constants";
 import { Wgs84Input } from "../../geodesy";
 import { R2FileRecord } from "../../common";
@@ -26,17 +25,24 @@ export type Project = QboCustomer & {
 };
 
 /** Project list response returned by the Northstar API. */
-export type ProjectListResponse = {
+export type ProjectListItem = {
   /** Project ID. */
   id: string;
   /** Full name of the project. */
   fullName: string;
   /** Internal project lifecycle status. */
   status: ProjectStatus;
-  /** Name of the parent project, if any. */
-  parentName: string;
-  /** Pagination information for the project list. */
-  pagination: Pagination;
+};
+
+export type ProjectListItemDbRow = {
+  /** Project ID. */
+  id: string;
+  /** Client ID associated with the project. */
+  parent_id: string;
+  /** Full name of the project. */
+  fullName: string;
+  /** Internal project lifecycle status. */
+  extra_status: string;
 };
 
 // #endregion

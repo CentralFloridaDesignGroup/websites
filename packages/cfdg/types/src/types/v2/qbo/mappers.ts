@@ -1,29 +1,34 @@
-import { QboAppSettings, QboCustomer, QboSettings } from "./types";
+import { QboAppSettings, QboCustomer, QboCustomerDbRow, QboSettings } from "./types";
 import { normalizeString, normalizeBoolean, normalizeJson, normalizeAddress } from "../../helpers";
-import { Address } from "../../common";
+import { Address, UnknownPartial } from "../../common";
+import { QboCustomerResponse } from "./http";
 
-//TODO: Move to customers section once created.
-export function mapQboCustomerRow(row: Record<string, unknown>): QboCustomer {
+/**
+ * Converts a database row representing a {@link QboCustomerDbRow} into a {@link QboCustomer} object.
+ * @param row The database row containing the customer data.
+ * @returns A {@link QboCustomer} object with the mapped data from the database row.
+ */
+export function mapQboCustomerDbToObject(row: UnknownPartial<QboCustomerDbRow>): QboCustomer {
 
   const billingAddress = normalizeAddress(
-    row.billAddrLine1,
-    row.billAddrLine2,
-    row.billAddrCity,
-    row.billAddrState,
-    row.billAddrPostalCode,
+    row.bill_addr_line1,
+    row.bill_addr_line2,
+    row.bill_addr_city,
+    row.bill_addr_state,
+    row.bill_addr_postal_code,
   );
 
   const shippingAddress = normalizeAddress(
-    row.shipAddrLine1,
-    row.shipAddrLine2,
-    row.shipAddrCity,
-    row.shipAddrState,
-    row.shipAddrPostalCode,
+    row.ship_addr_line1,
+    row.ship_addr_line2,
+    row.ship_addr_city,
+    row.ship_addr_state,
+    row.ship_addr_postal_code,
   );
 
   return {
     id: normalizeString(row.qbo_id),
-    parentId: normalizeString(row.parent_id),
+    parentId: normalizeString(row.parent_id) || "",
     displayName: normalizeString(row.display_name),
     fullyQualifiedName: normalizeString(row.fully_qualified_name),
     billingAddress: billingAddress ?? {} as Address,
@@ -32,6 +37,62 @@ export function mapQboCustomerRow(row: Record<string, unknown>): QboCustomer {
     syncToken: normalizeString(row.sync_token),
     qboUpdatedTime: normalizeString(row.qbo_updated_time),
     lastSyncedDate: normalizeString(row.last_synced_date),
+  };
+}
+
+/** 
+ * Converts a {@link QboCustomer} object into a database row representation {@link QboCustomerDbRow}.
+ * @param customer The {@link QboCustomer} object to convert.
+ * @returns A {@link QboCustomerDbRow} object containing the mapped data for database storage.
+ */
+export function mapQboCustomerObjectToDb(customer: QboCustomer): QboCustomerDbRow {
+  return {
+    qbo_id: normalizeString(customer.id),
+    parent_id: normalizeString(customer.parentId) || "",
+    display_name: normalizeString(customer.displayName),
+    fully_qualified_name: normalizeString(customer.fullyQualifiedName),
+    bill_addr_line1: normalizeString(customer.billingAddress.line1) || "",
+    bill_addr_line2: normalizeString(customer.billingAddress.line2) || "",
+    bill_addr_city: normalizeString(customer.billingAddress.city) || "",
+    bill_addr_state: normalizeString(customer.billingAddress.state) || "",
+    bill_addr_postal_code: normalizeString(customer.billingAddress.zip) || "",
+    ship_addr_line1: normalizeString(customer.shippingAddress.line1) || "",
+    ship_addr_line2: normalizeString(customer.shippingAddress.line2) || "",
+    ship_addr_city: normalizeString(customer.shippingAddress.city) || "",
+    ship_addr_state: normalizeString(customer.shippingAddress.state) || "",
+    ship_addr_postal_code: normalizeString(customer.shippingAddress.zip) || "",
+    active: customer.active ? 1 : 0,
+    sync_token: normalizeString(customer.syncToken),
+    qbo_updated_time: normalizeString(customer.qboUpdatedTime),
+    last_synced_date: normalizeString(customer.lastSyncedDate),
+  };
+}
+
+/**
+ * Converts a {@link QboCustomerResponse} object into a database row representation {@link QboCustomerDbRow}.
+ * @param data The {@link QboCustomerResponse} object to convert.
+ * @returns A {@link QboCustomerDbRow} object containing the mapped data for database storage.
+ */
+export function mapQboSourceToDb(data: QboCustomerResponse): QboCustomerDbRow {
+  return {
+    qbo_id: normalizeString(data.Id),
+    parent_id: normalizeString(data.ParentRef?.value) || "",
+    display_name: normalizeString(data.DisplayName),
+    fully_qualified_name: normalizeString(data.FullyQualifiedName),
+    bill_addr_line1: normalizeString(data.BillAddr?.line1) || "",
+    bill_addr_line2: normalizeString(data.BillAddr?.line2) || "",
+    bill_addr_city: normalizeString(data.BillAddr?.city) || "",
+    bill_addr_state: normalizeString(data.BillAddr?.CountrySubDivisionCode) || "",
+    bill_addr_postal_code: normalizeString(data.BillAddr?.postalCode) || "",
+    ship_addr_line1: normalizeString(data.ShipAddr?.line1) || "",
+    ship_addr_line2: normalizeString(data.ShipAddr?.line2) || "",
+    ship_addr_city: normalizeString(data.ShipAddr?.city) || "",
+    ship_addr_state: normalizeString(data.ShipAddr?.CountrySubDivisionCode) || "",
+    ship_addr_postal_code: normalizeString(data.ShipAddr?.postalCode) || "",
+    active: data.Active ? 1 : 0,
+    sync_token: normalizeString(data.SyncToken),
+    qbo_updated_time: normalizeString(data.MetaData?.LastUpdatedTime),
+    last_synced_date: "", // This field is not available in the QboCustomerResponse, so we set it to an empty string.
   };
 }
 

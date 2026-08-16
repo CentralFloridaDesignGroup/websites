@@ -1,7 +1,15 @@
 import { Hono } from "hono";
-import { badRequest, requireAuthMode, serverError, type HonoEnv } from "../../apiTypes";
+import {
+  badRequest,
+  requireAuthMode,
+  serverError,
+  type HonoEnv,
+} from "../../apiTypes";
+import type { CompanySettings } from "cfdg/types/v2";
 import { upsertCompanySettings } from "./db";
-import { getCompanySettings, parseGeneralSettings } from "./internal";
+import { getCompanySettings } from "./internal";
+import { convertBodyToObject } from "cfdg/scripts";
+import { mapCompanySettingsDbToObject } from "cfdg/types/mappers";
 
 /** Creates the V2 company settings routes. */
 export function companyApi() {
@@ -14,11 +22,13 @@ export function companyApi() {
       if (authError) return authError;
 
       const settings = await getCompanySettings(c.env.DB_NORTHSTAR);
-      if (!settings) return badRequest("Company settings are not configured");
+      if (typeof settings === "string") return badRequest(settings);
       return c.json({ settings }, 200);
     } catch (error: unknown) {
       console.error("Error reading V2 company settings:", error);
-      return serverError(String(error instanceof Error ? error.message : error));
+      return serverError(
+        String(error instanceof Error ? error.message : error),
+      );
     }
   });
 
@@ -29,20 +39,23 @@ export function companyApi() {
       if (authError) return authError;
 
       const body = (await c.req.json().catch(() => null)) as unknown;
-      const input =
-        body && typeof body === "object" && "general" in body
-          ? (body as Record<string, unknown>).general
-          : body;
-      const general = parseGeneralSettings(input);
-      if (!general) return badRequest("fullName and shortName are required");
+      if (!body || typeof body !== "object")
+        return badRequest("Invalid request body");
 
-      await upsertCompanySettings(c.env.DB_NORTHSTAR, general);
-      const settings = await getCompanySettings(c.env.DB_NORTHSTAR);
+      const settings = convertBodyToObject<CompanySettings>(c.req.raw);
+      if (!settings) return badRequest("Invalid request body");
+
+      await upsertCompanySettings(c.env.DB_NORTHSTAR, settings);
       if (!settings) return badRequest("Company settings are not configured");
-      return c.json({ status: "ok", settings }, 200);
+      return c.json(
+        { status: "ok", settings: mapCompanySettingsDbToObject(settings) },
+        200,
+      ); // Return the updated settings in the response.
     } catch (error: unknown) {
       console.error("Error updating V2 company settings:", error);
-      return serverError(String(error instanceof Error ? error.message : error));
+      return serverError(
+        String(error instanceof Error ? error.message : error),
+      );
     }
   });
 

@@ -1,18 +1,14 @@
 import type {
-  NorthstarClient,
-  NorthstarPageSize,
-  NorthstarProject,
+  Client,
+  PageSize,
+  Project,
   Phase,
-  PhaseCreatePayload,
-  PhaseSummaryResponse,
-  PhaseUpdatePayload,
-  ProjectContact,
-  ProjectExtraData,
+  Contact,
   ProjectListResponse,
-} from "cfdg/types";
+} from "cfdg/types/v2";
 import { requestJson } from "./client";
 
-type ListOptions = { page: number; pageSize: NorthstarPageSize; direction: "asc" | "desc"; clientId?: string };
+type ListOptions = { page: number; pageSize: PageSize; direction: "asc" | "desc"; clientId?: string };
 
 /** Loads a page of Northstar projects. */
 export async function fetchProjects(options: ListOptions): Promise<ProjectListResponse> {
@@ -22,96 +18,35 @@ export async function fetchProjects(options: ListOptions): Promise<ProjectListRe
 }
 
 /** Loads the base project record without extra-data fields. */
-export async function fetchProject(id: string): Promise<NorthstarProject> {
-  const response = await requestJson<{ project: NorthstarProject }>(`/v2/projects/${encodeURIComponent(id)}`);
+export async function fetchProject(id: string): Promise<Project> {
+  const response = await requestJson<{ project: Project }>(`/v2/projects/${encodeURIComponent(id)}`);
   return response.project;
 }
 
-/** Loads independently stored project extra data. */
-export async function fetchProjectExtraData(id: string): Promise<ProjectExtraData> {
-  const response = await requestJson<{ extraData: ProjectExtraData }>(`/v2/projects/${encodeURIComponent(id)}/extra-data`);
-  return response.extraData;
+/**
+ * Updates a project record with the provided payload. Only the fields present in the payload will be updated; other fields will remain unchanged.
+ * @param id The ID of the project to update.
+ * @param payload The fields to update on the project.
+ */
+export async function updateProject(id: string, payload: Partial<Project>): Promise<Project> {
+  throw new Error("Not implemented yet");
 }
 
 /** Loads the client linked to a project. */
-export async function fetchProjectClient(id: string): Promise<NorthstarClient | null> {
-  const response = await requestJson<{ client: NorthstarClient | null }>(`/v2/projects/${encodeURIComponent(id)}/client`);
+export async function fetchProjectClient(id: string): Promise<Client | null> {
+  const response = await requestJson<{ client: Client | null }>(`/v2/projects/${encodeURIComponent(id)}/client`);
   return response.client;
 }
 
-/** Updates a project's internal lifecycle status. */
-export async function updateProjectStatus(id: string, status: ProjectExtraData["status"]): Promise<ProjectExtraData> {
-  const response = await requestJson<{ extraData: ProjectExtraData }>(`/v2/projects/${encodeURIComponent(id)}/status`, {
-    method: "PUT",
-    body: JSON.stringify({ status }),
-  });
-  return response.extraData;
-}
-
-/** Updates the project purchase order used as the source for new invoice snapshots. */
-export async function updateProjectPurchaseOrder(id: string, purchaseOrder: string): Promise<ProjectExtraData> {
-  const response = await requestJson<{ extraData: ProjectExtraData }>(`/v2/projects/${encodeURIComponent(id)}/extra-data`, {
-    method: "PUT",
-    body: JSON.stringify({ purchaseOrder }),
-  });
-  return response.extraData;
-}
-
-export async function updateProjectCore(
-  id: string,
-  payload: {
-    projectManagerId: string;
-    status: ProjectExtraData["status"];
-    purchaseOrder: string;
-    address: { line1: string; line2: string; city: string; state: string; postalCode: string };
-  },
-): Promise<{ project: NorthstarProject; extraData: ProjectExtraData }> {
-  return requestJson<{ project: NorthstarProject; extraData: ProjectExtraData }>(
-    `/v2/projects/${encodeURIComponent(id)}/core`,
-    { method: "PUT", body: JSON.stringify(payload) },
-  );
-}
-
-export async function fetchProjectContacts(id: string): Promise<ProjectContact[]> {
-  const response = await requestJson<{ contacts: ProjectContact[] }>(`/v2/projects/${encodeURIComponent(id)}/contacts`);
+export async function fetchProjectContacts(id: string): Promise<Contact[]> {
+  const response = await requestJson<{ contacts: Contact[] }>(`/v2/projects/${encodeURIComponent(id)}/contacts`);
   return response.contacts;
 }
 
-export async function updateProjectContacts(id: string, contactIds: string[]): Promise<ProjectContact[]> {
-  const response = await requestJson<{ contacts: ProjectContact[] }>(
+export async function updateProjectContacts(id: string, contactIds: string[]): Promise<Contact[]> {
+  const response = await requestJson<{ contacts: Contact[] }>(
     `/v2/projects/${encodeURIComponent(id)}/contacts`,
     { method: "PUT", body: JSON.stringify({ contactIds }) },
   );
   return response.contacts;
-}
-
-/** Loads the hierarchical phase summary for a Northstar project. */
-export async function fetchProjectPhases(id: string): Promise<PhaseSummaryResponse> {
-  return requestJson<PhaseSummaryResponse>(`/v2/projects/${encodeURIComponent(id)}/phases`);
-}
-
-/** Creates a top-level or child phase for a Northstar project. */
-export async function createProjectPhase(id: string, payload: PhaseCreatePayload): Promise<Phase> {
-  const response = await requestJson<{ phase: Phase }>(`/v2/projects/${encodeURIComponent(id)}/phases`, {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-  return response.phase;
-}
-
-/** Updates editable metadata and accounting values for a phase. */
-export async function updateProjectPhase(id: string, phaseId: string, payload: PhaseUpdatePayload): Promise<Phase> {
-  const response = await requestJson<{ phase: Phase }>(`/v2/projects/${encodeURIComponent(id)}/phases/${encodeURIComponent(phaseId)}`, {
-    method: "PUT",
-    body: JSON.stringify(payload),
-  });
-  return response.phase;
-}
-
-/** Soft-deletes a phase and its descendants from the project summary. */
-export async function deleteProjectPhase(id: string, phaseId: string): Promise<Phase> {
-  const response = await requestJson<{ phase: Phase }>(`/v2/projects/${encodeURIComponent(id)}/phases/${encodeURIComponent(phaseId)}`, {
-    method: "DELETE",
-  });
-  return response.phase;
 }

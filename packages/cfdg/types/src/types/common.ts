@@ -41,3 +41,13 @@ export type R2FileRecord = {
     /** The user who last updated the file. */
     updatedBy: string;
 }
+
+/** A type that maps all properties of T to unknown. */
+export type Unknown<T> = {
+  [K in keyof T]: unknown;
+}
+
+/** A type that maps all properties of T to unknown, but allows for partial objects. */
+export type UnknownPartial<T> = {
+  [K in keyof T]?: unknown;
+}

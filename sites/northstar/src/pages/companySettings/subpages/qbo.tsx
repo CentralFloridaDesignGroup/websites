@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { CompanySettings, QboAccount, QboServiceItem } from "cfdg/types";
+import type { CompanySettings, QboAccount, QboServiceItem } from "cfdg/types/v2";
 import { NorthstarButton, NorthstarDropdown } from "cfdg/ui/input";
 import { disconnectQbo, fetchQboOptions, pullQboCustomers, startQboConnection } from "../../../api/qbo";
 import { LoadingOverlay } from "../../../components/LoadingOverlay";

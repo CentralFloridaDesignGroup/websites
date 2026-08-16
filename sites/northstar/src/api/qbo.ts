@@ -3,7 +3,7 @@ import type {
   QboAppSettings,
   QboOptionsResponse,
   QboServiceItem,
-} from "cfdg/types";
+} from "cfdg/types/v2";
 import { requestJson } from "./client";
 
 /** Starts the QuickBooks Online OAuth flow. */

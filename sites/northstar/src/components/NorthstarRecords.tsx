@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronsUpDown } from "lucide-react";
-import type { NorthstarPageSize, NorthstarPagination } from "cfdg/types";
+import type { PageSize, Pagination } from "cfdg/types/v2";
 
 /** Shared status badge used by Northstar client/project rows and detail sheets. */
 export function RecordStatus({ value }: { value: string }) {
@@ -15,9 +15,9 @@ export function RecordStatus({ value }: { value: string }) {
 
 /** A compact page-size and previous/next control row for Northstar tables. */
 export function PaginationControls({ pagination, onPageChange, onPageSizeChange }: {
-  pagination: NorthstarPagination;
+  pagination: Pagination;
   onPageChange: (page: number) => void;
-  onPageSizeChange: (pageSize: NorthstarPageSize) => void;
+  onPageSizeChange: (pageSize: PageSize) => void;
 }) {
   const canPrevious = pagination.page > 1;
   const canNext = pagination.totalPages > 0 && pagination.page < pagination.totalPages;
@@ -28,7 +28,7 @@ export function PaginationControls({ pagination, onPageChange, onPageSizeChange 
         <span className="relative">
           <select
             value={pagination.pageSize}
-            onChange={(event) => onPageSizeChange(Number(event.target.value) as NorthstarPageSize)}
+            onChange={(event) => onPageSizeChange(Number(event.target.value) as PageSize)}
             className="appearance-none rounded border border-neutral-300 bg-white py-1 pl-2 pr-7 font-semibold text-neutral-900 outline-none focus:border-[#173244] focus:ring-2 focus:ring-[#173244]/20 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-50"
           >
             {[25, 50, 100, 250].map((size) => <option key={size} value={size}>{size}</option>)}

@@ -29,7 +29,26 @@ export {
 } from '../types/accounting';
 
 export {
-  mapQboCustomerRow,
+  mapQboCustomerDbToObject,
+  mapQboCustomerObjectToDb,
+  mapQboSourceToDb,
   mapQboSettingsBlob,
   mapQboAppSettings,
 } from '../types/v2/qbo/mappers';
+
+export {
+  mapCompanySettingsDbToObject,
+  mapCompanySettingsObjectToDb,
+} from '../types/v2/company/mappers';
+
+export {
+  mapContactDbToObject,
+  mapContactObjectToDb,
+  mapClientDbToObject,
+  mapClientObjectToDb,
+  mapClientListItemDbToObject
+} from '../types/v2/client/mappers';
+
+export {
+  mapProjectListItemDbToObject,
+} from '../types/v2/project/mappers';

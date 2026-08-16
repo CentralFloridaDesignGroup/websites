@@ -1,6 +1,6 @@
 import { normalizeString } from "cfdg/scripts";
 import type { HonoEnv } from "../../apiTypes";
-import { QboTokenResponse } from "cfdg/types";
+import { QboTokenResponse } from "cfdg/types/v2";
 import { getQboSettings, upsertQboSettings } from "./db";
 
 /**

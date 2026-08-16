@@ -1,15 +1,28 @@
 export type {
     ClientStatus,
     Contact,
+    ProjectContact,
+    ContactDbRow,
     Client,
-    ClientListItem
+    ClientDbRow,
+    ClientListItem,
+    ClientListItemDbRow
 } from "./client/types"
+
+export type {
+    ClientListResponse,
+    ClientResponse,
+    ClientProjectListResponse,
+    ClientContactsListResponse,
+    ClientContactRequest,
+    ClientContactResponse
+} from "./client/http"
 
 export type {
     GeneralSettings,
     CompanyInvoiceSettings,
     CompanySettings,
-    CompanySettingsRow
+    CompanySettingsDbRow
 } from "./company/types"
 
 export type {
@@ -29,7 +42,8 @@ export type {
 export type {
     ProjectStatus,
     Project,
-    ProjectListResponse,
+    ProjectListItem,
+    ProjectListItemDbRow,
     PhaseBillType,
     PhaseAccounting,
     Phase,

@@ -12,11 +12,13 @@ import type {
   ProjectTask,
   ProjectTaskRow,
   ProjectMovePayload,
-  ProjectStatus,
   ProjectUpdatePayload,
-  QboCustomer,
   State,
 } from 'cfdg/types'
+import type {
+  ProjectStatus,
+  QboCustomer,
+} from 'cfdg/types/v2'
 import { CURRENT_PROJECT_STATUSES, PROJECT_STATUSES } from 'cfdg/types/constants'
 import { Hono } from 'hono'
 import { badRequest, jsonResponse, noContent, requireAuthMode, serverError, type HonoEnv } from './apiTypes'
@@ -139,21 +141,20 @@ function mapQboCustomer(row: QboCustomerRow): QboCustomer {
     parentId: normalizeString(row.parent_id),
     displayName: normalizeString(row.display_name),
     fullyQualifiedName: normalizeString(row.fully_qualified_name),
-    companyName: normalizeString(row.company_name),
-    givenName: normalizeString(row.given_name),
-    familyName: normalizeString(row.family_name),
-    primaryEmail: normalizeString(row.primary_email),
-    primaryPhone: normalizeString(row.primary_phone),
-    billAddrLine1: normalizeString(row.bill_addr_line1),
-    billAddrLine2: normalizeString(row.bill_addr_line2),
-    billAddrCity: normalizeString(row.bill_addr_city),
-    billAddrState: normalizeString(row.bill_addr_state),
-    billAddrPostalCode: normalizeString(row.bill_addr_postal_code),
-    shipAddrLine1: normalizeString(row.ship_addr_line1),
-    shipAddrLine2: normalizeString(row.ship_addr_line2),
-    shipAddrCity: normalizeString(row.ship_addr_city),
-    shipAddrState: normalizeString(row.ship_addr_state),
-    shipAddrPostalCode: normalizeString(row.ship_addr_postal_code),
+    billingAddress: {
+      line1: normalizeString(row.bill_addr_line1),
+      line2: normalizeString(row.bill_addr_line2),
+      city: normalizeString(row.bill_addr_city),
+      state: normalizeString(row.bill_addr_state) as State,
+      zip: normalizeString(row.bill_addr_postal_code),
+    },
+    shippingAddress: {
+      line1: normalizeString(row.ship_addr_line1),
+      line2: normalizeString(row.ship_addr_line2),
+      city: normalizeString(row.ship_addr_city),
+      state: normalizeString(row.ship_addr_state) as State,
+      zip: normalizeString(row.ship_addr_postal_code),
+    },
     active: normalizeBool(row.active),
     syncToken: normalizeString(row.sync_token),
     qboUpdatedTime: normalizeString(row.qbo_updated_time),
@@ -375,12 +376,12 @@ function parseAddressPayload(value: unknown): ClientCreatePayload['address'] | R
     line2: normalizeString(address.line2),
     city: normalizeString(address.city),
     state: normalizeString(address.state) as State,
-    postalCode: normalizeString(address.postalCode),
+    zip: normalizeString(address.postalCode),
   }
   if (!parsed.line1) return badRequest('address.line1 is required')
   if (!parsed.city) return badRequest('address.city is required')
   if (!parsed.state) return badRequest('address.state is required')
-  if (!parsed.postalCode) return badRequest('address.postalCode is required')
+  if (!parsed.zip) return badRequest('address.zip is required')
   return parsed
 }
 

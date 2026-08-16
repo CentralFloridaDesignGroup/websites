@@ -1,10 +1,10 @@
 import { Hono } from "hono";
 import { getIsoStringNow } from "cfdg/scripts";
-import type { QboCustomerResponse } from "cfdg/types";
+import type { QboCustomerResponse } from "cfdg/types/v2";
 import { badRequest, requireAuthMode, serverError, type HonoEnv } from "../../apiTypes";
 import { getQboSettings, upsertQboSettings } from "../qbo/db";
 import { qboFetch } from "../qbo/internal";
-import { upsertCustomer } from "./db";
+import { insertCustomer } from "./db";
 
 type CustomerQueryResponse = {
   QueryResponse?: { Customer?: QboCustomerResponse[] };
@@ -14,6 +14,7 @@ type CustomerQueryResponse = {
 export function customersApi() {
   const app = new Hono<HonoEnv>();
 
+  // POST: /v2/customers/sync - Retrieves all customers from QBO and upserts them into the Northstar database.
   app.post("/v2/customers/sync", async (c) => {
     try {
       const authError = requireAuthMode(c, "microsoft");
@@ -31,7 +32,7 @@ export function customersApi() {
         const data = await qboFetch<CustomerQueryResponse>(c.env.DB_NORTHSTAR, c.env, `/query?query=${query}`);
         const customers = data.QueryResponse?.Customer || [];
         for (const customer of customers) {
-          if (await upsertCustomer(c.env.DB_NORTHSTAR, customer, syncedDate)) count += 1;
+          if (await insertCustomer(c.env.DB_NORTHSTAR, customer, syncedDate)) count += 1;
         }
         if (customers.length < 1000) break;
         startPosition += 1000;

@@ -21,7 +21,7 @@ export type {
 export type { BaseApiEnv } from "./api";
 
 // General Exports
-export type { State, Address, R2FileRecord } from "./common";
+export type { State, Address, R2FileRecord, Unknown, UnknownPartial } from "./common";
 
 // Calculator Exports
 export type {
@@ -107,5 +107,9 @@ export type {
   ClassNameValue,
   ColorClassNamesFor,
 } from "./ui";
+
+export type {
+  QboConnectionStatus
+} from "./qbo";
 
 // #endregion

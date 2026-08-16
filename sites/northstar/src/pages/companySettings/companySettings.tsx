@@ -1,4 +1,4 @@
-import { CompanySettings } from "cfdg/types";
+import { CompanySettings } from "cfdg/types/v2";
 import { useCompanySettings } from "../../contexts/CompanySettingsContext";
 import { NorthstarButton } from 'cfdg/ui/input'
 import { Link2, Link2Off, Save, X } from "lucide-react";
@@ -42,6 +42,7 @@ export function CompanySettingsPage() {
         setPendingChanges(JSON.stringify(localSettings) !== JSON.stringify(settings));
     }, [localSettings, settings]);
 
+    // TODO: Finish implementing validation for the settings before saving. For now, we just check that the required fields are present.
     async function saveChanges() {
         if (!localSettings) return;
 
@@ -55,31 +56,8 @@ export function CompanySettingsPage() {
         if (!localSettings.general.shortName)
             validationErrors["general.shortName"] = "Short company name is required.";
 
-        if (!localSettings.general.invoiceBranding.name)
-            validationErrors["general.invoiceBranding.name"] = "Invoice company name is required.";
-
-        if (!localSettings.general.invoiceBranding.phone)
-            validationErrors["general.invoiceBranding.phone"] = "Invoice telephone number is required.";
-
-        if (!localSettings.general.invoiceNumbering.invoiceTemplate)
-            validationErrors["general.invoiceNumbering.invoiceTemplate"] = "Invoice number template is required.";
-
-        if (!localSettings.general.invoiceNumbering.bundleTemplate)
-            validationErrors["general.invoiceNumbering.bundleTemplate"] = "Invoice bundle template is required.";
-
-        if (!localSettings.general.invoiceNumbering.startingSequence ||
-            localSettings.general.invoiceNumbering.startingSequence <= 0)
-            validationErrors["general.invoiceNumbering.startingSequence"] = "Starting sequence must be a positive number.";
-
-        if (localSettings.general.invoiceNumbering.resetEachYear &&
-            (!localSettings.general.invoiceNumbering.invoiceTemplate.includes("YYYY") &&
-                !localSettings.general.invoiceNumbering.invoiceTemplate.includes("YY")))
-            validationErrors["general.invoiceNumbering.invoiceTemplate"] = "Invoice template must include 'YYYY' or 'YY' if reset each year is enabled.";
-
-        if (localSettings.general.invoiceNumbering.resetEachYear &&
-            (!localSettings.general.invoiceNumbering.bundleTemplate.includes("YYYY") &&
-                !localSettings.general.invoiceNumbering.bundleTemplate.includes("YY")))
-            validationErrors["general.invoiceNumbering.bundleTemplate"] = "Bundle template must include 'YYYY' or 'YY' if reset each year is enabled.";
+        if (!localSettings.invoice.invoiceIdTemplate)
+            validationErrors["invoice.invoiceIdTemplate"] = "Invoice ID template is required.";
 
         if (Object.keys(validationErrors).length > 0) {
             setErrors(validationErrors);

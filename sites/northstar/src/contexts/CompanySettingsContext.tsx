@@ -1,4 +1,4 @@
-import type { CompanySettings } from "cfdg/types";
+import type { CompanySettings } from "cfdg/types/v2";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { getCompanySettings, updateCompanySettings } from "../api/company";
 

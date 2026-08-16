@@ -1,4 +1,4 @@
-import type { CompanySettings } from "cfdg/types";
+import type { CompanySettings } from "cfdg/types/v2";
 import { requestJson } from "./client";
 import { updateQboSettings } from "./qbo";
 
@@ -15,7 +15,7 @@ export async function getCompanySettings(): Promise<CompanySettings> {
 export async function updateCompanySettings(newSettings: CompanySettings): Promise<CompanySettings> {
   await requestJson<CompanySettingsResponse>("/v2/company", {
     method: "POST",
-    body: JSON.stringify({ general: newSettings.general }),
+    body: JSON.stringify(newSettings),
   });
 
   // The general settings endpoint is independent from QBO. A settings row may

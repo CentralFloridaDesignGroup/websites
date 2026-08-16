@@ -1,5 +1,7 @@
 import { Address } from "../../common";
 
+// #region Customer Types
+
 /** Cached QuickBooks Online customer or sub-customer used by Compass forms. */
 export type QboCustomer = {
   /** Unique identifier of the customer */
@@ -23,6 +25,48 @@ export type QboCustomer = {
   /** Last synced date of the customer in the local system */
   lastSyncedDate: string;
 };
+
+/** Database row representation of a QuickBooks Online customer or sub-customer. */
+export type QboCustomerDbRow = {
+  /** Unique identifier of the customer in QuickBooks Online */
+  qbo_id: string;
+  /** Unique identifier of the parent customer in QuickBooks Online, if applicable */
+  parent_id: string;
+  /** Display name of the customer in QuickBooks Online */
+  display_name: string;
+  /** Fully qualified name of the customer in QuickBooks Online */
+  fully_qualified_name: string;
+  /** Billing address line 1 of the customer in QuickBooks Online */
+  bill_addr_line1: string;
+  /** Billing address line 2 of the customer in QuickBooks Online */
+  bill_addr_line2: string;
+  /** Billing address city of the customer in QuickBooks Online */
+  bill_addr_city: string;
+  /** Billing address state of the customer in QuickBooks Online */
+  bill_addr_state: string;
+  /** Billing address postal code of the customer in QuickBooks Online */
+  bill_addr_postal_code: string;
+  /** Shipping address line 1 of the customer in QuickBooks Online */
+  ship_addr_line1: string;
+  /** Shipping address line 2 of the customer in QuickBooks Online */
+  ship_addr_line2: string;
+  /** Shipping address city of the customer in QuickBooks Online */
+  ship_addr_city: string;
+  /** Shipping address state of the customer in QuickBooks Online */
+  ship_addr_state: string;
+  /** Shipping address postal code of the customer in QuickBooks Online */
+  ship_addr_postal_code: string;
+  /** Whether the customer is active in QuickBooks Online */
+  active: number;
+  /** Sync token of the customer in QuickBooks Online */
+  sync_token: string;
+  /** Last updated time of the customer in QuickBooks Online */
+  qbo_updated_time: string;
+  /** Last synced date of the customer in the local system */
+  last_synced_date: string;
+};
+
+// #endregion Customer Types
 
 /** Cached QuickBooks Online address used for customers, billing, and shipping. */
 export type QboAddress = {

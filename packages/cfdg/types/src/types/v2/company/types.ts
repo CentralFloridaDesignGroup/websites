@@ -42,14 +42,17 @@ export type CompanyInvoiceSettings = {
 
 export type CompanySettings = {
   /** The unique identifier of the company */
-  id: string;
+  id: number;
+  /** The general settings of the company */
   general: GeneralSettings;
+  /** The invoice settings of the company */
   invoice: CompanyInvoiceSettings;
+  /** The QBO settings of the company */
   qboSettings: QboAppSettings | null;
 };
 
 /** The database row representation of company settings. */
-export type CompanySettingsRow = {
+export type CompanySettingsDbRow = {
   id: number;
   general_settings: string;
   invoice_settings: string;

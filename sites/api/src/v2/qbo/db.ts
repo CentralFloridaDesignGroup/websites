@@ -1,5 +1,5 @@
 import { normalizeJson } from "cfdg/scripts";
-import { QboSettings } from "cfdg/types";
+import { QboSettings } from "cfdg/types/v2";
 
 //TODO: Allow for the possibility of multiple companies in the future. For now, we will only support a single company with ID 1.
 /**

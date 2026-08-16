@@ -1,92 +1,62 @@
-import { normalizeString } from "cfdg/scripts";
-import type { QboCustomerResponse } from "cfdg/types";
+import type { QboCustomerResponse } from "cfdg/types/v2";
+import { mapQboSourceToDb } from "cfdg/types/mappers";
 
-function text(value: unknown): string {
-  return normalizeString(value);
-}
 
 /** Upserts one QBO customer or project into the Northstar customer table. */
-export async function upsertCustomer(
+export async function insertCustomer(
   db: D1Database,
   customer: QboCustomerResponse,
   syncedDate: string,
 ): Promise<boolean> {
-  const id = text(customer.Id);
-  const displayName = text(customer.DisplayName || customer.FullyQualifiedName || customer.CompanyName || `${text(customer.GivenName)} ${text(customer.FamilyName)}`);
-  if (!id || !displayName) return false;
+  const dbCustomer = mapQboSourceToDb(customer);
 
-  const parentId = text(customer.ParentRef?.value);
+  if (!dbCustomer) {
+    return false;
+  }
 
+  // Only insert the customer if it doesn't already exist. If it does exist, we don't want to overwrite it with potentially outdated data.
   const result = await db.prepare(`
     INSERT INTO qbo_customers_projects (
-      qbo_id, parent_id, display_name, fully_qualified_name, company_name,
-      given_name, family_name, primary_email, primary_phone,
-      bill_addr_line1, bill_addr_line2, bill_addr_city, bill_addr_state, bill_addr_postal_code,
-      ship_addr_line1, ship_addr_line2, ship_addr_city, ship_addr_state, ship_addr_postal_code,
+      qbo_id, parent_id, display_name, fully_qualified_name,
+      bill_addr_line1, bill_addr_line2, bill_addr_city, bill_addr_state, bill_addr_zip,
+      ship_addr_line1, ship_addr_line2, ship_addr_city, ship_addr_state, ship_addr_zip,
       active, sync_token, qbo_updated_time, last_synced_date
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(qbo_id) DO UPDATE SET
-      parent_id = excluded.parent_id,
-      display_name = excluded.display_name,
-      fully_qualified_name = excluded.fully_qualified_name,
-      company_name = excluded.company_name,
-      given_name = excluded.given_name,
-      family_name = excluded.family_name,
-      primary_email = excluded.primary_email,
-      primary_phone = excluded.primary_phone,
-      bill_addr_line1 = excluded.bill_addr_line1,
-      bill_addr_line2 = excluded.bill_addr_line2,
-      bill_addr_city = excluded.bill_addr_city,
-      bill_addr_state = excluded.bill_addr_state,
-      bill_addr_postal_code = excluded.bill_addr_postal_code,
-      ship_addr_line1 = excluded.ship_addr_line1,
-      ship_addr_line2 = excluded.ship_addr_line2,
-      ship_addr_city = excluded.ship_addr_city,
-      ship_addr_state = excluded.ship_addr_state,
-      ship_addr_postal_code = excluded.ship_addr_postal_code,
-      active = excluded.active,
-      sync_token = excluded.sync_token,
-      qbo_updated_time = excluded.qbo_updated_time,
-      last_synced_date = excluded.last_synced_date
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(qbo_id) IGNORE
   `).bind(
-    id,
-    parentId,
-    displayName,
-    text(customer.FullyQualifiedName),
-    text(customer.CompanyName),
-    text(customer.GivenName),
-    text(customer.FamilyName),
-    text(customer.PrimaryEmailAddr?.Address),
-    text(customer.PrimaryPhone?.FreeFormNumber),
-    text(customer.BillAddr?.line1),
-    text(customer.BillAddr?.line2),
-    text(customer.BillAddr?.city),
-    text(customer.BillAddr?.CountrySubDivisionCode),
-    text(customer.BillAddr?.postalCode),
-    text(customer.ShipAddr?.line1),
-    text(customer.ShipAddr?.line2),
-    text(customer.ShipAddr?.city),
-    text(customer.ShipAddr?.CountrySubDivisionCode),
-    text(customer.ShipAddr?.postalCode),
-    customer.Active === false ? 0 : 1,
-    text(customer.SyncToken),
-    text(customer.MetaData?.LastUpdatedTime),
+    dbCustomer.qbo_id,
+    dbCustomer.parent_id,
+    dbCustomer.display_name,
+    dbCustomer.fully_qualified_name,
+    dbCustomer.bill_addr_line1,
+    dbCustomer.bill_addr_line2,
+    dbCustomer.bill_addr_city,
+    dbCustomer.bill_addr_state,
+    dbCustomer.bill_addr_postal_code,
+    dbCustomer.ship_addr_line1,
+    dbCustomer.ship_addr_line2,
+    dbCustomer.ship_addr_city,
+    dbCustomer.ship_addr_state,
+    dbCustomer.ship_addr_postal_code,
+    dbCustomer.active ? 1 : 0,
+    dbCustomer.sync_token,
+    dbCustomer.qbo_updated_time,
     syncedDate,
   ).run();
 
-  if (parentId) {
-    await db.prepare("DELETE FROM client_extra_data WHERE qbo_id = ?").bind(id).run();
+  if (dbCustomer.parent_id) {
+    await db.prepare("DELETE FROM client_extra_data WHERE qbo_id = ?").bind(dbCustomer.qbo_id).run();
     await db.prepare(`
       INSERT INTO project_extra_data (qbo_id, status)
-      VALUES (?, 'proposal')
+      VALUES (?, 'imported')
       ON CONFLICT(qbo_id) DO UPDATE SET
         status = CASE
-          WHEN project_extra_data.status IS NULL OR TRIM(project_extra_data.status) = '' THEN 'active'
+          WHEN project_extra_data.status IS NULL OR TRIM(project_extra_data.status) = '' THEN 'imported'
           ELSE project_extra_data.status
         END
-    `).bind(id).run();
+    `).bind(dbCustomer.qbo_id).run();
   } else {
-    await db.prepare("DELETE FROM project_extra_data WHERE qbo_id = ?").bind(id).run();
+    await db.prepare("DELETE FROM project_extra_data WHERE qbo_id = ?").bind(dbCustomer.qbo_id).run();
     await db.prepare(`
       INSERT INTO client_extra_data (qbo_id, status)
       VALUES (?, 'active')
@@ -95,7 +65,7 @@ export async function upsertCustomer(
           WHEN client_extra_data.status IS NULL OR TRIM(client_extra_data.status) = '' THEN 'active'
           ELSE client_extra_data.status
         END
-    `).bind(id).run();
+    `).bind(dbCustomer.qbo_id).run();
   }
 
   return result.success;

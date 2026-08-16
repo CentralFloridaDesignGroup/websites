@@ -150,6 +150,26 @@ export function compactRecord<T extends Record<string, unknown>>(
 }
 
 /**
+ * Converts a request body to an object of type T. If the body is a JSON string, it parses it; if it's already an object, it casts it.
+ * @param body - The request body to convert.
+ * @returns The converted object of type T, or null if the conversion fails.
+ */
+export function convertBodyToObject<T>(body: unknown): T | null {
+  if (typeof body === "string") {
+    try {
+      return JSON.parse(body) as T;
+    }
+    catch {
+      return null;
+    }
+  }
+  if (typeof body === "object" && body !== null) {
+    return body as T;
+  }
+  return null;
+}
+
+/**
  * Parses the JSON body of a Request object. If the Content-Type header is not 'application/json', it throws an error.
  * @param request - The Request object to parse.
  * @returns A promise that resolves to the parsed JSON object.

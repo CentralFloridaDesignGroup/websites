@@ -11,7 +11,7 @@ import { NorthstarLayout } from "./components/NorthstarLayout";
 
 const HomePage = lazy(() => import("./pages/home").then((module) => ({ default: module.HomePage })));
 const CompanySettingsPage = lazy(() => import("./pages/companySettings/companySettings").then((module) => ({ default: module.CompanySettingsPage })));
-const ClientsPage = lazy(() => import("./pages/clients/list").then((module) => ({ default: module.ClientsPage })));
+const ClientsPage = lazy(() => import("./pages/clients/handler").then((module) => ({ default: module.ClientsHandler })));
 const ProjectsPage = lazy(() => import("./pages/projects/handler").then((module) => ({ default: module.ProjectHandler })));
 const InvoicesPage = lazy(() => import("./pages/invoices").then((module) => ({ default: module.InvoicesPage })));
 

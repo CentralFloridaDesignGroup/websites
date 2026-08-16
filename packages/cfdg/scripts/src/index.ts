@@ -24,6 +24,7 @@ export {
   normalizeType,
   normalizeAddress,
   compactRecord,
+  convertBodyToObject,
   parseJsonBody,
   validateInt,
   getIsoStringNow,

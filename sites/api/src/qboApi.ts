@@ -6,186 +6,207 @@ import type {
   InvoicePaymentRow,
   ProjectCreatePayload,
   ProjectUpdatePayload,
-  QboAccount,
   QboConnectionStatus,
-  QboCustomer,
-  QboServiceItem,
-} from 'cfdg/types'
-import { Hono } from 'hono'
-import { invoiceSyncState, paymentSyncState, payoutSyncState } from './accountingSyncState'
-import { badRequest, jsonResponse, requireAuthMode, serverError, type ApiContext, type HonoEnv } from './apiTypes'
-import { mapInvoicePaymentRow } from 'cfdg/types/invoice'
+  State,
+} from "cfdg/types";
+import type { QboAccount, QboCustomer, QboServiceItem } from "cfdg/types/v2";
+import { Hono } from "hono";
+import {
+  invoiceSyncState,
+  paymentSyncState,
+  payoutSyncState,
+} from "./accountingSyncState";
+import {
+  badRequest,
+  jsonResponse,
+  requireAuthMode,
+  serverError,
+  type ApiContext,
+  type HonoEnv,
+} from "./apiTypes";
+import { mapInvoicePaymentRow } from "cfdg/types/invoice";
+import { STATES } from "cfdg/types/constants";
+import { normalizeString, normalizeType, normalizeBoolean, getIsoStringNow } from "cfdg/scripts";
 
-const QBO_ADMIN_EMAIL = 'nwhite@whitepointsurvey.com'
+const QBO_ADMIN_EMAIL = "nwhite@whitepointsurvey.com";
 
 /** @deprecated Use QboTokenResponse from 'cfdg/types/qbo/http' instead */
 type QboTokenResponse = {
-  access_token?: string
-  refresh_token?: string
-  expires_in?: number
-  x_refresh_token_expires_in?: number
-}
+  access_token?: string;
+  refresh_token?: string;
+  expires_in?: number;
+  x_refresh_token_expires_in?: number;
+};
 
 /** @deprecated Use QboAddress from 'cfdg/types/qbo/types' instead */
 type QboAddress = {
-  Line1?: string
-  Line2?: string
-  City?: string
-  CountrySubDivisionCode?: string
-  PostalCode?: string
-}
+  Line1?: string;
+  Line2?: string;
+  City?: string;
+  CountrySubDivisionCode?: string;
+  PostalCode?: string;
+};
 
 /** @deprecated Use QboCustomerResponse from 'cfdg/types/qbo/http' instead */
 type QboCustomerResponse = {
-  Id?: string
-  ParentRef?: { value?: string }
-  DisplayName?: string
-  FullyQualifiedName?: string
-  CompanyName?: string
-  GivenName?: string
-  FamilyName?: string
-  PrimaryEmailAddr?: { Address?: string }
-  PrimaryPhone?: { FreeFormNumber?: string }
-  BillAddr?: QboAddress
-  ShipAddr?: QboAddress
-  Active?: boolean
-  SyncToken?: string
-  Job?: boolean
-  MetaData?: { LastUpdatedTime?: string }
-}
+  Id?: string;
+  ParentRef?: { value?: string };
+  DisplayName?: string;
+  FullyQualifiedName?: string;
+  CompanyName?: string;
+  GivenName?: string;
+  FamilyName?: string;
+  PrimaryEmailAddr?: { Address?: string };
+  PrimaryPhone?: { FreeFormNumber?: string };
+  BillAddr?: QboAddress;
+  ShipAddr?: QboAddress;
+  Active?: boolean;
+  SyncToken?: string;
+  Job?: boolean;
+  MetaData?: { LastUpdatedTime?: string };
+};
 
 /** @deprecated Use QboInvoiceResponse from 'cfdg/types/qbo/http' instead */
 type QboInvoiceResponse = {
   Invoice?: {
-    Id?: string
-    SyncToken?: string
-  }
+    Id?: string;
+    SyncToken?: string;
+  };
   Payment?: {
-    Id?: string
+    Id?: string;
     Line?: Array<{
-      Id?: string
-    }>
-  }
+      Id?: string;
+    }>;
+  };
   Deposit?: {
-    Id?: string
-  }
-}
+    Id?: string;
+  };
+};
 
 type StripePayoutDepositInput = {
-  payoutId: string
-  amountCents: number
-  arrivalDate: string
-}
+  payoutId: string;
+  amountCents: number;
+  arrivalDate: string;
+};
 
 type StripePayoutDepositPayment = {
-  invoice: Invoice
-  payment: InvoicePayment
-}
+  invoice: Invoice;
+  payment: InvoicePayment;
+};
 
 /** @deprecated Use QboAccountResponse from 'cfdg/types/qbo/http' instead */
 type QboAccountResponse = {
-  Id?: string
-  Name?: string
-  FullyQualifiedName?: string
-  AccountType?: string
-  AccountSubType?: string
-  Classification?: string
-  Active?: boolean
-  SyncToken?: string
-  MetaData?: { LastUpdatedTime?: string }
-}
+  Id?: string;
+  Name?: string;
+  FullyQualifiedName?: string;
+  AccountType?: string;
+  AccountSubType?: string;
+  Classification?: string;
+  Active?: boolean;
+  SyncToken?: string;
+  MetaData?: { LastUpdatedTime?: string };
+};
 
 /** @deprecated Use QboItemResponse from 'cfdg/types/qbo/http' instead */
 type QboItemResponse = {
-  Id?: string
-  Name?: string
-  FullyQualifiedName?: string
-  Description?: string
-  Type?: string
-  Active?: boolean
-  SyncToken?: string
-  MetaData?: { LastUpdatedTime?: string }
-}
+  Id?: string;
+  Name?: string;
+  FullyQualifiedName?: string;
+  Description?: string;
+  Type?: string;
+  Active?: boolean;
+  SyncToken?: string;
+  MetaData?: { LastUpdatedTime?: string };
+};
 
 /** @deprecated Use QboPaymentMethodResponse from 'cfdg/types/qbo/http' instead */
 type QboPaymentMethodResponse = {
-  Id?: string
-  Name?: string
-  Active?: boolean
-}
+  Id?: string;
+  Name?: string;
+  Active?: boolean;
+};
 
-const qboSchemaReadyByDb = new WeakMap<D1Database, Promise<void>>()
-
-/** @deprecated Use the shared normalizeString from 'cfdg/scripts' instead */
-function normalizeString(value: unknown): string {
-  return String(value ?? '').trim()
-}
-
-/** @deprecated Use the shared normalizeBool from 'cfdg/scripts' instead */
-function normalizeBool(value: unknown): boolean {
-  return value === true || value === 1 || value === '1'
-}
-
-/** @deprecated Use getIsoStringNow from 'cfdg/scripts' instead */
-function nowIso(): string {
-  return new Date().toISOString()
-}
+const qboSchemaReadyByDb = new WeakMap<D1Database, Promise<void>>();
 
 /** @deprecated Use generateRandomString from 'cfdg/scripts/crypto' instead */
 function createStateToken(): string {
-  const bytes = new Uint8Array(24)
-  crypto.getRandomValues(bytes)
-  let binary = ''
+  const bytes = new Uint8Array(24);
+  crypto.getRandomValues(bytes);
+  let binary = "";
   for (const byte of bytes) {
-    binary += String.fromCharCode(byte)
+    binary += String.fromCharCode(byte);
   }
-  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '')
+  return btoa(binary)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
 }
 
-function getQboEnvironment(env: HonoEnv['Bindings']): 'sandbox' | 'production' {
-  return normalizeString(env.QBO_ENVIRONMENT).toLowerCase() === 'sandbox' ? 'sandbox' : 'production'
+function getQboEnvironment(env: HonoEnv["Bindings"]): "sandbox" | "production" {
+  return normalizeString(env.QBO_ENVIRONMENT).toLowerCase() === "sandbox"
+    ? "sandbox"
+    : "production";
 }
 
-function getQboApiBaseUrl(env: HonoEnv['Bindings']): string {
-  return getQboEnvironment(env) === 'sandbox' ? 'https://sandbox-quickbooks.api.intuit.com' : 'https://quickbooks.api.intuit.com'
+function getQboApiBaseUrl(env: HonoEnv["Bindings"]): string {
+  return getQboEnvironment(env) === "sandbox"
+    ? "https://sandbox-quickbooks.api.intuit.com"
+    : "https://quickbooks.api.intuit.com";
 }
 
-function getQboMinorVersion(env: HonoEnv['Bindings']): string {
-  return normalizeString(env.QBO_MINOR_VERSION) || '75'
+function getQboMinorVersion(env: HonoEnv["Bindings"]): string {
+  return normalizeString(env.QBO_MINOR_VERSION) || "75";
 }
 
-function getDocumentBaseUrl(env: HonoEnv['Bindings']): string {
-  const configured = normalizeString(env.INVOICE_PUBLIC_BASE_URL)
+function getDocumentBaseUrl(env: HonoEnv["Bindings"]): string {
+  const configured = normalizeString(env.INVOICE_PUBLIC_BASE_URL);
   if (!configured) {
-    throw new Error('Server configuration error: Missing INVOICE_PUBLIC_BASE_URL')
+    throw new Error(
+      "Server configuration error: Missing INVOICE_PUBLIC_BASE_URL",
+    );
   }
-  return configured.replace(/\/+$/g, '')
+  return configured.replace(/\/+$/g, "");
 }
 
-function requireQboConfig(env: HonoEnv['Bindings']): { clientId: string; clientSecret: string; redirectUri: string } {
-  const clientId = normalizeString(env.QBO_CLIENT_ID)
-  const clientSecret = normalizeString(env.QBO_CLIENT_SECRET)
-  const redirectUri = normalizeString(env.QBO_REDIRECT_URI)
+function requireQboConfig(env: HonoEnv["Bindings"]): {
+  clientId: string;
+  clientSecret: string;
+  redirectUri: string;
+} {
+  const clientId = normalizeString(env.QBO_CLIENT_ID);
+  const clientSecret = normalizeString(env.QBO_CLIENT_SECRET);
+  const redirectUri = normalizeString(env.QBO_REDIRECT_URI);
   if (!clientId || !clientSecret || !redirectUri) {
-    throw new Error('Server configuration error: Missing QuickBooks OAuth configuration')
+    throw new Error(
+      "Server configuration error: Missing QuickBooks OAuth configuration",
+    );
   }
-  return { clientId, clientSecret, redirectUri }
+  return { clientId, clientSecret, redirectUri };
 }
 
-async function ensureColumn(db: D1Database, tableName: 'invoices', columnDefinitionSql: string): Promise<void> {
+async function ensureColumn(
+  db: D1Database,
+  tableName: "invoices",
+  columnDefinitionSql: string,
+): Promise<void> {
   try {
-    await db.prepare(`ALTER TABLE ${tableName} ADD COLUMN ${columnDefinitionSql}`).run()
+    await db
+      .prepare(`ALTER TABLE ${tableName} ADD COLUMN ${columnDefinitionSql}`)
+      .run();
   } catch (error: unknown) {
-    const message = String(error instanceof Error ? error.message : error).toLowerCase()
-    if (!message.includes('duplicate column name')) {
-      throw error
+    const message = String(
+      error instanceof Error ? error.message : error,
+    ).toLowerCase();
+    if (!message.includes("duplicate column name")) {
+      throw error;
     }
   }
 }
 
 async function ensureQboSchema(db: D1Database): Promise<void> {
-  await db.prepare(
-    `CREATE TABLE IF NOT EXISTS qbo_connection (
+  await db
+    .prepare(
+      `CREATE TABLE IF NOT EXISTS qbo_connection (
       id INTEGER PRIMARY KEY CHECK (id = 1),
       realm_id TEXT NOT NULL,
       environment TEXT NOT NULL,
@@ -201,30 +222,42 @@ async function ensureQboSchema(db: D1Database): Promise<void> {
       stripe_fee_expense_account_id TEXT,
       connected_date DATETIME NOT NULL,
       updated_date DATETIME NOT NULL
-    )`
-  ).run()
+    )`,
+    )
+    .run();
 
-  for (const column of ['last_item_sync_date DATETIME', 'last_account_sync_date DATETIME', 'default_service_item_id TEXT', 'default_deposit_account_id TEXT', 'stripe_fee_expense_account_id TEXT']) {
+  for (const column of [
+    "last_item_sync_date DATETIME",
+    "last_account_sync_date DATETIME",
+    "default_service_item_id TEXT",
+    "default_deposit_account_id TEXT",
+    "stripe_fee_expense_account_id TEXT",
+  ]) {
     try {
-      await db.prepare(`ALTER TABLE qbo_connection ADD COLUMN ${column}`).run()
+      await db.prepare(`ALTER TABLE qbo_connection ADD COLUMN ${column}`).run();
     } catch (error: unknown) {
-      const message = String(error instanceof Error ? error.message : error).toLowerCase()
-      if (!message.includes('duplicate column name')) {
-        throw error
+      const message = String(
+        error instanceof Error ? error.message : error,
+      ).toLowerCase();
+      if (!message.includes("duplicate column name")) {
+        throw error;
       }
     }
   }
 
-  await db.prepare(
-    `CREATE TABLE IF NOT EXISTS qbo_oauth_states (
+  await db
+    .prepare(
+      `CREATE TABLE IF NOT EXISTS qbo_oauth_states (
       state TEXT PRIMARY KEY,
       return_path TEXT,
       created_date DATETIME NOT NULL
-    )`
-  ).run()
+    )`,
+    )
+    .run();
 
-  await db.prepare(
-    `CREATE TABLE IF NOT EXISTS qbo_customers (
+  await db
+    .prepare(
+      `CREATE TABLE IF NOT EXISTS qbo_customers (
       qbo_id TEXT PRIMARY KEY,
       parent_id TEXT,
       display_name TEXT NOT NULL,
@@ -248,11 +281,13 @@ async function ensureQboSchema(db: D1Database): Promise<void> {
       sync_token TEXT,
       qbo_updated_time DATETIME,
       last_synced_date DATETIME NOT NULL
-    )`
-  ).run()
+    )`,
+    )
+    .run();
 
-  await db.prepare(
-    `CREATE TABLE IF NOT EXISTS qbo_service_items (
+  await db
+    .prepare(
+      `CREATE TABLE IF NOT EXISTS qbo_service_items (
       qbo_id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       fully_qualified_name TEXT,
@@ -261,11 +296,13 @@ async function ensureQboSchema(db: D1Database): Promise<void> {
       sync_token TEXT,
       qbo_updated_time DATETIME,
       last_synced_date DATETIME NOT NULL
-    )`
-  ).run()
+    )`,
+    )
+    .run();
 
-  await db.prepare(
-    `CREATE TABLE IF NOT EXISTS qbo_accounts (
+  await db
+    .prepare(
+      `CREATE TABLE IF NOT EXISTS qbo_accounts (
       qbo_id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       fully_qualified_name TEXT,
@@ -276,34 +313,35 @@ async function ensureQboSchema(db: D1Database): Promise<void> {
       sync_token TEXT,
       qbo_updated_time DATETIME,
       last_synced_date DATETIME NOT NULL
-    )`
-  ).run()
+    )`,
+    )
+    .run();
 
   for (const column of [
-    'qbo_customer_id TEXT',
-    'qbo_project_id TEXT',
-    'qbo_invoice_id TEXT',
-    'qbo_invoice_sync_token TEXT',
-    'qbo_payment_id TEXT',
-    'qbo_last_sync_date DATETIME',
-    'qbo_sync_status TEXT',
-    'qbo_sync_message TEXT',
+    "qbo_customer_id TEXT",
+    "qbo_project_id TEXT",
+    "qbo_invoice_id TEXT",
+    "qbo_invoice_sync_token TEXT",
+    "qbo_payment_id TEXT",
+    "qbo_last_sync_date DATETIME",
+    "qbo_sync_status TEXT",
+    "qbo_sync_message TEXT",
   ]) {
-    await ensureColumn(db, 'invoices', column)
+    await ensureColumn(db, "invoices", column);
   }
 
   for (const statement of [
-    'CREATE INDEX IF NOT EXISTS idx_qbo_customers_parent_id ON qbo_customers(parent_id)',
-    'CREATE INDEX IF NOT EXISTS idx_qbo_customers_display_name ON qbo_customers(display_name)',
-    'CREATE INDEX IF NOT EXISTS idx_qbo_customers_primary_email ON qbo_customers(primary_email)',
-    'CREATE INDEX IF NOT EXISTS idx_qbo_service_items_name ON qbo_service_items(name)',
-    'CREATE INDEX IF NOT EXISTS idx_qbo_accounts_name ON qbo_accounts(name)',
-    'CREATE INDEX IF NOT EXISTS idx_qbo_accounts_account_type ON qbo_accounts(account_type)',
-    'CREATE INDEX IF NOT EXISTS idx_invoices_qbo_customer_id ON invoices(qbo_customer_id)',
-    'CREATE INDEX IF NOT EXISTS idx_invoices_qbo_project_id ON invoices(qbo_project_id)',
-    'CREATE INDEX IF NOT EXISTS idx_invoices_qbo_invoice_id ON invoices(qbo_invoice_id)',
+    "CREATE INDEX IF NOT EXISTS idx_qbo_customers_parent_id ON qbo_customers(parent_id)",
+    "CREATE INDEX IF NOT EXISTS idx_qbo_customers_display_name ON qbo_customers(display_name)",
+    "CREATE INDEX IF NOT EXISTS idx_qbo_customers_primary_email ON qbo_customers(primary_email)",
+    "CREATE INDEX IF NOT EXISTS idx_qbo_service_items_name ON qbo_service_items(name)",
+    "CREATE INDEX IF NOT EXISTS idx_qbo_accounts_name ON qbo_accounts(name)",
+    "CREATE INDEX IF NOT EXISTS idx_qbo_accounts_account_type ON qbo_accounts(account_type)",
+    "CREATE INDEX IF NOT EXISTS idx_invoices_qbo_customer_id ON invoices(qbo_customer_id)",
+    "CREATE INDEX IF NOT EXISTS idx_invoices_qbo_project_id ON invoices(qbo_project_id)",
+    "CREATE INDEX IF NOT EXISTS idx_invoices_qbo_invoice_id ON invoices(qbo_invoice_id)",
   ]) {
-    await db.prepare(statement).run()
+    await db.prepare(statement).run();
   }
 }
 
@@ -315,11 +353,11 @@ function mapCachedQboAccount(row: Record<string, unknown>): QboAccount {
     accountType: normalizeString(row.account_type),
     accountSubType: normalizeString(row.account_sub_type),
     classification: normalizeString(row.classification),
-    active: normalizeBool(row.active),
+    active: normalizeBoolean(row.active),
     syncToken: normalizeString(row.sync_token),
     qboUpdatedTime: normalizeString(row.qbo_updated_time),
     lastSyncedDate: normalizeString(row.last_synced_date),
-  }
+  };
 }
 
 function mapCachedQboServiceItem(row: Record<string, unknown>): QboServiceItem {
@@ -328,19 +366,19 @@ function mapCachedQboServiceItem(row: Record<string, unknown>): QboServiceItem {
     name: normalizeString(row.name),
     fullyQualifiedName: normalizeString(row.fully_qualified_name),
     description: normalizeString(row.description),
-    active: normalizeBool(row.active),
+    active: normalizeBoolean(row.active),
     syncToken: normalizeString(row.sync_token),
     qboUpdatedTime: normalizeString(row.qbo_updated_time),
     lastSyncedDate: normalizeString(row.last_synced_date),
-  }
+  };
 }
 
 export function ensureQboSchemaReady(db: D1Database): Promise<void> {
-  const existing = qboSchemaReadyByDb.get(db)
-  if (existing) return existing
-  const ready = ensureQboSchema(db)
-  qboSchemaReadyByDb.set(db, ready)
-  return ready
+  const existing = qboSchemaReadyByDb.get(db);
+  if (existing) return existing;
+  const ready = ensureQboSchema(db);
+  qboSchemaReadyByDb.set(db, ready);
+  return ready;
 }
 
 /** @deprecated Use mapQboCustomerRow from cfdg/types/src/types/qbo/mappers.ts instead */
@@ -350,70 +388,107 @@ function mapCachedQboCustomer(row: Record<string, unknown>): QboCustomer {
     parentId: normalizeString(row.parent_id),
     displayName: normalizeString(row.display_name),
     fullyQualifiedName: normalizeString(row.fully_qualified_name),
-    companyName: normalizeString(row.company_name),
-    givenName: normalizeString(row.given_name),
-    familyName: normalizeString(row.family_name),
-    primaryEmail: normalizeString(row.primary_email),
-    primaryPhone: normalizeString(row.primary_phone),
-    billAddrLine1: normalizeString(row.bill_addr_line1),
-    billAddrLine2: normalizeString(row.bill_addr_line2),
-    billAddrCity: normalizeString(row.bill_addr_city),
-    billAddrState: normalizeString(row.bill_addr_state),
-    billAddrPostalCode: normalizeString(row.bill_addr_postal_code),
-    shipAddrLine1: normalizeString(row.ship_addr_line1),
-    shipAddrLine2: normalizeString(row.ship_addr_line2),
-    shipAddrCity: normalizeString(row.ship_addr_city),
-    shipAddrState: normalizeString(row.ship_addr_state),
-    shipAddrPostalCode: normalizeString(row.ship_addr_postal_code),
-    active: normalizeBool(row.active),
+    billingAddress: {
+      line1: normalizeString(row.bill_addr_line1),
+      line2: normalizeString(row.bill_addr_line2),
+      city: normalizeString(row.bill_addr_city),
+      state: normalizeType<State>(
+        row.bill_addr_state,
+        Object.keys(STATES) as State[],
+        "FL" as State,
+      ),
+      zip: normalizeString(row.bill_addr_postal_code),
+    },
+    shippingAddress: {
+      line1: normalizeString(row.ship_addr_line1),
+      line2: normalizeString(row.ship_addr_line2),
+      city: normalizeString(row.ship_addr_city),
+      state: normalizeType<State>(
+        row.ship_addr_state,
+        Object.keys(STATES) as State[],
+        "FL" as State,
+      ),
+      zip: normalizeString(row.ship_addr_postal_code),
+    },
+    active: normalizeBoolean(row.active),
     syncToken: normalizeString(row.sync_token),
     qboUpdatedTime: normalizeString(row.qbo_updated_time),
     lastSyncedDate: normalizeString(row.last_synced_date),
-  }
+  };
 }
 
-async function getConnection(db: D1Database): Promise<Record<string, unknown> | null> {
-  await ensureQboSchemaReady(db)
-  return db.prepare('SELECT * FROM qbo_connection WHERE id = 1').first<Record<string, unknown>>()
+async function getConnection(
+  db: D1Database,
+): Promise<Record<string, unknown> | null> {
+  await ensureQboSchemaReady(db);
+  return db
+    .prepare("SELECT * FROM qbo_connection WHERE id = 1")
+    .first<Record<string, unknown>>();
 }
 
 /** @deprecated Use exchangeToken from sites/api/src/v2/qbo/internal.ts instead */
-async function exchangeToken(env: HonoEnv['Bindings'], body: URLSearchParams): Promise<QboTokenResponse> {
-  const { clientId, clientSecret } = requireQboConfig(env)
-  const response = await fetch('https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer', {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/x-www-form-urlencoded',
-      Authorization: `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
-      'x-include-refresh-token-hard-expires-in': 'true',
+async function exchangeToken(
+  env: HonoEnv["Bindings"],
+  body: URLSearchParams,
+): Promise<QboTokenResponse> {
+  const { clientId, clientSecret } = requireQboConfig(env);
+  const response = await fetch(
+    "https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer",
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
+        "x-include-refresh-token-hard-expires-in": "true",
+      },
+      body: body.toString(),
     },
-    body: body.toString(),
-  })
-  const data = await response.json().catch(() => null) as QboTokenResponse | { error_description?: string } | null
+  );
+  const data = (await response.json().catch(() => null)) as
+    | QboTokenResponse
+    | { error_description?: string }
+    | null;
   if (!response.ok) {
-    const message = data && 'error_description' in data ? data.error_description : response.statusText
-    throw new Error(`QuickBooks OAuth failed: ${message || response.statusText}`)
+    const message =
+      data && "error_description" in data
+        ? data.error_description
+        : response.statusText;
+    throw new Error(
+      `QuickBooks OAuth failed: ${message || response.statusText}`,
+    );
   }
-  return data as QboTokenResponse
+  return data as QboTokenResponse;
 }
 
-async function storeConnection(db: D1Database, env: HonoEnv['Bindings'], realmId: string, token: QboTokenResponse): Promise<void> {
-  const accessToken = normalizeString(token.access_token)
-  const refreshToken = normalizeString(token.refresh_token)
+async function storeConnection(
+  db: D1Database,
+  env: HonoEnv["Bindings"],
+  realmId: string,
+  token: QboTokenResponse,
+): Promise<void> {
+  const accessToken = normalizeString(token.access_token);
+  const refreshToken = normalizeString(token.refresh_token);
   if (!accessToken || !refreshToken) {
-    throw new Error('QuickBooks OAuth did not return access and refresh tokens')
+    throw new Error(
+      "QuickBooks OAuth did not return access and refresh tokens",
+    );
   }
 
-  const now = Date.now()
-  const tokenExpiresDate = new Date(now + Math.max(60, Number(token.expires_in ?? 3600) - 60) * 1000).toISOString()
+  const now = Date.now();
+  const tokenExpiresDate = new Date(
+    now + Math.max(60, Number(token.expires_in ?? 3600) - 60) * 1000,
+  ).toISOString();
   const refreshExpiresDate = token.x_refresh_token_expires_in
-    ? new Date(now + Number(token.x_refresh_token_expires_in) * 1000).toISOString()
-    : ''
-  const date = nowIso()
+    ? new Date(
+        now + Number(token.x_refresh_token_expires_in) * 1000,
+      ).toISOString()
+    : "";
+  const date = getIsoStringNow();
 
-  await db.prepare(
-    `INSERT INTO qbo_connection (
+  await db
+    .prepare(
+      `INSERT INTO qbo_connection (
       id, realm_id, environment, access_token, refresh_token, token_expires_date, refresh_expires_date, connected_date, updated_date
     ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(id) DO UPDATE SET
@@ -423,71 +498,103 @@ async function storeConnection(db: D1Database, env: HonoEnv['Bindings'], realmId
       refresh_token = excluded.refresh_token,
       token_expires_date = excluded.token_expires_date,
       refresh_expires_date = excluded.refresh_expires_date,
-      updated_date = excluded.updated_date`
-  ).bind(realmId, getQboEnvironment(env), accessToken, refreshToken, tokenExpiresDate, refreshExpiresDate, date, date).run()
+      updated_date = excluded.updated_date`,
+    )
+    .bind(
+      realmId,
+      getQboEnvironment(env),
+      accessToken,
+      refreshToken,
+      tokenExpiresDate,
+      refreshExpiresDate,
+      date,
+      date,
+    )
+    .run();
 }
 
-async function getAccessToken(db: D1Database, env: HonoEnv['Bindings']): Promise<{ realmId: string; accessToken: string }> {
-  const connection = await getConnection(db)
-  const realmId = normalizeString(connection?.realm_id)
-  const accessToken = normalizeString(connection?.access_token)
-  const refreshToken = normalizeString(connection?.refresh_token)
+async function getAccessToken(
+  db: D1Database,
+  env: HonoEnv["Bindings"],
+): Promise<{ realmId: string; accessToken: string }> {
+  const connection = await getConnection(db);
+  const realmId = normalizeString(connection?.realm_id);
+  const accessToken = normalizeString(connection?.access_token);
+  const refreshToken = normalizeString(connection?.refresh_token);
   if (!realmId || !accessToken || !refreshToken) {
-    throw new Error('QuickBooks is not connected')
+    throw new Error("QuickBooks is not connected");
   }
 
-  const expires = new Date(normalizeString(connection?.token_expires_date)).getTime()
+  const expires = new Date(
+    normalizeString(connection?.token_expires_date),
+  ).getTime();
   if (Number.isFinite(expires) && expires > Date.now() + 60_000) {
-    return { realmId, accessToken }
+    return { realmId, accessToken };
   }
 
-  const body = new URLSearchParams()
-  body.set('grant_type', 'refresh_token')
-  body.set('refresh_token', refreshToken)
-  const token = await exchangeToken(env, body)
-  await storeConnection(db, env, realmId, token)
-  return { realmId, accessToken: normalizeString(token.access_token) }
+  const body = new URLSearchParams();
+  body.set("grant_type", "refresh_token");
+  body.set("refresh_token", refreshToken);
+  const token = await exchangeToken(env, body);
+  await storeConnection(db, env, realmId, token);
+  return { realmId, accessToken: normalizeString(token.access_token) };
 }
 
-async function qboFetch<T>(db: D1Database, env: HonoEnv['Bindings'], path: string, init: RequestInit = {}): Promise<T> {
-  const { realmId, accessToken } = await getAccessToken(db, env)
-  const separator = path.includes('?') ? '&' : '?'
-  const response = await fetch(`${getQboApiBaseUrl(env)}/v3/company/${realmId}${path}${separator}minorversion=${encodeURIComponent(getQboMinorVersion(env))}`, {
-    ...init,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-      ...(init.headers || {}),
+async function qboFetch<T>(
+  db: D1Database,
+  env: HonoEnv["Bindings"],
+  path: string,
+  init: RequestInit = {},
+): Promise<T> {
+  const { realmId, accessToken } = await getAccessToken(db, env);
+  const separator = path.includes("?") ? "&" : "?";
+  const response = await fetch(
+    `${getQboApiBaseUrl(env)}/v3/company/${realmId}${path}${separator}minorversion=${encodeURIComponent(getQboMinorVersion(env))}`,
+    {
+      ...init,
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+        ...(init.headers || {}),
+      },
     },
-  })
-  const data = await response.json().catch(() => null) as T | { Fault?: { Error?: Array<{ Message?: string; Detail?: string }> } } | null
+  );
+  const data = (await response.json().catch(() => null)) as
+    | T
+    | { Fault?: { Error?: Array<{ Message?: string; Detail?: string }> } }
+    | null;
   if (!response.ok) {
-    const error = data && typeof data === 'object' && 'Fault' in data ? data.Fault?.Error?.[0] : null
-    throw new Error(`QuickBooks API failed: ${error?.Detail || error?.Message || response.statusText}`)
+    const error =
+      data && typeof data === "object" && "Fault" in data
+        ? data.Fault?.Error?.[0]
+        : null;
+    throw new Error(
+      `QuickBooks API failed: ${error?.Detail || error?.Message || response.statusText}`,
+    );
   }
-  return data as T
+  return data as T;
 }
 
 function qboAmount(cents: number): number {
-  return Math.round(cents) / 100
+  return Math.round(cents) / 100;
 }
 
 function requireQboAdmin(context: ApiContext): Response | null {
-  const authError = requireAuthMode(context, 'microsoft')
-  if (authError) return authError
+  const authError = requireAuthMode(context, "microsoft");
+  if (authError) return authError;
 
-  const email = normalizeString(context.get('auth')?.email).toLowerCase()
+  const email = normalizeString(context.get("auth")?.email).toLowerCase();
   if (email !== QBO_ADMIN_EMAIL) {
-    return jsonResponse({ error: 'Forbidden' }, { status: 403 })
+    return jsonResponse({ error: "Forbidden" }, { status: 403 });
   }
 
-  return null
+  return null;
 }
 
 function buildQboInvoiceLines(invoice: Invoice, serviceItemId: string) {
   const lines = invoice.lineItems.map((item) => ({
-    DetailType: 'SalesItemLineDetail',
+    DetailType: "SalesItemLineDetail",
     Description: item.description,
     Amount: qboAmount(item.amountCents),
     SalesItemLineDetail: {
@@ -495,35 +602,45 @@ function buildQboInvoiceLines(invoice: Invoice, serviceItemId: string) {
       Qty: 1,
       UnitPrice: qboAmount(item.amountCents),
     },
-  }))
+  }));
 
   if (invoice.previouslyBilledCents > 0) {
     lines.push({
-      DetailType: 'SalesItemLineDetail',
-      Description: 'Previously billed',
+      DetailType: "SalesItemLineDetail",
+      Description: "Previously billed",
       Amount: -qboAmount(invoice.previouslyBilledCents),
       SalesItemLineDetail: {
         ItemRef: { value: serviceItemId },
         Qty: 1,
         UnitPrice: -qboAmount(invoice.previouslyBilledCents),
       },
-    })
+    });
   }
 
-  return lines
+  return lines;
 }
 
 function customerDisplayName(customer: QboCustomerResponse): string {
-  return normalizeString(customer.DisplayName || customer.FullyQualifiedName || customer.CompanyName || `${normalizeString(customer.GivenName)} ${normalizeString(customer.FamilyName)}`)
+  return normalizeString(
+    customer.DisplayName ||
+      customer.FullyQualifiedName ||
+      customer.CompanyName ||
+      `${normalizeString(customer.GivenName)} ${normalizeString(customer.FamilyName)}`,
+  );
 }
 
-async function upsertQboCustomer(db: D1Database, customer: QboCustomerResponse, syncedDate: string): Promise<void> {
-  const id = normalizeString(customer.Id)
-  const displayName = customerDisplayName(customer)
-  if (!id || !displayName) return
+async function upsertQboCustomer(
+  db: D1Database,
+  customer: QboCustomerResponse,
+  syncedDate: string,
+): Promise<void> {
+  const id = normalizeString(customer.Id);
+  const displayName = customerDisplayName(customer);
+  if (!id || !displayName) return;
 
-  await db.prepare(
-    `INSERT INTO qbo_customers (
+  await db
+    .prepare(
+      `INSERT INTO qbo_customers (
       qbo_id, parent_id, display_name, fully_qualified_name, company_name, given_name, family_name,
       primary_email, primary_phone, bill_addr_line1, bill_addr_line2, bill_addr_city, bill_addr_state, bill_addr_postal_code,
       ship_addr_line1, ship_addr_line2, ship_addr_city, ship_addr_state, ship_addr_postal_code,
@@ -551,338 +668,437 @@ async function upsertQboCustomer(db: D1Database, customer: QboCustomerResponse, 
       active = excluded.active,
       sync_token = excluded.sync_token,
       qbo_updated_time = excluded.qbo_updated_time,
-      last_synced_date = excluded.last_synced_date`
-  ).bind(
-    id,
-    normalizeString(customer.ParentRef?.value),
-    displayName,
-    normalizeString(customer.FullyQualifiedName),
-    normalizeString(customer.CompanyName),
-    normalizeString(customer.GivenName),
-    normalizeString(customer.FamilyName),
-    normalizeString(customer.PrimaryEmailAddr?.Address).toLowerCase(),
-    normalizeString(customer.PrimaryPhone?.FreeFormNumber),
-    normalizeString(customer.BillAddr?.Line1),
-    normalizeString(customer.BillAddr?.Line2),
-    normalizeString(customer.BillAddr?.City),
-    normalizeString(customer.BillAddr?.CountrySubDivisionCode),
-    normalizeString(customer.BillAddr?.PostalCode),
-    normalizeString(customer.ShipAddr?.Line1),
-    normalizeString(customer.ShipAddr?.Line2),
-    normalizeString(customer.ShipAddr?.City),
-    normalizeString(customer.ShipAddr?.CountrySubDivisionCode),
-    normalizeString(customer.ShipAddr?.PostalCode),
-    customer.Active === false ? 0 : 1,
-    normalizeString(customer.SyncToken),
-    normalizeString(customer.MetaData?.LastUpdatedTime),
-    syncedDate
-  ).run()
+      last_synced_date = excluded.last_synced_date`,
+    )
+    .bind(
+      id,
+      normalizeString(customer.ParentRef?.value),
+      displayName,
+      normalizeString(customer.FullyQualifiedName),
+      normalizeString(customer.CompanyName),
+      normalizeString(customer.GivenName),
+      normalizeString(customer.FamilyName),
+      normalizeString(customer.PrimaryEmailAddr?.Address).toLowerCase(),
+      normalizeString(customer.PrimaryPhone?.FreeFormNumber),
+      normalizeString(customer.BillAddr?.Line1),
+      normalizeString(customer.BillAddr?.Line2),
+      normalizeString(customer.BillAddr?.City),
+      normalizeString(customer.BillAddr?.CountrySubDivisionCode),
+      normalizeString(customer.BillAddr?.PostalCode),
+      normalizeString(customer.ShipAddr?.Line1),
+      normalizeString(customer.ShipAddr?.Line2),
+      normalizeString(customer.ShipAddr?.City),
+      normalizeString(customer.ShipAddr?.CountrySubDivisionCode),
+      normalizeString(customer.ShipAddr?.PostalCode),
+      customer.Active === false ? 0 : 1,
+      normalizeString(customer.SyncToken),
+      normalizeString(customer.MetaData?.LastUpdatedTime),
+      syncedDate,
+    )
+    .run();
 }
 
-async function fetchCachedQboCustomer(db: D1Database, qboCustomerId: string): Promise<QboCustomer | null> {
-  await ensureQboSchemaReady(db)
-  const row = await db.prepare('SELECT * FROM qbo_customers WHERE qbo_id = ?').bind(qboCustomerId).first<Record<string, unknown>>()
-  return row ? mapCachedQboCustomer(row) : null
+async function fetchCachedQboCustomer(
+  db: D1Database,
+  qboCustomerId: string,
+): Promise<QboCustomer | null> {
+  await ensureQboSchemaReady(db);
+  const row = await db
+    .prepare("SELECT * FROM qbo_customers WHERE qbo_id = ?")
+    .bind(qboCustomerId)
+    .first<Record<string, unknown>>();
+  return row ? mapCachedQboCustomer(row) : null;
 }
 
-function buildCustomerAddress(address: ClientCreatePayload['address']): QboAddress {
+function buildCustomerAddress(
+  address: ClientCreatePayload["address"],
+): QboAddress {
   return {
     Line1: normalizeString(address.line1),
     Line2: normalizeString(address.line2) || undefined,
     City: normalizeString(address.city),
     CountrySubDivisionCode: normalizeString(address.state),
-    PostalCode: normalizeString(address.postalCode),
-  }
+    PostalCode: normalizeString(address.zip),
+  };
 }
 
-function buildCustomerContact(payload: Pick<ClientCreatePayload, 'email' | 'phone'>) {
-  const email = normalizeString(payload.email).toLowerCase()
-  const phone = normalizeString(payload.phone)
+function buildCustomerContact(
+  payload: Pick<ClientCreatePayload, "email" | "phone">,
+) {
+  const email = normalizeString(payload.email).toLowerCase();
+  const phone = normalizeString(payload.phone);
   return {
     ...(email ? { PrimaryEmailAddr: { Address: email } } : {}),
     ...(phone ? { PrimaryPhone: { FreeFormNumber: phone } } : {}),
-  }
+  };
 }
 
 function buildCachedCustomerPatch(
   current: QboCustomer,
   payload: ClientUpdatePayload | ProjectUpdatePayload,
   qboCustomer: QboCustomerResponse,
-  parentId = current.parentId
+  parentId = current.parentId,
 ): QboCustomerResponse {
-  const address = buildCustomerAddress(payload.address)
-  const syncToken = normalizeString(qboCustomer.SyncToken || current.syncToken)
-  const email = 'email' in payload ? payload.email : ''
-  const phone = 'phone' in payload ? payload.phone : ''
+  const address = buildCustomerAddress(payload.address);
+  const syncToken = normalizeString(qboCustomer.SyncToken || current.syncToken);
   return {
     Id: current.id,
     ParentRef: parentId ? { value: parentId } : undefined,
-    DisplayName: normalizeString(qboCustomer.DisplayName || payload.name || current.displayName),
-    FullyQualifiedName: normalizeString(qboCustomer.FullyQualifiedName || current.fullyQualifiedName),
-    CompanyName: normalizeString(qboCustomer.CompanyName || payload.name || current.companyName),
-    GivenName: current.givenName,
-    FamilyName: current.familyName,
-    PrimaryEmailAddr: email ? { Address: normalizeString(email).toLowerCase() } : current.primaryEmail ? { Address: current.primaryEmail } : undefined,
-    PrimaryPhone: phone ? { FreeFormNumber: normalizeString(phone) } : current.primaryPhone ? { FreeFormNumber: current.primaryPhone } : undefined,
+    DisplayName: normalizeString(
+      qboCustomer.DisplayName || payload.name || current.displayName,
+    ),
+    FullyQualifiedName: normalizeString(
+      qboCustomer.FullyQualifiedName || current.fullyQualifiedName,
+    ),
     BillAddr: address,
-    ShipAddr: parentId ? address : {
-      Line1: current.shipAddrLine1,
-      Line2: current.shipAddrLine2,
-      City: current.shipAddrCity,
-      CountrySubDivisionCode: current.shipAddrState,
-      PostalCode: current.shipAddrPostalCode,
-    },
+    ShipAddr: address,
     Active: current.active,
     SyncToken: syncToken,
     Job: Boolean(parentId),
-    MetaData: { LastUpdatedTime: normalizeString(qboCustomer.MetaData?.LastUpdatedTime || current.qboUpdatedTime) },
-  }
+    MetaData: {
+      LastUpdatedTime: normalizeString(
+        qboCustomer.MetaData?.LastUpdatedTime || current.qboUpdatedTime,
+      ),
+    },
+  };
 }
 
-export async function createQboClientCustomer(db: D1Database, env: HonoEnv['Bindings'], payload: ClientCreatePayload): Promise<QboCustomer> {
-  await ensureQboSchemaReady(db)
-  const name = normalizeString(payload.name)
-  const data = await qboFetch<{ Customer?: QboCustomerResponse }>(db, env, '/customer', {
-    method: 'POST',
-    body: JSON.stringify({
-      DisplayName: name,
-      CompanyName: name,
-      BillAddr: buildCustomerAddress(payload.address),
-      ...buildCustomerContact(payload),
-    }),
-  })
-  const customer = data.Customer
-  const qboCustomerId = normalizeString(customer?.Id)
+export async function createQboClientCustomer(
+  db: D1Database,
+  env: HonoEnv["Bindings"],
+  payload: ClientCreatePayload,
+): Promise<QboCustomer> {
+  await ensureQboSchemaReady(db);
+  const name = normalizeString(payload.name);
+  const data = await qboFetch<{ Customer?: QboCustomerResponse }>(
+    db,
+    env,
+    "/customer",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        DisplayName: name,
+        CompanyName: name,
+        BillAddr: buildCustomerAddress(payload.address),
+        ...buildCustomerContact(payload),
+      }),
+    },
+  );
+  const customer = data.Customer;
+  const qboCustomerId = normalizeString(customer?.Id);
   if (!customer || !qboCustomerId) {
-    throw new Error('QuickBooks did not return a customer ID')
+    throw new Error("QuickBooks did not return a customer ID");
   }
-  await upsertQboCustomer(db, customer, nowIso())
-  const cached = await fetchCachedQboCustomer(db, qboCustomerId)
+  await upsertQboCustomer(db, customer, getIsoStringNow());
+  const cached = await fetchCachedQboCustomer(db, qboCustomerId);
   if (!cached) {
-    throw new Error('QuickBooks customer was not cached after create')
+    throw new Error("QuickBooks customer was not cached after create");
   }
-  return cached
+  return cached;
 }
 
-export async function updateQboClientCustomer(db: D1Database, env: HonoEnv['Bindings'], client: QboCustomer, payload: ClientUpdatePayload): Promise<QboCustomer> {
-  await ensureQboSchemaReady(db)
-  const name = normalizeString(payload.name)
-  const data = await qboFetch<{ Customer?: QboCustomerResponse }>(db, env, '/customer', {
-    method: 'POST',
-    body: JSON.stringify({
-      Id: client.id,
-      SyncToken: client.syncToken,
-      sparse: true,
-      DisplayName: name,
-      CompanyName: name,
-      BillAddr: buildCustomerAddress(payload.address),
-      ...buildCustomerContact(payload),
-    }),
-  })
-  const customer = data.Customer
-  const qboCustomerId = normalizeString(customer?.Id)
+export async function updateQboClientCustomer(
+  db: D1Database,
+  env: HonoEnv["Bindings"],
+  client: QboCustomer,
+  payload: ClientUpdatePayload,
+): Promise<QboCustomer> {
+  await ensureQboSchemaReady(db);
+  const name = normalizeString(payload.name);
+  const data = await qboFetch<{ Customer?: QboCustomerResponse }>(
+    db,
+    env,
+    "/customer",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        Id: client.id,
+        SyncToken: client.syncToken,
+        sparse: true,
+        DisplayName: name,
+        CompanyName: name,
+        BillAddr: buildCustomerAddress(payload.address),
+        ...buildCustomerContact(payload),
+      }),
+    },
+  );
+  const customer = data.Customer;
+  const qboCustomerId = normalizeString(customer?.Id);
   if (!customer || !qboCustomerId) {
-    throw new Error('QuickBooks did not return the updated customer')
+    throw new Error("QuickBooks did not return the updated customer");
   }
-  await upsertQboCustomer(db, buildCachedCustomerPatch(client, payload, customer, ''), nowIso())
-  const cached = await fetchCachedQboCustomer(db, qboCustomerId)
+  await upsertQboCustomer(
+    db,
+    buildCachedCustomerPatch(client, payload, customer, ""),
+    getIsoStringNow(),
+  );
+  const cached = await fetchCachedQboCustomer(db, qboCustomerId);
   if (!cached) {
-    throw new Error('QuickBooks customer was not cached after update')
+    throw new Error("QuickBooks customer was not cached after update");
   }
-  return cached
+  return cached;
 }
 
 /** Updates a QuickBooks customer or project active state and refreshes its local cache record. */
-export async function updateQboCustomerActiveState(db: D1Database, env: HonoEnv['Bindings'], customer: QboCustomer, active: boolean): Promise<QboCustomer> {
-  await ensureQboSchemaReady(db)
-  const data = await qboFetch<{ Customer?: QboCustomerResponse }>(db, env, '/customer', {
-    method: 'POST',
-    body: JSON.stringify({
-      Id: customer.id,
-      SyncToken: customer.syncToken,
-      sparse: true,
-      Active: active,
-    }),
-  })
-  const updated = data.Customer
-  const qboCustomerId = normalizeString(updated?.Id)
+export async function updateQboCustomerActiveState(
+  db: D1Database,
+  env: HonoEnv["Bindings"],
+  customer: QboCustomer,
+  active: boolean,
+): Promise<QboCustomer> {
+  await ensureQboSchemaReady(db);
+  const data = await qboFetch<{ Customer?: QboCustomerResponse }>(
+    db,
+    env,
+    "/customer",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        Id: customer.id,
+        SyncToken: customer.syncToken,
+        sparse: true,
+        Active: active,
+      }),
+    },
+  );
+  const updated = data.Customer;
+  const qboCustomerId = normalizeString(updated?.Id);
   if (!updated || !qboCustomerId) {
-    throw new Error('QuickBooks did not return the updated customer status')
+    throw new Error("QuickBooks did not return the updated customer status");
   }
-  await upsertQboCustomer(db, {
-    Id: customer.id,
-    ParentRef: customer.parentId ? { value: customer.parentId } : undefined,
-    DisplayName: customer.displayName,
-    FullyQualifiedName: customer.fullyQualifiedName,
-    CompanyName: customer.companyName,
-    GivenName: customer.givenName,
-    FamilyName: customer.familyName,
-    PrimaryEmailAddr: customer.primaryEmail ? { Address: customer.primaryEmail } : undefined,
-    PrimaryPhone: customer.primaryPhone ? { FreeFormNumber: customer.primaryPhone } : undefined,
-    BillAddr: {
-      Line1: customer.billAddrLine1,
-      Line2: customer.billAddrLine2,
-      City: customer.billAddrCity,
-      CountrySubDivisionCode: customer.billAddrState,
-      PostalCode: customer.billAddrPostalCode,
+  await upsertQboCustomer(
+    db,
+    {
+      Id: customer.id,
+      ParentRef: customer.parentId ? { value: customer.parentId } : undefined,
+      DisplayName: customer.displayName,
+      FullyQualifiedName: customer.fullyQualifiedName,
+      BillAddr: {
+        Line1: customer.billingAddress.line1,
+        Line2: customer.billingAddress.line2 || "",
+        City: customer.billingAddress.city,
+        CountrySubDivisionCode: customer.billingAddress.state,
+        PostalCode: customer.billingAddress.zip,
+      },
+      ShipAddr: {
+        Line1: customer.shippingAddress.line1,
+        Line2: customer.shippingAddress.line2 || "",
+        City: customer.shippingAddress.city,
+        CountrySubDivisionCode: customer.shippingAddress.state,
+        PostalCode: customer.shippingAddress.zip,
+      },
+      Active: active,
+      SyncToken: normalizeString(updated.SyncToken || customer.syncToken),
+      Job: Boolean(customer.parentId),
+      MetaData: {
+        LastUpdatedTime: normalizeString(
+          updated.MetaData?.LastUpdatedTime || customer.qboUpdatedTime,
+        ),
+      },
     },
-    ShipAddr: {
-      Line1: customer.shipAddrLine1,
-      Line2: customer.shipAddrLine2,
-      City: customer.shipAddrCity,
-      CountrySubDivisionCode: customer.shipAddrState,
-      PostalCode: customer.shipAddrPostalCode,
+    getIsoStringNow(),
+  );
+  const cached = await fetchCachedQboCustomer(db, qboCustomerId);
+  if (!cached) {
+    throw new Error("QuickBooks customer was not cached after status update");
+  }
+  return cached;
+}
+
+export async function createQboProjectCustomer(
+  db: D1Database,
+  env: HonoEnv["Bindings"],
+  payload: ProjectCreatePayload,
+): Promise<QboCustomer> {
+  await ensureQboSchemaReady(db);
+  const name = normalizeString(payload.name);
+  const parentCustomerId = normalizeString(payload.parentCustomerId);
+  const data = await qboFetch<{ Customer?: QboCustomerResponse }>(
+    db,
+    env,
+    "/customer",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        DisplayName: name,
+        CompanyName: name,
+        ParentRef: { value: parentCustomerId },
+        Job: true,
+        BillAddr: buildCustomerAddress(payload.address),
+        ShipAddr: buildCustomerAddress(payload.address),
+      }),
     },
-    Active: active,
-    SyncToken: normalizeString(updated.SyncToken || customer.syncToken),
-    Job: Boolean(customer.parentId),
-    MetaData: { LastUpdatedTime: normalizeString(updated.MetaData?.LastUpdatedTime || customer.qboUpdatedTime) },
-  }, nowIso())
-  const cached = await fetchCachedQboCustomer(db, qboCustomerId)
-  if (!cached) {
-    throw new Error('QuickBooks customer was not cached after status update')
-  }
-  return cached
-}
-
-export async function createQboProjectCustomer(db: D1Database, env: HonoEnv['Bindings'], payload: ProjectCreatePayload): Promise<QboCustomer> {
-  await ensureQboSchemaReady(db)
-  const name = normalizeString(payload.name)
-  const parentCustomerId = normalizeString(payload.parentCustomerId)
-  const data = await qboFetch<{ Customer?: QboCustomerResponse }>(db, env, '/customer', {
-    method: 'POST',
-    body: JSON.stringify({
-      DisplayName: name,
-      CompanyName: name,
-      ParentRef: { value: parentCustomerId },
-      Job: true,
-      BillAddr: buildCustomerAddress(payload.address),
-      ShipAddr: buildCustomerAddress(payload.address),
-    }),
-  })
-  const customer = data.Customer
-  const qboCustomerId = normalizeString(customer?.Id)
+  );
+  const customer = data.Customer;
+  const qboCustomerId = normalizeString(customer?.Id);
   if (!customer || !qboCustomerId) {
-    throw new Error('QuickBooks did not return a project ID')
+    throw new Error("QuickBooks did not return a project ID");
   }
-  await upsertQboCustomer(db, customer, nowIso())
-  const cached = await fetchCachedQboCustomer(db, qboCustomerId)
+  await upsertQboCustomer(db, customer, getIsoStringNow());
+  const cached = await fetchCachedQboCustomer(db, qboCustomerId);
   if (!cached) {
-    throw new Error('QuickBooks project was not cached after create')
+    throw new Error("QuickBooks project was not cached after create");
   }
-  return cached
+  return cached;
 }
 
-export async function updateQboProjectCustomer(db: D1Database, env: HonoEnv['Bindings'], project: QboCustomer, payload: ProjectUpdatePayload): Promise<QboCustomer> {
-  await ensureQboSchemaReady(db)
-  const name = normalizeString(payload.name)
-  const data = await qboFetch<{ Customer?: QboCustomerResponse }>(db, env, '/customer', {
-    method: 'POST',
-    body: JSON.stringify({
-      Id: project.id,
-      SyncToken: project.syncToken,
-      sparse: true,
-      DisplayName: name,
-      CompanyName: name,
-      ParentRef: { value: project.parentId },
-      Job: true,
-      BillAddr: buildCustomerAddress(payload.address),
-      ShipAddr: buildCustomerAddress(payload.address),
-    }),
-  })
-  const customer = data.Customer
-  const qboCustomerId = normalizeString(customer?.Id)
+export async function updateQboProjectCustomer(
+  db: D1Database,
+  env: HonoEnv["Bindings"],
+  project: QboCustomer,
+  payload: ProjectUpdatePayload,
+): Promise<QboCustomer> {
+  await ensureQboSchemaReady(db);
+  const name = normalizeString(payload.name);
+  const data = await qboFetch<{ Customer?: QboCustomerResponse }>(
+    db,
+    env,
+    "/customer",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        Id: project.id,
+        SyncToken: project.syncToken,
+        sparse: true,
+        DisplayName: name,
+        CompanyName: name,
+        ParentRef: { value: project.parentId },
+        Job: true,
+        BillAddr: buildCustomerAddress(payload.address),
+        ShipAddr: buildCustomerAddress(payload.address),
+      }),
+    },
+  );
+  const customer = data.Customer;
+  const qboCustomerId = normalizeString(customer?.Id);
   if (!customer || !qboCustomerId) {
-    throw new Error('QuickBooks did not return the updated project')
+    throw new Error("QuickBooks did not return the updated project");
   }
-  await upsertQboCustomer(db, buildCachedCustomerPatch(project, payload, customer, project.parentId), nowIso())
-  const cached = await fetchCachedQboCustomer(db, qboCustomerId)
+  await upsertQboCustomer(
+    db,
+    buildCachedCustomerPatch(project, payload, customer, project.parentId),
+    getIsoStringNow(),
+  );
+  const cached = await fetchCachedQboCustomer(db, qboCustomerId);
   if (!cached) {
-    throw new Error('QuickBooks project was not cached after update')
+    throw new Error("QuickBooks project was not cached after update");
   }
-  return cached
+  return cached;
 }
 
-export async function moveQboProjectCustomer(db: D1Database, env: HonoEnv['Bindings'], project: QboCustomer, parentCustomerId: string): Promise<QboCustomer> {
-  await ensureQboSchemaReady(db)
-  const data = await qboFetch<{ Customer?: QboCustomerResponse }>(db, env, '/customer', {
-    method: 'POST',
-    body: JSON.stringify({
+export async function moveQboProjectCustomer(
+  db: D1Database,
+  env: HonoEnv["Bindings"],
+  project: QboCustomer,
+  parentCustomerId: string,
+): Promise<QboCustomer> {
+  await ensureQboSchemaReady(db);
+  const data = await qboFetch<{ Customer?: QboCustomerResponse }>(
+    db,
+    env,
+    "/customer",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        Id: project.id,
+        SyncToken: project.syncToken,
+        sparse: true,
+        ParentRef: { value: normalizeString(parentCustomerId) },
+        Job: true,
+      }),
+    },
+  );
+  const customer = data.Customer;
+  const qboCustomerId = normalizeString(customer?.Id);
+  if (!customer || !qboCustomerId) {
+    throw new Error("QuickBooks did not return the moved project");
+  }
+  await upsertQboCustomer(
+    db,
+    {
       Id: project.id,
-      SyncToken: project.syncToken,
-      sparse: true,
       ParentRef: { value: normalizeString(parentCustomerId) },
+      DisplayName: project.displayName,
+      FullyQualifiedName: project.fullyQualifiedName,
+      BillAddr: {
+        Line1: project.billingAddress.line1,
+        Line2: project.billingAddress.line2 || "",
+        City: project.billingAddress.city,
+        CountrySubDivisionCode: project.billingAddress.state,
+        PostalCode: project.billingAddress.zip,
+      },
+      ShipAddr: {
+        Line1: project.shippingAddress.line1,
+        Line2: project.shippingAddress.line2 || "",
+        City: project.shippingAddress.city,
+        CountrySubDivisionCode: project.shippingAddress.state,
+        PostalCode: project.shippingAddress.zip,
+      },
+      Active: project.active,
+      SyncToken: normalizeString(customer.SyncToken || project.syncToken),
       Job: true,
-    }),
-  })
-  const customer = data.Customer
-  const qboCustomerId = normalizeString(customer?.Id)
-  if (!customer || !qboCustomerId) {
-    throw new Error('QuickBooks did not return the moved project')
-  }
-  await upsertQboCustomer(db, {
-    Id: project.id,
-    ParentRef: { value: normalizeString(parentCustomerId) },
-    DisplayName: project.displayName,
-    FullyQualifiedName: project.fullyQualifiedName,
-    CompanyName: project.companyName,
-    PrimaryEmailAddr: project.primaryEmail ? { Address: project.primaryEmail } : undefined,
-    PrimaryPhone: project.primaryPhone ? { FreeFormNumber: project.primaryPhone } : undefined,
-    BillAddr: {
-      Line1: project.billAddrLine1,
-      Line2: project.billAddrLine2,
-      City: project.billAddrCity,
-      CountrySubDivisionCode: project.billAddrState,
-      PostalCode: project.billAddrPostalCode,
+      MetaData: {
+        LastUpdatedTime: normalizeString(
+          customer.MetaData?.LastUpdatedTime || project.qboUpdatedTime,
+        ),
+      },
     },
-    ShipAddr: {
-      Line1: project.shipAddrLine1,
-      Line2: project.shipAddrLine2,
-      City: project.shipAddrCity,
-      CountrySubDivisionCode: project.shipAddrState,
-      PostalCode: project.shipAddrPostalCode,
-    },
-    Active: project.active,
-    SyncToken: normalizeString(customer.SyncToken || project.syncToken),
-    Job: true,
-    MetaData: { LastUpdatedTime: normalizeString(customer.MetaData?.LastUpdatedTime || project.qboUpdatedTime) },
-  }, nowIso())
-  const cached = await fetchCachedQboCustomer(db, qboCustomerId)
+    getIsoStringNow(),
+  );
+  const cached = await fetchCachedQboCustomer(db, qboCustomerId);
   if (!cached) {
-    throw new Error('QuickBooks project was not cached after move')
+    throw new Error("QuickBooks project was not cached after move");
   }
-  return cached
+  return cached;
 }
 
-export async function syncQboCustomers(db: D1Database, env: HonoEnv['Bindings']): Promise<number> {
-  await ensureQboSchemaReady(db)
-  let startPosition = 1
-  let syncedCount = 0
-  const syncedDate = nowIso()
+export async function syncQboCustomers(
+  db: D1Database,
+  env: HonoEnv["Bindings"],
+): Promise<number> {
+  await ensureQboSchemaReady(db);
+  let startPosition = 1;
+  let syncedCount = 0;
+  const syncedDate = getIsoStringNow();
 
   while (true) {
-    const query = encodeURIComponent(`SELECT * FROM Customer STARTPOSITION ${startPosition} MAXRESULTS 1000`)
-    const data = await qboFetch<{ QueryResponse?: { Customer?: QboCustomerResponse[]; maxResults?: number } }>(db, env, `/query?query=${query}`)
-    const customers = data.QueryResponse?.Customer || []
+    const query = encodeURIComponent(
+      `SELECT * FROM Customer STARTPOSITION ${startPosition} MAXRESULTS 1000`,
+    );
+    const data = await qboFetch<{
+      QueryResponse?: { Customer?: QboCustomerResponse[]; maxResults?: number };
+    }>(db, env, `/query?query=${query}`);
+    const customers = data.QueryResponse?.Customer || [];
     for (const customer of customers) {
-      await upsertQboCustomer(db, customer, syncedDate)
-      syncedCount += 1
+      await upsertQboCustomer(db, customer, syncedDate);
+      syncedCount += 1;
     }
-    if (customers.length < 1000) break
-    startPosition += 1000
+    if (customers.length < 1000) break;
+    startPosition += 1000;
   }
 
-  await db.prepare('UPDATE qbo_connection SET last_customer_sync_date = ?, updated_date = ? WHERE id = 1').bind(syncedDate, syncedDate).run()
-  return syncedCount
+  await db
+    .prepare(
+      "UPDATE qbo_connection SET last_customer_sync_date = ?, updated_date = ? WHERE id = 1",
+    )
+    .bind(syncedDate, syncedDate)
+    .run();
+  return syncedCount;
 }
 
-async function upsertQboServiceItem(db: D1Database, item: QboItemResponse, syncedDate: string): Promise<void> {
-  const id = normalizeString(item.Id)
-  const name = normalizeString(item.Name || item.FullyQualifiedName)
-  if (!id || !name || normalizeString(item.Type).toLowerCase() !== 'service') return
+async function upsertQboServiceItem(
+  db: D1Database,
+  item: QboItemResponse,
+  syncedDate: string,
+): Promise<void> {
+  const id = normalizeString(item.Id);
+  const name = normalizeString(item.Name || item.FullyQualifiedName);
+  if (!id || !name || normalizeString(item.Type).toLowerCase() !== "service")
+    return;
 
-  await db.prepare(
-    `INSERT INTO qbo_service_items (
+  await db
+    .prepare(
+      `INSERT INTO qbo_service_items (
       qbo_id, name, fully_qualified_name, description, active, sync_token, qbo_updated_time, last_synced_date
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(qbo_id) DO UPDATE SET
@@ -892,48 +1108,67 @@ async function upsertQboServiceItem(db: D1Database, item: QboItemResponse, synce
       active = excluded.active,
       sync_token = excluded.sync_token,
       qbo_updated_time = excluded.qbo_updated_time,
-      last_synced_date = excluded.last_synced_date`
-  ).bind(
-    id,
-    name,
-    normalizeString(item.FullyQualifiedName),
-    normalizeString(item.Description),
-    item.Active === false ? 0 : 1,
-    normalizeString(item.SyncToken),
-    normalizeString(item.MetaData?.LastUpdatedTime),
-    syncedDate
-  ).run()
+      last_synced_date = excluded.last_synced_date`,
+    )
+    .bind(
+      id,
+      name,
+      normalizeString(item.FullyQualifiedName),
+      normalizeString(item.Description),
+      item.Active === false ? 0 : 1,
+      normalizeString(item.SyncToken),
+      normalizeString(item.MetaData?.LastUpdatedTime),
+      syncedDate,
+    )
+    .run();
 }
 
-export async function syncQboServiceItems(db: D1Database, env: HonoEnv['Bindings']): Promise<number> {
-  await ensureQboSchemaReady(db)
-  let startPosition = 1
-  let syncedCount = 0
-  const syncedDate = nowIso()
+export async function syncQboServiceItems(
+  db: D1Database,
+  env: HonoEnv["Bindings"],
+): Promise<number> {
+  await ensureQboSchemaReady(db);
+  let startPosition = 1;
+  let syncedCount = 0;
+  const syncedDate = getIsoStringNow();
 
   while (true) {
-    const query = encodeURIComponent(`SELECT * FROM Item WHERE Type = 'Service' STARTPOSITION ${startPosition} MAXRESULTS 1000`)
-    const data = await qboFetch<{ QueryResponse?: { Item?: QboItemResponse[] } }>(db, env, `/query?query=${query}`)
-    const items = data.QueryResponse?.Item || []
+    const query = encodeURIComponent(
+      `SELECT * FROM Item WHERE Type = 'Service' STARTPOSITION ${startPosition} MAXRESULTS 1000`,
+    );
+    const data = await qboFetch<{
+      QueryResponse?: { Item?: QboItemResponse[] };
+    }>(db, env, `/query?query=${query}`);
+    const items = data.QueryResponse?.Item || [];
     for (const item of items) {
-      await upsertQboServiceItem(db, item, syncedDate)
-      syncedCount += 1
+      await upsertQboServiceItem(db, item, syncedDate);
+      syncedCount += 1;
     }
-    if (items.length < 1000) break
-    startPosition += 1000
+    if (items.length < 1000) break;
+    startPosition += 1000;
   }
 
-  await db.prepare('UPDATE qbo_connection SET last_item_sync_date = ?, updated_date = ? WHERE id = 1').bind(syncedDate, syncedDate).run()
-  return syncedCount
+  await db
+    .prepare(
+      "UPDATE qbo_connection SET last_item_sync_date = ?, updated_date = ? WHERE id = 1",
+    )
+    .bind(syncedDate, syncedDate)
+    .run();
+  return syncedCount;
 }
 
-async function upsertQboAccount(db: D1Database, account: QboAccountResponse, syncedDate: string): Promise<void> {
-  const id = normalizeString(account.Id)
-  const name = normalizeString(account.Name)
-  if (!id || !name) return
+async function upsertQboAccount(
+  db: D1Database,
+  account: QboAccountResponse,
+  syncedDate: string,
+): Promise<void> {
+  const id = normalizeString(account.Id);
+  const name = normalizeString(account.Name);
+  if (!id || !name) return;
 
-  await db.prepare(
-    `INSERT INTO qbo_accounts (
+  await db
+    .prepare(
+      `INSERT INTO qbo_accounts (
       qbo_id, name, fully_qualified_name, account_type, account_sub_type, classification,
       active, sync_token, qbo_updated_time, last_synced_date
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -946,125 +1181,185 @@ async function upsertQboAccount(db: D1Database, account: QboAccountResponse, syn
       active = excluded.active,
       sync_token = excluded.sync_token,
       qbo_updated_time = excluded.qbo_updated_time,
-      last_synced_date = excluded.last_synced_date`
-  ).bind(
-    id,
-    name,
-    normalizeString(account.FullyQualifiedName),
-    normalizeString(account.AccountType),
-    normalizeString(account.AccountSubType),
-    normalizeString(account.Classification),
-    account.Active === false ? 0 : 1,
-    normalizeString(account.SyncToken),
-    normalizeString(account.MetaData?.LastUpdatedTime),
-    syncedDate
-  ).run()
+      last_synced_date = excluded.last_synced_date`,
+    )
+    .bind(
+      id,
+      name,
+      normalizeString(account.FullyQualifiedName),
+      normalizeString(account.AccountType),
+      normalizeString(account.AccountSubType),
+      normalizeString(account.Classification),
+      account.Active === false ? 0 : 1,
+      normalizeString(account.SyncToken),
+      normalizeString(account.MetaData?.LastUpdatedTime),
+      syncedDate,
+    )
+    .run();
 }
 
-export async function syncQboAccounts(db: D1Database, env: HonoEnv['Bindings']): Promise<number> {
-  await ensureQboSchemaReady(db)
-  let startPosition = 1
-  let syncedCount = 0
-  const syncedDate = nowIso()
+export async function syncQboAccounts(
+  db: D1Database,
+  env: HonoEnv["Bindings"],
+): Promise<number> {
+  await ensureQboSchemaReady(db);
+  let startPosition = 1;
+  let syncedCount = 0;
+  const syncedDate = getIsoStringNow();
 
   while (true) {
-    const query = encodeURIComponent(`SELECT * FROM Account STARTPOSITION ${startPosition} MAXRESULTS 1000`)
-    const data = await qboFetch<{ QueryResponse?: { Account?: QboAccountResponse[] } }>(db, env, `/query?query=${query}`)
-    const accounts = data.QueryResponse?.Account || []
+    const query = encodeURIComponent(
+      `SELECT * FROM Account STARTPOSITION ${startPosition} MAXRESULTS 1000`,
+    );
+    const data = await qboFetch<{
+      QueryResponse?: { Account?: QboAccountResponse[] };
+    }>(db, env, `/query?query=${query}`);
+    const accounts = data.QueryResponse?.Account || [];
     for (const account of accounts) {
-      await upsertQboAccount(db, account, syncedDate)
-      syncedCount += 1
+      await upsertQboAccount(db, account, syncedDate);
+      syncedCount += 1;
     }
-    if (accounts.length < 1000) break
-    startPosition += 1000
+    if (accounts.length < 1000) break;
+    startPosition += 1000;
   }
 
-  await db.prepare('UPDATE qbo_connection SET last_account_sync_date = ?, updated_date = ? WHERE id = 1').bind(syncedDate, syncedDate).run()
-  return syncedCount
+  await db
+    .prepare(
+      "UPDATE qbo_connection SET last_account_sync_date = ?, updated_date = ? WHERE id = 1",
+    )
+    .bind(syncedDate, syncedDate)
+    .run();
+  return syncedCount;
 }
 
 async function getDefaultServiceItemId(db: D1Database): Promise<string> {
-  const connection = await getConnection(db)
-  return normalizeString(connection?.default_service_item_id)
+  const connection = await getConnection(db);
+  return normalizeString(connection?.default_service_item_id);
 }
 
-async function getPaymentDepositSettings(db: D1Database): Promise<{ depositAccountId: string; feeExpenseAccountId: string }> {
-  const connection = await getConnection(db)
+async function getPaymentDepositSettings(
+  db: D1Database,
+): Promise<{ depositAccountId: string; feeExpenseAccountId: string }> {
+  const connection = await getConnection(db);
   return {
     depositAccountId: normalizeString(connection?.default_deposit_account_id),
-    feeExpenseAccountId: normalizeString(connection?.stripe_fee_expense_account_id),
-  }
+    feeExpenseAccountId: normalizeString(
+      connection?.stripe_fee_expense_account_id,
+    ),
+  };
 }
 
-async function getQboPaymentTxnLineId(db: D1Database, env: HonoEnv['Bindings'], paymentId: string): Promise<string> {
-  const normalizedPaymentId = normalizeString(paymentId)
-  if (!normalizedPaymentId) return ''
+async function getQboPaymentTxnLineId(
+  db: D1Database,
+  env: HonoEnv["Bindings"],
+  paymentId: string,
+): Promise<string> {
+  const normalizedPaymentId = normalizeString(paymentId);
+  if (!normalizedPaymentId) return "";
 
-  const data = await qboFetch<QboInvoiceResponse>(db, env, `/payment/${encodeURIComponent(normalizedPaymentId)}`)
-  const lineId = normalizeString(data.Payment?.Line?.find((line) => normalizeString(line.Id))?.Id)
-  return lineId || '0'
+  const data = await qboFetch<QboInvoiceResponse>(
+    db,
+    env,
+    `/payment/${encodeURIComponent(normalizedPaymentId)}`,
+  );
+  const lineId = normalizeString(
+    data.Payment?.Line?.find((line) => normalizeString(line.Id))?.Id,
+  );
+  return lineId || "0";
 }
 
 function paymentReferenceDetail(payment: InvoicePayment): string {
-  const referenceNumber = normalizeString(payment.referenceNumber)
-  const method = payment.method || 'Payment'
-  return referenceNumber ? `${method}${method.toLowerCase() === 'check' ? ' #' : ' reference '}${referenceNumber}` : method
+  const referenceNumber = normalizeString(payment.referenceNumber);
+  const method = payment.method || "Payment";
+  return referenceNumber
+    ? `${method}${method.toLowerCase() === "check" ? " #" : " reference "}${referenceNumber}`
+    : method;
 }
 
 function paymentPrivateNote(payment: InvoicePayment): string {
-  const referenceDetail = paymentReferenceDetail(payment)
-  return payment.note ? `${payment.note} ${referenceDetail}.` : `${referenceDetail} synced from Compass.`
+  const referenceDetail = paymentReferenceDetail(payment);
+  return payment.note
+    ? `${payment.note} ${referenceDetail}.`
+    : `${referenceDetail} synced from Compass.`;
 }
 
 function paymentMethodNames(method: string): string[] {
   const supportedMethods: Record<string, string[]> = {
-    ach: ['ACH'],
-    'ach / bank transfer': ['ACH'],
-    'credit card': ['Credit Card'],
-    check: ['Check'],
-    cash: ['Cash'],
-    'stripe other payment': ['Stripe Other Payment'],
-  }
-  return supportedMethods[normalizeString(method).toLowerCase()] || []
+    ach: ["ACH"],
+    "ach / bank transfer": ["ACH"],
+    "credit card": ["Credit Card"],
+    check: ["Check"],
+    cash: ["Cash"],
+    "stripe other payment": ["Stripe Other Payment"],
+  };
+  return supportedMethods[normalizeString(method).toLowerCase()] || [];
 }
 
 /** Finds the active QuickBooks payment method corresponding to a Compass payment method. */
-async function getQboPaymentMethodId(db: D1Database, env: HonoEnv['Bindings'], method: string): Promise<string> {
-  const names = paymentMethodNames(method).map((name) => name.toLowerCase())
-  if (names.length === 0 || !names[0]) return ''
+async function getQboPaymentMethodId(
+  db: D1Database,
+  env: HonoEnv["Bindings"],
+  method: string,
+): Promise<string> {
+  const names = paymentMethodNames(method).map((name) => name.toLowerCase());
+  if (names.length === 0 || !names[0]) return "";
 
-  const query = encodeURIComponent('SELECT * FROM PaymentMethod')
-  const data = await qboFetch<{ QueryResponse?: { PaymentMethod?: QboPaymentMethodResponse[] } }>(db, env, `/query?query=${query}`)
-  const paymentMethods = data.QueryResponse?.PaymentMethod || []
-  const matchedMethod = paymentMethods.find((paymentMethod) => (
-    paymentMethod.Active !== false && names.includes(normalizeString(paymentMethod.Name).toLowerCase())
-  ))
-  return normalizeString(matchedMethod?.Id)
+  const query = encodeURIComponent("SELECT * FROM PaymentMethod");
+  const data = await qboFetch<{
+    QueryResponse?: { PaymentMethod?: QboPaymentMethodResponse[] };
+  }>(db, env, `/query?query=${query}`);
+  const paymentMethods = data.QueryResponse?.PaymentMethod || [];
+  const matchedMethod = paymentMethods.find(
+    (paymentMethod) =>
+      paymentMethod.Active !== false &&
+      names.includes(normalizeString(paymentMethod.Name).toLowerCase()),
+  );
+  return normalizeString(matchedMethod?.Id);
 }
 
-async function buildQboPaymentFields(db: D1Database, env: HonoEnv['Bindings'], payment: InvoicePayment): Promise<Record<string, unknown>> {
-  const referenceNumber = normalizeString(payment.referenceNumber)
-  const paymentMethodId = await getQboPaymentMethodId(db, env, payment.method)
+async function buildQboPaymentFields(
+  db: D1Database,
+  env: HonoEnv["Bindings"],
+  payment: InvoicePayment,
+): Promise<Record<string, unknown>> {
+  const referenceNumber = normalizeString(payment.referenceNumber);
+  const paymentMethodId = await getQboPaymentMethodId(db, env, payment.method);
   return {
     // QuickBooks maps PaymentRefNum to doc_num, which accepts at most 21 characters.
     // Keep longer references (such as Stripe payment-intent IDs) in PrivateNote instead.
-    ...(referenceNumber && referenceNumber.length <= 21 ? { PaymentRefNum: referenceNumber } : {}),
-    ...(paymentMethodId ? { PaymentMethodRef: { value: paymentMethodId } } : {}),
-  }
+    ...(referenceNumber && referenceNumber.length <= 21
+      ? { PaymentRefNum: referenceNumber }
+      : {}),
+    ...(paymentMethodId
+      ? { PaymentMethodRef: { value: paymentMethodId } }
+      : {}),
+  };
 }
 
-export async function syncInvoiceToQbo(db: D1Database, env: HonoEnv['Bindings'], invoice: Invoice): Promise<string> {
-  await ensureQboSchemaReady(db)
-  const customerRef = normalizeString(invoice.qboProjectId || invoice.qboCustomerId)
-  if (!customerRef) return ''
+export async function syncInvoiceToQbo(
+  db: D1Database,
+  env: HonoEnv["Bindings"],
+  invoice: Invoice,
+): Promise<string> {
+  await ensureQboSchemaReady(db);
+  const customerRef = normalizeString(
+    invoice.qboProjectId || invoice.qboCustomerId,
+  );
+  if (!customerRef) return "";
 
-  const serviceItemId = await getDefaultServiceItemId(db)
+  const serviceItemId = await getDefaultServiceItemId(db);
   if (!serviceItemId) {
-    throw new Error('QuickBooks default service item is not selected')
+    throw new Error("QuickBooks default service item is not selected");
   }
 
   const payload = {
-    ...(invoice.qboInvoiceId ? { Id: invoice.qboInvoiceId, SyncToken: invoice.qboInvoiceSyncToken, sparse: false } : {}),
+    ...(invoice.qboInvoiceId
+      ? {
+          Id: invoice.qboInvoiceId,
+          SyncToken: invoice.qboInvoiceSyncToken,
+          sparse: false,
+        }
+      : {}),
     CustomerRef: { value: customerRef },
     DocNumber: invoice.invoiceNumber,
     TxnDate: invoice.issueDate,
@@ -1072,144 +1367,209 @@ export async function syncInvoiceToQbo(db: D1Database, env: HonoEnv['Bindings'],
     PrivateNote: invoice.internalNote || undefined,
     CustomerMemo: invoice.notes ? { value: invoice.notes } : undefined,
     Line: buildQboInvoiceLines(invoice, serviceItemId),
-  }
+  };
 
-  const data = await qboFetch<QboInvoiceResponse>(db, env, '/invoice', {
-    method: 'POST',
+  const data = await qboFetch<QboInvoiceResponse>(db, env, "/invoice", {
+    method: "POST",
     body: JSON.stringify(payload),
-  })
-  const qboInvoiceId = normalizeString(data.Invoice?.Id)
-  const qboSyncToken = normalizeString(data.Invoice?.SyncToken)
+  });
+  const qboInvoiceId = normalizeString(data.Invoice?.Id);
+  const qboSyncToken = normalizeString(data.Invoice?.SyncToken);
   if (!qboInvoiceId) {
-    throw new Error('QuickBooks did not return an invoice ID')
+    throw new Error("QuickBooks did not return an invoice ID");
   }
 
-  const date = nowIso()
-  await db.prepare(
-    `UPDATE invoices
+  const date = getIsoStringNow();
+  await db
+    .prepare(
+      `UPDATE invoices
      SET qbo_invoice_id = ?, qbo_invoice_sync_token = ?, qbo_last_sync_date = ?, qbo_sync_status = 'synced', qbo_sync_message = '',
          accounting_sync_state = json_patch(COALESCE(NULLIF(accounting_sync_state, ''), '{}'), ?)
-     WHERE id = ?`
-  ).bind(qboInvoiceId, qboSyncToken, date, invoiceSyncState({
-    qboInvoiceId,
-    qboInvoiceSyncToken: qboSyncToken,
-    qboStatus: 'synced',
-    qboLastSyncDate: date,
-  }), invoice.id).run()
-  return qboInvoiceId
+     WHERE id = ?`,
+    )
+    .bind(
+      qboInvoiceId,
+      qboSyncToken,
+      date,
+      invoiceSyncState({
+        qboInvoiceId,
+        qboInvoiceSyncToken: qboSyncToken,
+        qboStatus: "synced",
+        qboLastSyncDate: date,
+      }),
+      invoice.id,
+    )
+    .run();
+  return qboInvoiceId;
 }
 
-export async function syncPaymentToQbo(db: D1Database, env: HonoEnv['Bindings'], invoice: Invoice): Promise<void> {
-  await ensureQboSchemaReady(db)
-  if (!invoice.qboInvoiceId || invoice.qboPaymentId) return
-  const customerRef = normalizeString(invoice.qboProjectId || invoice.qboCustomerId)
-  if (!customerRef) return
+export async function syncPaymentToQbo(
+  db: D1Database,
+  env: HonoEnv["Bindings"],
+  invoice: Invoice,
+): Promise<void> {
+  await ensureQboSchemaReady(db);
+  if (!invoice.qboInvoiceId || invoice.qboPaymentId) return;
+  const customerRef = normalizeString(
+    invoice.qboProjectId || invoice.qboCustomerId,
+  );
+  if (!customerRef) return;
 
-  const data = await qboFetch<QboInvoiceResponse>(db, env, '/payment', {
-    method: 'POST',
+  const data = await qboFetch<QboInvoiceResponse>(db, env, "/payment", {
+    method: "POST",
     body: JSON.stringify({
       CustomerRef: { value: customerRef },
       TotalAmt: qboAmount(invoice.totalCents),
-      TxnDate: (invoice.paidDate || nowIso()).slice(0, 10),
-      PrivateNote: invoice.internalNote || 'Compass payment sync.',
+      TxnDate: (invoice.paidDate || getIsoStringNow()).slice(0, 10),
+      PrivateNote: invoice.internalNote || "Compass payment sync.",
       Line: [
         {
           Amount: qboAmount(invoice.totalCents),
-          LinkedTxn: [{ TxnId: invoice.qboInvoiceId, TxnType: 'Invoice' }],
+          LinkedTxn: [{ TxnId: invoice.qboInvoiceId, TxnType: "Invoice" }],
         },
       ],
     }),
-  })
-  const paymentId = normalizeString(data.Payment?.Id)
+  });
+  const paymentId = normalizeString(data.Payment?.Id);
   if (paymentId) {
-    const date = nowIso()
-    await db.prepare(
-      `UPDATE invoices
+    const date = getIsoStringNow();
+    await db
+      .prepare(
+        `UPDATE invoices
        SET qbo_payment_id = ?, qbo_last_sync_date = ?, qbo_sync_status = 'payment_synced', qbo_sync_message = '',
            accounting_sync_state = json_patch(COALESCE(NULLIF(accounting_sync_state, ''), '{}'), ?)
-       WHERE id = ?`
-    ).bind(paymentId, date, invoiceSyncState({
-      qboInvoiceId: invoice.qboInvoiceId,
-      qboInvoiceSyncToken: invoice.qboInvoiceSyncToken,
-      qboPaymentId: paymentId,
-      qboStatus: 'payment_synced',
-      qboLastSyncDate: date,
-    }), invoice.id).run()
+       WHERE id = ?`,
+      )
+      .bind(
+        paymentId,
+        date,
+        invoiceSyncState({
+          qboInvoiceId: invoice.qboInvoiceId,
+          qboInvoiceSyncToken: invoice.qboInvoiceSyncToken,
+          qboPaymentId: paymentId,
+          qboStatus: "payment_synced",
+          qboLastSyncDate: date,
+        }),
+        invoice.id,
+      )
+      .run();
   }
 }
 
-export async function syncInvoicePaymentToQbo(db: D1Database, env: HonoEnv['Bindings'], invoice: Invoice, payment: InvoicePayment): Promise<void> {
-  await ensureQboSchemaReady(db)
-  if (payment.status !== 'succeeded' || payment.grossCents <= 0) return
-  if (payment.stripePaymentIntentId && payment.method === 'Stripe Details Pending') return
-  const customerRef = normalizeString(invoice.qboProjectId || invoice.qboCustomerId)
-  if (!customerRef) return
-  const qboInvoiceId = invoice.qboInvoiceId || await syncInvoiceToQbo(db, env, invoice)
+export async function syncInvoicePaymentToQbo(
+  db: D1Database,
+  env: HonoEnv["Bindings"],
+  invoice: Invoice,
+  payment: InvoicePayment,
+): Promise<void> {
+  await ensureQboSchemaReady(db);
+  if (payment.status !== "succeeded" || payment.grossCents <= 0) return;
+  if (
+    payment.stripePaymentIntentId &&
+    payment.method === "Stripe Details Pending"
+  )
+    return;
+  const customerRef = normalizeString(
+    invoice.qboProjectId || invoice.qboCustomerId,
+  );
+  if (!customerRef) return;
+  const qboInvoiceId =
+    invoice.qboInvoiceId || (await syncInvoiceToQbo(db, env, invoice));
   if (!qboInvoiceId) {
-    throw new Error('QuickBooks invoice ID is required before syncing payment')
+    throw new Error("QuickBooks invoice ID is required before syncing payment");
   }
 
-  let paymentId = payment.qboPaymentId
+  let paymentId = payment.qboPaymentId;
   if (!paymentId) {
-    const qboPaymentFields = await buildQboPaymentFields(db, env, payment)
-    const data = await qboFetch<QboInvoiceResponse>(db, env, '/payment', {
-      method: 'POST',
+    const qboPaymentFields = await buildQboPaymentFields(db, env, payment);
+    const data = await qboFetch<QboInvoiceResponse>(db, env, "/payment", {
+      method: "POST",
       body: JSON.stringify({
         CustomerRef: { value: customerRef },
         TotalAmt: qboAmount(payment.grossCents),
-        TxnDate: (payment.paidDate || nowIso()).slice(0, 10),
+        TxnDate: (payment.paidDate || getIsoStringNow()).slice(0, 10),
         PrivateNote: paymentPrivateNote(payment),
         ...qboPaymentFields,
         Line: [
           {
             Amount: qboAmount(payment.grossCents),
-            LinkedTxn: [{ TxnId: qboInvoiceId, TxnType: 'Invoice' }],
+            LinkedTxn: [{ TxnId: qboInvoiceId, TxnType: "Invoice" }],
           },
         ],
       }),
-    })
-    paymentId = normalizeString(data.Payment?.Id)
+    });
+    paymentId = normalizeString(data.Payment?.Id);
   }
   if (paymentId) {
-    const date = nowIso()
-    await db.prepare(
-      `UPDATE invoice_payments
+    const date = getIsoStringNow();
+    await db
+      .prepare(
+        `UPDATE invoice_payments
        SET qbo_payment_id = ?, qbo_last_sync_date = ?, qbo_sync_status = 'payment_synced', qbo_sync_message = '',
            accounting_sync_state = json_patch(COALESCE(NULLIF(accounting_sync_state, ''), '{}'), ?)
-       WHERE id = ?`
-    ).bind(paymentId, date, paymentSyncState({
-      qboPaymentId: paymentId,
-      qboDepositId: payment.qboDepositId,
-      qboStatus: 'payment_synced',
-      qboLastSyncDate: date,
-    }), payment.id).run()
-    await db.prepare(
-      `UPDATE invoices
+       WHERE id = ?`,
+      )
+      .bind(
+        paymentId,
+        date,
+        paymentSyncState({
+          qboPaymentId: paymentId,
+          qboDepositId: payment.qboDepositId,
+          qboStatus: "payment_synced",
+          qboLastSyncDate: date,
+        }),
+        payment.id,
+      )
+      .run();
+    await db
+      .prepare(
+        `UPDATE invoices
        SET qbo_payment_id = COALESCE(NULLIF(qbo_payment_id, ''), ?), qbo_last_sync_date = ?, qbo_sync_status = 'payment_synced', qbo_sync_message = '',
            accounting_sync_state = json_patch(COALESCE(NULLIF(accounting_sync_state, ''), '{}'), ?)
-     WHERE id = ?`
-    ).bind(paymentId, date, invoiceSyncState({
-      qboInvoiceId,
-      qboPaymentId: paymentId,
-      qboStatus: 'payment_synced',
-      qboLastSyncDate: date,
-    }), invoice.id).run()
+     WHERE id = ?`,
+      )
+      .bind(
+        paymentId,
+        date,
+        invoiceSyncState({
+          qboInvoiceId,
+          qboPaymentId: paymentId,
+          qboStatus: "payment_synced",
+          qboLastSyncDate: date,
+        }),
+        invoice.id,
+      )
+      .run();
 
-    const { depositAccountId, feeExpenseAccountId } = await getPaymentDepositSettings(db)
-    const shouldCreateImmediateDeposit = !payment.stripeBalanceTransactionId && !payment.stripePaymentIntentId
-    if (shouldCreateImmediateDeposit && depositAccountId && !payment.qboDepositId) {
+    const { depositAccountId, feeExpenseAccountId } =
+      await getPaymentDepositSettings(db);
+    const shouldCreateImmediateDeposit =
+      !payment.stripeBalanceTransactionId && !payment.stripePaymentIntentId;
+    if (
+      shouldCreateImmediateDeposit &&
+      depositAccountId &&
+      !payment.qboDepositId
+    ) {
       if (payment.feeCents > 0 && !feeExpenseAccountId) {
-        throw new Error('QuickBooks Stripe fee expense account is not selected')
+        throw new Error(
+          "QuickBooks Stripe fee expense account is not selected",
+        );
       }
-      const paymentTxnLineId = await getQboPaymentTxnLineId(db, env, paymentId)
-      const paymentReference = `invoice ${invoice.invoiceNumber}, ${paymentReferenceDetail(payment)}, QBO payment ${paymentId}`
+      const paymentTxnLineId = await getQboPaymentTxnLineId(db, env, paymentId);
+      const paymentReference = `invoice ${invoice.invoiceNumber}, ${paymentReferenceDetail(payment)}, QBO payment ${paymentId}`;
       const depositLines: Array<Record<string, unknown>> = [
         {
           Amount: qboAmount(payment.grossCents),
           Description: `Gross payment for ${paymentReference}`,
-          LinkedTxn: [{ TxnId: paymentId, TxnType: 'Payment', TxnLineId: paymentTxnLineId }],
+          LinkedTxn: [
+            {
+              TxnId: paymentId,
+              TxnType: "Payment",
+              TxnLineId: paymentTxnLineId,
+            },
+          ],
         },
-      ]
+      ];
       if (payment.feeCents > 0) {
         depositLines.push({
           Amount: -qboAmount(payment.feeCents),
@@ -1217,501 +1577,767 @@ export async function syncInvoicePaymentToQbo(db: D1Database, env: HonoEnv['Bind
           DepositLineDetail: {
             AccountRef: { value: feeExpenseAccountId },
           },
-        })
+        });
       }
-      const deposit = await qboFetch<QboInvoiceResponse>(db, env, '/deposit', {
-        method: 'POST',
+      const deposit = await qboFetch<QboInvoiceResponse>(db, env, "/deposit", {
+        method: "POST",
         body: JSON.stringify({
           DepositToAccountRef: { value: depositAccountId },
-          TxnDate: (payment.paidDate || nowIso()).slice(0, 10),
-          PrivateNote: `Compass deposit for ${paymentReference}${payment.feeCents > 0 ? `, Stripe fee ${qboAmount(payment.feeCents).toFixed(2)}, net ${qboAmount(Math.max(0, payment.grossCents - payment.feeCents)).toFixed(2)}` : ''}.`,
+          TxnDate: (payment.paidDate || getIsoStringNow()).slice(0, 10),
+          PrivateNote: `Compass deposit for ${paymentReference}${payment.feeCents > 0 ? `, Stripe fee ${qboAmount(payment.feeCents).toFixed(2)}, net ${qboAmount(Math.max(0, payment.grossCents - payment.feeCents)).toFixed(2)}` : ""}.`,
           Line: depositLines,
         }),
-      })
-      const depositId = normalizeString(deposit.Deposit?.Id)
+      });
+      const depositId = normalizeString(deposit.Deposit?.Id);
       if (depositId) {
-        await db.prepare(
-          `UPDATE invoice_payments
+        await db
+          .prepare(
+            `UPDATE invoice_payments
            SET qbo_deposit_id = ?, qbo_last_sync_date = ?, qbo_sync_status = 'deposit_synced', qbo_sync_message = '',
                accounting_sync_state = json_patch(COALESCE(NULLIF(accounting_sync_state, ''), '{}'), ?)
-           WHERE id = ?`
-        ).bind(depositId, nowIso(), paymentSyncState({
-          qboPaymentId: paymentId,
-          qboDepositId: depositId,
-          qboStatus: 'deposit_synced',
-          qboLastSyncDate: nowIso(),
-        }), payment.id).run()
+           WHERE id = ?`,
+          )
+          .bind(
+            depositId,
+            getIsoStringNow(),
+            paymentSyncState({
+              qboPaymentId: paymentId,
+              qboDepositId: depositId,
+              qboStatus: "deposit_synced",
+              qboLastSyncDate: getIsoStringNow(),
+            }),
+            payment.id,
+          )
+          .run();
       }
     }
   }
 }
 
-async function fetchSavedInvoicePayment(db: D1Database, paymentId: string): Promise<InvoicePayment | null> {
-  const row = await db.prepare('SELECT * FROM invoice_payments WHERE id = ?').bind(paymentId).first<InvoicePaymentRow>()
-  return row ? mapInvoicePaymentRow(row) : null
+async function fetchSavedInvoicePayment(
+  db: D1Database,
+  paymentId: string,
+): Promise<InvoicePayment | null> {
+  const row = await db
+    .prepare("SELECT * FROM invoice_payments WHERE id = ?")
+    .bind(paymentId)
+    .first<InvoicePaymentRow>();
+  return row ? mapInvoicePaymentRow(row) : null;
 }
 
 export async function syncStripePayoutDepositToQbo(
   db: D1Database,
-  env: HonoEnv['Bindings'],
+  env: HonoEnv["Bindings"],
   payout: StripePayoutDepositInput,
-  payoutPayments: StripePayoutDepositPayment[]
+  payoutPayments: StripePayoutDepositPayment[],
 ): Promise<string> {
-  await ensureQboSchemaReady(db)
-  const payoutId = normalizeString(payout.payoutId)
-  if (!payoutId || payoutPayments.length === 0) return ''
+  await ensureQboSchemaReady(db);
+  const payoutId = normalizeString(payout.payoutId);
+  if (!payoutId || payoutPayments.length === 0) return "";
 
-  const existingPayout = await db.prepare('SELECT qbo_deposit_id FROM stripe_payouts WHERE stripe_payout_id = ?').bind(payoutId).first<{ qbo_deposit_id?: unknown }>()
-  const existingDepositId = normalizeString(existingPayout?.qbo_deposit_id) || normalizeString(payoutPayments.find((entry) => entry.payment.qboDepositId)?.payment.qboDepositId)
+  const existingPayout = await db
+    .prepare(
+      "SELECT qbo_deposit_id FROM stripe_payouts WHERE stripe_payout_id = ?",
+    )
+    .bind(payoutId)
+    .first<{ qbo_deposit_id?: unknown }>();
+  const existingDepositId =
+    normalizeString(existingPayout?.qbo_deposit_id) ||
+    normalizeString(
+      payoutPayments.find((entry) => entry.payment.qboDepositId)?.payment
+        .qboDepositId,
+    );
   if (existingDepositId) {
-    await db.prepare(
-      `UPDATE invoice_payments
+    await db
+      .prepare(
+        `UPDATE invoice_payments
        SET qbo_deposit_id = ?, qbo_sync_status = 'deposit_synced', qbo_sync_message = '', qbo_last_sync_date = ?,
            accounting_sync_state = json_patch(COALESCE(NULLIF(accounting_sync_state, ''), '{}'), ?)
-       WHERE stripe_payout_id = ? AND (qbo_deposit_id IS NULL OR qbo_deposit_id = '')`
-    ).bind(existingDepositId, nowIso(), paymentSyncState({
-      qboDepositId: existingDepositId,
-      qboStatus: 'deposit_synced',
-      qboLastSyncDate: nowIso(),
-      stripePayoutId: payoutId,
-    }), payoutId).run()
-    return existingDepositId
+       WHERE stripe_payout_id = ? AND (qbo_deposit_id IS NULL OR qbo_deposit_id = '')`,
+      )
+      .bind(
+        existingDepositId,
+        getIsoStringNow(),
+        paymentSyncState({
+          qboDepositId: existingDepositId,
+          qboStatus: "deposit_synced",
+          qboLastSyncDate: getIsoStringNow(),
+          stripePayoutId: payoutId,
+        }),
+        payoutId,
+      )
+      .run();
+    return existingDepositId;
   }
 
-  const { depositAccountId, feeExpenseAccountId } = await getPaymentDepositSettings(db)
+  const { depositAccountId, feeExpenseAccountId } =
+    await getPaymentDepositSettings(db);
   if (!depositAccountId) {
-    throw new Error('QuickBooks payment deposit account is not selected')
+    throw new Error("QuickBooks payment deposit account is not selected");
   }
-  if (payoutPayments.some((entry) => entry.payment.feeCents > 0) && !feeExpenseAccountId) {
-    throw new Error('QuickBooks Stripe fee expense account is not selected')
+  if (
+    payoutPayments.some((entry) => entry.payment.feeCents > 0) &&
+    !feeExpenseAccountId
+  ) {
+    throw new Error("QuickBooks Stripe fee expense account is not selected");
   }
 
-  const readyEntries: Array<{ invoice: Invoice; payment: InvoicePayment; qboPaymentId: string; qboPaymentTxnLineId: string }> = []
+  const readyEntries: Array<{
+    invoice: Invoice;
+    payment: InvoicePayment;
+    qboPaymentId: string;
+    qboPaymentTxnLineId: string;
+  }> = [];
   for (const entry of payoutPayments) {
-    let payment = entry.payment
+    let payment = entry.payment;
     if (!payment.qboPaymentId) {
-      await syncInvoicePaymentToQbo(db, env, entry.invoice, payment)
-      payment = await fetchSavedInvoicePayment(db, payment.id) || payment
+      await syncInvoicePaymentToQbo(db, env, entry.invoice, payment);
+      payment = (await fetchSavedInvoicePayment(db, payment.id)) || payment;
     }
-    const qboPaymentId = normalizeString(payment.qboPaymentId)
+    const qboPaymentId = normalizeString(payment.qboPaymentId);
     if (qboPaymentId) {
       readyEntries.push({
         invoice: entry.invoice,
         payment,
         qboPaymentId,
-        qboPaymentTxnLineId: await getQboPaymentTxnLineId(db, env, qboPaymentId),
-      })
+        qboPaymentTxnLineId: await getQboPaymentTxnLineId(
+          db,
+          env,
+          qboPaymentId,
+        ),
+      });
     }
   }
   if (readyEntries.length === 0) {
-    throw new Error('No QuickBooks payment records were available for this Stripe payout')
+    throw new Error(
+      "No QuickBooks payment records were available for this Stripe payout",
+    );
   }
 
-  const depositLines: Array<Record<string, unknown>> = []
+  const depositLines: Array<Record<string, unknown>> = [];
   for (const entry of readyEntries) {
-    const paymentReference = `invoice ${entry.invoice.invoiceNumber}, QBO payment ${entry.qboPaymentId}`
+    const paymentReference = `invoice ${entry.invoice.invoiceNumber}, QBO payment ${entry.qboPaymentId}`;
     depositLines.push({
       Amount: qboAmount(entry.payment.grossCents),
-      Description: `Gross Stripe payment for ${paymentReference}, Stripe payout ${payoutId}${entry.payment.stripeBalanceTransactionId ? `, balance transaction ${entry.payment.stripeBalanceTransactionId}` : ''}`,
-      LinkedTxn: [{ TxnId: entry.qboPaymentId, TxnType: 'Payment', TxnLineId: entry.qboPaymentTxnLineId }],
-    })
+      Description: `Gross Stripe payment for ${paymentReference}, Stripe payout ${payoutId}${entry.payment.stripeBalanceTransactionId ? `, balance transaction ${entry.payment.stripeBalanceTransactionId}` : ""}`,
+      LinkedTxn: [
+        {
+          TxnId: entry.qboPaymentId,
+          TxnType: "Payment",
+          TxnLineId: entry.qboPaymentTxnLineId,
+        },
+      ],
+    });
     if (entry.payment.feeCents > 0) {
       depositLines.push({
         Amount: -qboAmount(entry.payment.feeCents),
-        Description: `Stripe fee for ${paymentReference}, Stripe payout ${payoutId}${entry.payment.stripeBalanceTransactionId ? `, balance transaction ${entry.payment.stripeBalanceTransactionId}` : ''}`,
+        Description: `Stripe fee for ${paymentReference}, Stripe payout ${payoutId}${entry.payment.stripeBalanceTransactionId ? `, balance transaction ${entry.payment.stripeBalanceTransactionId}` : ""}`,
         DepositLineDetail: {
           AccountRef: { value: feeExpenseAccountId },
         },
-      })
+      });
     }
   }
 
-  const grossCents = readyEntries.reduce((sum, entry) => sum + entry.payment.grossCents, 0)
-  const feeCents = readyEntries.reduce((sum, entry) => sum + entry.payment.feeCents, 0)
-  const invoiceNumbers = readyEntries.map((entry) => entry.invoice.invoiceNumber).join(', ')
-  const deposit = await qboFetch<QboInvoiceResponse>(db, env, '/deposit', {
-    method: 'POST',
+  const grossCents = readyEntries.reduce(
+    (sum, entry) => sum + entry.payment.grossCents,
+    0,
+  );
+  const feeCents = readyEntries.reduce(
+    (sum, entry) => sum + entry.payment.feeCents,
+    0,
+  );
+  const invoiceNumbers = readyEntries
+    .map((entry) => entry.invoice.invoiceNumber)
+    .join(", ");
+  const deposit = await qboFetch<QboInvoiceResponse>(db, env, "/deposit", {
+    method: "POST",
     body: JSON.stringify({
       DepositToAccountRef: { value: depositAccountId },
-      TxnDate: (payout.arrivalDate || nowIso()).slice(0, 10),
+      TxnDate: (payout.arrivalDate || getIsoStringNow()).slice(0, 10),
       PrivateNote: `Compass Stripe payout ${payoutId}. Invoices: ${invoiceNumbers}. Gross ${qboAmount(grossCents).toFixed(2)}, fees ${qboAmount(feeCents).toFixed(2)}, net ${qboAmount(payout.amountCents || Math.max(0, grossCents - feeCents)).toFixed(2)}.`,
       Line: depositLines,
     }),
-  })
-  const depositId = normalizeString(deposit.Deposit?.Id)
+  });
+  const depositId = normalizeString(deposit.Deposit?.Id);
   if (!depositId) {
-    throw new Error('QuickBooks did not return a deposit ID')
+    throw new Error("QuickBooks did not return a deposit ID");
   }
 
-  const date = nowIso()
-  await db.prepare(
-    `UPDATE invoice_payments
+  const date = getIsoStringNow();
+  await db
+    .prepare(
+      `UPDATE invoice_payments
      SET qbo_deposit_id = ?, qbo_last_sync_date = ?, qbo_sync_status = 'deposit_synced', qbo_sync_message = '',
          accounting_sync_state = json_patch(COALESCE(NULLIF(accounting_sync_state, ''), '{}'), ?)
-     WHERE stripe_payout_id = ?`
-  ).bind(depositId, date, paymentSyncState({
-    qboDepositId: depositId,
-    qboStatus: 'deposit_synced',
-    qboLastSyncDate: date,
-    stripePayoutId: payoutId,
-  }), payoutId).run()
-  await db.prepare(
-    `UPDATE stripe_payouts
+     WHERE stripe_payout_id = ?`,
+    )
+    .bind(
+      depositId,
+      date,
+      paymentSyncState({
+        qboDepositId: depositId,
+        qboStatus: "deposit_synced",
+        qboLastSyncDate: date,
+        stripePayoutId: payoutId,
+      }),
+      payoutId,
+    )
+    .run();
+  await db
+    .prepare(
+      `UPDATE stripe_payouts
      SET qbo_deposit_id = ?, qbo_last_sync_date = ?, qbo_sync_status = 'deposit_synced', qbo_sync_message = '',
          accounting_sync_state = json_patch(COALESCE(NULLIF(accounting_sync_state, ''), '{}'), ?), updated_date = ?
-     WHERE stripe_payout_id = ?`
-  ).bind(depositId, date, payoutSyncState({
-    payoutStatus: 'reconciled',
-    qboDepositId: depositId,
-    qboStatus: 'deposit_synced',
-    qboLastSyncDate: date,
-  }), date, payoutId).run()
-  return depositId
+     WHERE stripe_payout_id = ?`,
+    )
+    .bind(
+      depositId,
+      date,
+      payoutSyncState({
+        payoutStatus: "reconciled",
+        qboDepositId: depositId,
+        qboStatus: "deposit_synced",
+        qboLastSyncDate: date,
+      }),
+      date,
+      payoutId,
+    )
+    .run();
+  return depositId;
 }
 
-export async function voidInvoiceInQbo(db: D1Database, env: HonoEnv['Bindings'], invoice: Invoice): Promise<void> {
-  await ensureQboSchemaReady(db)
-  if (!invoice.qboInvoiceId) return
-  const data = await qboFetch<QboInvoiceResponse>(db, env, `/invoice/${encodeURIComponent(invoice.qboInvoiceId)}`)
-  const qboInvoice = data.Invoice
+export async function voidInvoiceInQbo(
+  db: D1Database,
+  env: HonoEnv["Bindings"],
+  invoice: Invoice,
+): Promise<void> {
+  await ensureQboSchemaReady(db);
+  if (!invoice.qboInvoiceId) return;
+  const data = await qboFetch<QboInvoiceResponse>(
+    db,
+    env,
+    `/invoice/${encodeURIComponent(invoice.qboInvoiceId)}`,
+  );
+  const qboInvoice = data.Invoice;
   if (!qboInvoice) {
-    throw new Error('QuickBooks invoice was not found for void')
+    throw new Error("QuickBooks invoice was not found for void");
   }
-  const voided = await qboFetch<QboInvoiceResponse>(db, env, '/invoice?operation=void', {
-    method: 'POST',
-    body: JSON.stringify(qboInvoice),
-  })
-  const date = nowIso()
-  await db.prepare(
-    `UPDATE invoices
+  const voided = await qboFetch<QboInvoiceResponse>(
+    db,
+    env,
+    "/invoice?operation=void",
+    {
+      method: "POST",
+      body: JSON.stringify(qboInvoice),
+    },
+  );
+  const date = getIsoStringNow();
+  await db
+    .prepare(
+      `UPDATE invoices
      SET qbo_invoice_sync_token = ?, qbo_last_sync_date = ?, qbo_sync_status = 'void_synced', qbo_sync_message = '',
          accounting_sync_state = json_patch(COALESCE(NULLIF(accounting_sync_state, ''), '{}'), ?)
-     WHERE id = ?`
-  ).bind(normalizeString(voided.Invoice?.SyncToken), date, invoiceSyncState({
-    qboInvoiceId: invoice.qboInvoiceId,
-    qboInvoiceSyncToken: normalizeString(voided.Invoice?.SyncToken),
-    qboStatus: 'void_synced',
-    qboLastSyncDate: date,
-  }), invoice.id).run()
+     WHERE id = ?`,
+    )
+    .bind(
+      normalizeString(voided.Invoice?.SyncToken),
+      date,
+      invoiceSyncState({
+        qboInvoiceId: invoice.qboInvoiceId,
+        qboInvoiceSyncToken: normalizeString(voided.Invoice?.SyncToken),
+        qboStatus: "void_synced",
+        qboLastSyncDate: date,
+      }),
+      invoice.id,
+    )
+    .run();
 }
 
-async function setInvoiceQboSyncError(db: D1Database, invoiceId: string, message: string): Promise<void> {
-  const date = nowIso()
-  await db.prepare(
-    `UPDATE invoices
+async function setInvoiceQboSyncError(
+  db: D1Database,
+  invoiceId: string,
+  message: string,
+): Promise<void> {
+  const date = getIsoStringNow();
+  await db
+    .prepare(
+      `UPDATE invoices
      SET qbo_last_sync_date = ?, qbo_sync_status = 'error', qbo_sync_message = ?,
          accounting_sync_state = json_patch(COALESCE(NULLIF(accounting_sync_state, ''), '{}'), ?)
-     WHERE id = ?`
-  ).bind(date, message.slice(0, 1000), invoiceSyncState({
-    qboStatus: 'error',
-    qboMessage: message.slice(0, 1000),
-    qboLastSyncDate: date,
-  }), invoiceId).run()
+     WHERE id = ?`,
+    )
+    .bind(
+      date,
+      message.slice(0, 1000),
+      invoiceSyncState({
+        qboStatus: "error",
+        qboMessage: message.slice(0, 1000),
+        qboLastSyncDate: date,
+      }),
+      invoiceId,
+    )
+    .run();
 }
 
-export async function trySyncPaymentToQbo(db: D1Database, env: HonoEnv['Bindings'], invoice: Invoice): Promise<void> {
+export async function trySyncPaymentToQbo(
+  db: D1Database,
+  env: HonoEnv["Bindings"],
+  invoice: Invoice,
+): Promise<void> {
   try {
-    await syncPaymentToQbo(db, env, invoice)
+    await syncPaymentToQbo(db, env, invoice);
   } catch (error: unknown) {
-    await setInvoiceQboSyncError(db, invoice.id, String(error instanceof Error ? error.message : error))
+    await setInvoiceQboSyncError(
+      db,
+      invoice.id,
+      String(error instanceof Error ? error.message : error),
+    );
   }
 }
 
-export async function trySyncInvoicePaymentToQbo(db: D1Database, env: HonoEnv['Bindings'], invoice: Invoice, payment: InvoicePayment): Promise<void> {
+export async function trySyncInvoicePaymentToQbo(
+  db: D1Database,
+  env: HonoEnv["Bindings"],
+  invoice: Invoice,
+  payment: InvoicePayment,
+): Promise<void> {
   try {
-    await syncInvoicePaymentToQbo(db, env, invoice, payment)
+    await syncInvoicePaymentToQbo(db, env, invoice, payment);
   } catch (error: unknown) {
-    await db.prepare(
-      `UPDATE invoice_payments
+    await db
+      .prepare(
+        `UPDATE invoice_payments
        SET qbo_last_sync_date = ?, qbo_sync_status = 'error', qbo_sync_message = ?,
            accounting_sync_state = json_patch(COALESCE(NULLIF(accounting_sync_state, ''), '{}'), ?)
-       WHERE id = ?`
-    ).bind(nowIso(), String(error instanceof Error ? error.message : error).slice(0, 1000), paymentSyncState({
-      qboStatus: 'error',
-      qboMessage: String(error instanceof Error ? error.message : error).slice(0, 1000),
-      qboLastSyncDate: nowIso(),
-    }), payment.id).run()
-    await setInvoiceQboSyncError(db, invoice.id, String(error instanceof Error ? error.message : error))
+       WHERE id = ?`,
+      )
+      .bind(
+        getIsoStringNow(),
+        String(error instanceof Error ? error.message : error).slice(0, 1000),
+        paymentSyncState({
+          qboStatus: "error",
+          qboMessage: String(
+            error instanceof Error ? error.message : error,
+          ).slice(0, 1000),
+          qboLastSyncDate: getIsoStringNow(),
+        }),
+        payment.id,
+      )
+      .run();
+    await setInvoiceQboSyncError(
+      db,
+      invoice.id,
+      String(error instanceof Error ? error.message : error),
+    );
   }
 }
 
 export function createQboApi() {
-  const app = new Hono<HonoEnv>()
+  const app = new Hono<HonoEnv>();
 
-  app.get('/api/qbo/status', async (context) => {
+  app.get("/api/qbo/status", async (context) => {
     try {
-      const authError = requireAuthMode(context, 'microsoft')
-      if (authError) return authError
-      const connection = await getConnection(context.env.DB)
+      const authError = requireAuthMode(context, "microsoft");
+      if (authError) return authError;
+      const connection = await getConnection(context.env.DB);
       const status: QboConnectionStatus = {
         connected: Boolean(connection),
         realmId: normalizeString(connection?.realm_id),
-        environment: normalizeString(connection?.environment || getQboEnvironment(context.env)),
-        lastCustomerSyncDate: normalizeString(connection?.last_customer_sync_date),
+        environment: normalizeString(
+          connection?.environment || getQboEnvironment(context.env),
+        ),
+        lastCustomerSyncDate: normalizeString(
+          connection?.last_customer_sync_date,
+        ),
         lastItemSyncDate: normalizeString(connection?.last_item_sync_date),
-        lastAccountSyncDate: normalizeString(connection?.last_account_sync_date),
+        lastAccountSyncDate: normalizeString(
+          connection?.last_account_sync_date,
+        ),
         tokenExpiresDate: normalizeString(connection?.token_expires_date),
-        defaultServiceItemId: normalizeString(connection?.default_service_item_id),
-        defaultServiceItemName: '',
-        defaultDepositAccountId: normalizeString(connection?.default_deposit_account_id),
-        defaultDepositAccountName: '',
-        stripeFeeExpenseAccountId: normalizeString(connection?.stripe_fee_expense_account_id),
-        stripeFeeExpenseAccountName: '',
-      }
+        defaultServiceItemId: normalizeString(
+          connection?.default_service_item_id,
+        ),
+        defaultServiceItemName: "",
+        defaultDepositAccountId: normalizeString(
+          connection?.default_deposit_account_id,
+        ),
+        defaultDepositAccountName: "",
+        stripeFeeExpenseAccountId: normalizeString(
+          connection?.stripe_fee_expense_account_id,
+        ),
+        stripeFeeExpenseAccountName: "",
+      };
       if (status.defaultServiceItemId) {
-        const item = await context.env.DB.prepare('SELECT name FROM qbo_service_items WHERE qbo_id = ?').bind(status.defaultServiceItemId).first<{ name?: string }>()
-        status.defaultServiceItemName = normalizeString(item?.name)
+        const item = await context.env.DB.prepare(
+          "SELECT name FROM qbo_service_items WHERE qbo_id = ?",
+        )
+          .bind(status.defaultServiceItemId)
+          .first<{ name?: string }>();
+        status.defaultServiceItemName = normalizeString(item?.name);
       }
       if (status.defaultDepositAccountId) {
-        const account = await context.env.DB.prepare('SELECT name FROM qbo_accounts WHERE qbo_id = ?').bind(status.defaultDepositAccountId).first<{ name?: string }>()
-        status.defaultDepositAccountName = normalizeString(account?.name)
+        const account = await context.env.DB.prepare(
+          "SELECT name FROM qbo_accounts WHERE qbo_id = ?",
+        )
+          .bind(status.defaultDepositAccountId)
+          .first<{ name?: string }>();
+        status.defaultDepositAccountName = normalizeString(account?.name);
       }
       if (status.stripeFeeExpenseAccountId) {
-        const account = await context.env.DB.prepare('SELECT name FROM qbo_accounts WHERE qbo_id = ?').bind(status.stripeFeeExpenseAccountId).first<{ name?: string }>()
-        status.stripeFeeExpenseAccountName = normalizeString(account?.name)
+        const account = await context.env.DB.prepare(
+          "SELECT name FROM qbo_accounts WHERE qbo_id = ?",
+        )
+          .bind(status.stripeFeeExpenseAccountId)
+          .first<{ name?: string }>();
+        status.stripeFeeExpenseAccountName = normalizeString(account?.name);
       }
-      return jsonResponse({ status })
+      return jsonResponse({ status });
     } catch (error: unknown) {
-      console.error('Error reading QBO status:', error)
-      return serverError(String(error instanceof Error ? error.message : error))
+      console.error("Error reading QBO status:", error);
+      return serverError(
+        String(error instanceof Error ? error.message : error),
+      );
     }
-  })
+  });
 
-  app.get('/api/qbo/connect', async (context) => {
+  app.get("/api/qbo/connect", async (context) => {
     try {
-      const authError = requireQboAdmin(context)
-      if (authError) return authError
-      await ensureQboSchemaReady(context.env.DB)
-      const { clientId, redirectUri } = requireQboConfig(context.env)
-      const state = createStateToken()
-      await context.env.DB.prepare('INSERT INTO qbo_oauth_states (state, return_path, created_date) VALUES (?, ?, ?)')
-        .bind(state, '/invoices', nowIso()).run()
-      const params = new URLSearchParams()
-      params.set('client_id', clientId)
-      params.set('response_type', 'code')
-      params.set('scope', 'com.intuit.quickbooks.accounting')
-      params.set('redirect_uri', redirectUri)
-      params.set('state', state)
-      return jsonResponse({ authorizationUrl: `https://appcenter.intuit.com/connect/oauth2?${params.toString()}` })
+      const authError = requireQboAdmin(context);
+      if (authError) return authError;
+      await ensureQboSchemaReady(context.env.DB);
+      const { clientId, redirectUri } = requireQboConfig(context.env);
+      const state = createStateToken();
+      await context.env.DB.prepare(
+        "INSERT INTO qbo_oauth_states (state, return_path, created_date) VALUES (?, ?, ?)",
+      )
+        .bind(state, "/invoices", getIsoStringNow())
+        .run();
+      const params = new URLSearchParams();
+      params.set("client_id", clientId);
+      params.set("response_type", "code");
+      params.set("scope", "com.intuit.quickbooks.accounting");
+      params.set("redirect_uri", redirectUri);
+      params.set("state", state);
+      return jsonResponse({
+        authorizationUrl: `https://appcenter.intuit.com/connect/oauth2?${params.toString()}`,
+      });
     } catch (error: unknown) {
-      console.error('Error starting QBO connection:', error)
-      return serverError(String(error instanceof Error ? error.message : error))
+      console.error("Error starting QBO connection:", error);
+      return serverError(
+        String(error instanceof Error ? error.message : error),
+      );
     }
-  })
+  });
 
-  app.get('/api/qbo/callback', async (context) => {
+  app.get("/api/qbo/callback", async (context) => {
     try {
-      await ensureQboSchemaReady(context.env.DB)
-      const state = normalizeString(context.req.query('state'))
-      const code = normalizeString(context.req.query('code'))
-      const realmId = normalizeString(context.req.query('realmId'))
+      await ensureQboSchemaReady(context.env.DB);
+      const state = normalizeString(context.req.query("state"));
+      const code = normalizeString(context.req.query("code"));
+      const realmId = normalizeString(context.req.query("realmId"));
       if (!state || !code || !realmId) {
-        return badRequest('Missing QuickBooks OAuth callback parameters')
+        return badRequest("Missing QuickBooks OAuth callback parameters");
       }
-      const stateRow = await context.env.DB.prepare('SELECT state FROM qbo_oauth_states WHERE state = ?').bind(state).first()
+      const stateRow = await context.env.DB.prepare(
+        "SELECT state FROM qbo_oauth_states WHERE state = ?",
+      )
+        .bind(state)
+        .first();
       if (!stateRow) {
-        return jsonResponse({ error: 'Invalid QuickBooks OAuth state' }, { status: 400 })
+        return jsonResponse(
+          { error: "Invalid QuickBooks OAuth state" },
+          { status: 400 },
+        );
       }
-      await context.env.DB.prepare('DELETE FROM qbo_oauth_states WHERE state = ?').bind(state).run()
-      const { redirectUri } = requireQboConfig(context.env)
-      const body = new URLSearchParams()
-      body.set('grant_type', 'authorization_code')
-      body.set('code', code)
-      body.set('redirect_uri', redirectUri)
-      const token = await exchangeToken(context.env, body)
-      await storeConnection(context.env.DB, context.env, realmId, token)
-      return Response.redirect(`${getDocumentBaseUrl(context.env)}/invoices?qbo=connected`, 302)
+      await context.env.DB.prepare(
+        "DELETE FROM qbo_oauth_states WHERE state = ?",
+      )
+        .bind(state)
+        .run();
+      const { redirectUri } = requireQboConfig(context.env);
+      const body = new URLSearchParams();
+      body.set("grant_type", "authorization_code");
+      body.set("code", code);
+      body.set("redirect_uri", redirectUri);
+      const token = await exchangeToken(context.env, body);
+      await storeConnection(context.env.DB, context.env, realmId, token);
+      return Response.redirect(
+        `${getDocumentBaseUrl(context.env)}/invoices?qbo=connected`,
+        302,
+      );
     } catch (error: unknown) {
-      console.error('Error handling QBO callback:', error)
-      return Response.redirect(`${getDocumentBaseUrl(context.env)}/invoices?qbo=error`, 302)
+      console.error("Error handling QBO callback:", error);
+      return Response.redirect(
+        `${getDocumentBaseUrl(context.env)}/invoices?qbo=error`,
+        302,
+      );
     }
-  })
+  });
 
-  app.post('/api/qbo/customers/sync', async (context) => {
+  app.post("/api/qbo/customers/sync", async (context) => {
     try {
-      const authError = requireQboAdmin(context)
-      if (authError) return authError
-      const count = await syncQboCustomers(context.env.DB, context.env)
-      return jsonResponse({ count })
+      const authError = requireQboAdmin(context);
+      if (authError) return authError;
+      const count = await syncQboCustomers(context.env.DB, context.env);
+      return jsonResponse({ count });
     } catch (error: unknown) {
-      console.error('Error syncing QBO customers:', error)
-      return serverError(String(error instanceof Error ? error.message : error))
+      console.error("Error syncing QBO customers:", error);
+      return serverError(
+        String(error instanceof Error ? error.message : error),
+      );
     }
-  })
+  });
 
-  app.post('/api/qbo/items/sync', async (context) => {
+  app.post("/api/qbo/items/sync", async (context) => {
     try {
-      const authError = requireQboAdmin(context)
-      if (authError) return authError
-      const count = await syncQboServiceItems(context.env.DB, context.env)
-      return jsonResponse({ count })
+      const authError = requireQboAdmin(context);
+      if (authError) return authError;
+      const count = await syncQboServiceItems(context.env.DB, context.env);
+      return jsonResponse({ count });
     } catch (error: unknown) {
-      console.error('Error syncing QBO service items:', error)
-      return serverError(String(error instanceof Error ? error.message : error))
+      console.error("Error syncing QBO service items:", error);
+      return serverError(
+        String(error instanceof Error ? error.message : error),
+      );
     }
-  })
+  });
 
-  app.post('/api/qbo/accounts/sync', async (context) => {
+  app.post("/api/qbo/accounts/sync", async (context) => {
     try {
-      const authError = requireQboAdmin(context)
-      if (authError) return authError
-      const count = await syncQboAccounts(context.env.DB, context.env)
-      return jsonResponse({ count })
+      const authError = requireQboAdmin(context);
+      if (authError) return authError;
+      const count = await syncQboAccounts(context.env.DB, context.env);
+      return jsonResponse({ count });
     } catch (error: unknown) {
-      console.error('Error syncing QBO accounts:', error)
-      return serverError(String(error instanceof Error ? error.message : error))
+      console.error("Error syncing QBO accounts:", error);
+      return serverError(
+        String(error instanceof Error ? error.message : error),
+      );
     }
-  })
+  });
 
-  app.get('/api/qbo/items', async (context) => {
+  app.get("/api/qbo/items", async (context) => {
     try {
-      const authError = requireQboAdmin(context)
-      if (authError) return authError
-      await ensureQboSchemaReady(context.env.DB)
-      const search = normalizeString(context.req.query('search'))
-      const conditions = ['active = 1']
-      const bindings: string[] = []
+      const authError = requireQboAdmin(context);
+      if (authError) return authError;
+      await ensureQboSchemaReady(context.env.DB);
+      const search = normalizeString(context.req.query("search"));
+      const conditions = ["active = 1"];
+      const bindings: string[] = [];
       if (search) {
-        conditions.push('(name LIKE ? OR fully_qualified_name LIKE ? OR description LIKE ?)')
-        const like = `%${search}%`
-        bindings.push(like, like, like)
+        conditions.push(
+          "(name LIKE ? OR fully_qualified_name LIKE ? OR description LIKE ?)",
+        );
+        const like = `%${search}%`;
+        bindings.push(like, like, like);
       }
       const rows = await context.env.DB.prepare(
         `SELECT * FROM qbo_service_items
-         WHERE ${conditions.join(' AND ')}
+         WHERE ${conditions.join(" AND ")}
          ORDER BY name ASC
-         LIMIT 300`
-      ).bind(...bindings).all()
-      return jsonResponse({ items: (rows.results || []).map((row) => mapCachedQboServiceItem(row as Record<string, unknown>)) })
+         LIMIT 300`,
+      )
+        .bind(...bindings)
+        .all();
+      return jsonResponse({
+        items: (rows.results || []).map((row) =>
+          mapCachedQboServiceItem(row as Record<string, unknown>),
+        ),
+      });
     } catch (error: unknown) {
-      console.error('Error listing QBO service items:', error)
-      return serverError(String(error instanceof Error ? error.message : error))
+      console.error("Error listing QBO service items:", error);
+      return serverError(
+        String(error instanceof Error ? error.message : error),
+      );
     }
-  })
+  });
 
-  app.get('/api/qbo/accounts', async (context) => {
+  app.get("/api/qbo/accounts", async (context) => {
     try {
-      const authError = requireQboAdmin(context)
-      if (authError) return authError
-      await ensureQboSchemaReady(context.env.DB)
-      const search = normalizeString(context.req.query('search'))
-      const accountType = normalizeString(context.req.query('accountType'))
-      const conditions = ['active = 1']
-      const bindings: string[] = []
+      const authError = requireQboAdmin(context);
+      if (authError) return authError;
+      await ensureQboSchemaReady(context.env.DB);
+      const search = normalizeString(context.req.query("search"));
+      const accountType = normalizeString(context.req.query("accountType"));
+      const conditions = ["active = 1"];
+      const bindings: string[] = [];
       if (accountType) {
-        conditions.push('account_type = ?')
-        bindings.push(accountType)
+        conditions.push("account_type = ?");
+        bindings.push(accountType);
       }
       if (search) {
-        conditions.push('(name LIKE ? OR fully_qualified_name LIKE ? OR account_type LIKE ?)')
-        const like = `%${search}%`
-        bindings.push(like, like, like)
+        conditions.push(
+          "(name LIKE ? OR fully_qualified_name LIKE ? OR account_type LIKE ?)",
+        );
+        const like = `%${search}%`;
+        bindings.push(like, like, like);
       }
       const rows = await context.env.DB.prepare(
         `SELECT * FROM qbo_accounts
-         WHERE ${conditions.join(' AND ')}
+         WHERE ${conditions.join(" AND ")}
          ORDER BY account_type ASC, name ASC
-         LIMIT 500`
-      ).bind(...bindings).all()
-      return jsonResponse({ accounts: (rows.results || []).map((row) => mapCachedQboAccount(row as Record<string, unknown>)) })
+         LIMIT 500`,
+      )
+        .bind(...bindings)
+        .all();
+      return jsonResponse({
+        accounts: (rows.results || []).map((row) =>
+          mapCachedQboAccount(row as Record<string, unknown>),
+        ),
+      });
     } catch (error: unknown) {
-      console.error('Error listing QBO accounts:', error)
-      return serverError(String(error instanceof Error ? error.message : error))
+      console.error("Error listing QBO accounts:", error);
+      return serverError(
+        String(error instanceof Error ? error.message : error),
+      );
     }
-  })
+  });
 
-  app.put('/api/qbo/settings', async (context) => {
+  app.put("/api/qbo/settings", async (context) => {
     try {
-      const authError = requireQboAdmin(context)
-      if (authError) return authError
-      await ensureQboSchemaReady(context.env.DB)
-      const body = await context.req.json().catch(() => ({} as Record<string, unknown>)) as Record<string, unknown>
-      const serviceItemId = normalizeString(body.defaultServiceItemId)
-      const depositAccountId = normalizeString(body.defaultDepositAccountId)
-      const feeExpenseAccountId = normalizeString(body.stripeFeeExpenseAccountId)
+      const authError = requireQboAdmin(context);
+      if (authError) return authError;
+      await ensureQboSchemaReady(context.env.DB);
+      const body = (await context.req
+        .json()
+        .catch(() => ({}) as Record<string, unknown>)) as Record<
+        string,
+        unknown
+      >;
+      const serviceItemId = normalizeString(body.defaultServiceItemId);
+      const depositAccountId = normalizeString(body.defaultDepositAccountId);
+      const feeExpenseAccountId = normalizeString(
+        body.stripeFeeExpenseAccountId,
+      );
       if (serviceItemId) {
-        const item = await context.env.DB.prepare('SELECT qbo_id FROM qbo_service_items WHERE qbo_id = ? AND active = 1').bind(serviceItemId).first()
+        const item = await context.env.DB.prepare(
+          "SELECT qbo_id FROM qbo_service_items WHERE qbo_id = ? AND active = 1",
+        )
+          .bind(serviceItemId)
+          .first();
         if (!item) {
-          return badRequest('Selected QuickBooks service item was not found. Sync service items first.')
+          return badRequest(
+            "Selected QuickBooks service item was not found. Sync service items first.",
+          );
         }
       }
       if (depositAccountId) {
-        const account = await context.env.DB.prepare('SELECT qbo_id FROM qbo_accounts WHERE qbo_id = ? AND active = 1').bind(depositAccountId).first()
+        const account = await context.env.DB.prepare(
+          "SELECT qbo_id FROM qbo_accounts WHERE qbo_id = ? AND active = 1",
+        )
+          .bind(depositAccountId)
+          .first();
         if (!account) {
-          return badRequest('Selected QuickBooks deposit account was not found. Sync accounts first.')
+          return badRequest(
+            "Selected QuickBooks deposit account was not found. Sync accounts first.",
+          );
         }
       }
       if (feeExpenseAccountId) {
-        const account = await context.env.DB.prepare('SELECT qbo_id FROM qbo_accounts WHERE qbo_id = ? AND active = 1').bind(feeExpenseAccountId).first()
+        const account = await context.env.DB.prepare(
+          "SELECT qbo_id FROM qbo_accounts WHERE qbo_id = ? AND active = 1",
+        )
+          .bind(feeExpenseAccountId)
+          .first();
         if (!account) {
-          return badRequest('Selected QuickBooks fee expense account was not found. Sync accounts first.')
+          return badRequest(
+            "Selected QuickBooks fee expense account was not found. Sync accounts first.",
+          );
         }
       }
-      const connection = await getConnection(context.env.DB)
+      const connection = await getConnection(context.env.DB);
       await context.env.DB.prepare(
         `UPDATE qbo_connection
          SET default_service_item_id = ?,
              default_deposit_account_id = ?,
              stripe_fee_expense_account_id = ?,
              updated_date = ?
-         WHERE id = 1`
-      ).bind(
-        serviceItemId || normalizeString(connection?.default_service_item_id),
-        depositAccountId || normalizeString(connection?.default_deposit_account_id),
-        feeExpenseAccountId || normalizeString(connection?.stripe_fee_expense_account_id),
-        nowIso()
-      ).run()
-      return jsonResponse({ status: 'ok' })
+         WHERE id = 1`,
+      )
+        .bind(
+          serviceItemId || normalizeString(connection?.default_service_item_id),
+          depositAccountId ||
+            normalizeString(connection?.default_deposit_account_id),
+          feeExpenseAccountId ||
+            normalizeString(connection?.stripe_fee_expense_account_id),
+          getIsoStringNow(),
+        )
+        .run();
+      return jsonResponse({ status: "ok" });
     } catch (error: unknown) {
-      console.error('Error updating QBO settings:', error)
-      return serverError(String(error instanceof Error ? error.message : error))
+      console.error("Error updating QBO settings:", error);
+      return serverError(
+        String(error instanceof Error ? error.message : error),
+      );
     }
-  })
+  });
 
-  app.get('/api/qbo/customers', async (context) => {
+  app.get("/api/qbo/customers", async (context) => {
     try {
-      const authError = requireAuthMode(context, 'microsoft')
-      if (authError) return authError
-      await ensureQboSchemaReady(context.env.DB)
-      const search = normalizeString(context.req.query('search'))
-      const conditions = ['(parent_id IS NULL OR parent_id = \'\')', 'active = 1']
-      const bindings: string[] = []
+      const authError = requireAuthMode(context, "microsoft");
+      if (authError) return authError;
+      await ensureQboSchemaReady(context.env.DB);
+      const search = normalizeString(context.req.query("search"));
+      const conditions = [
+        "(parent_id IS NULL OR parent_id = '')",
+        "active = 1",
+      ];
+      const bindings: string[] = [];
       if (search) {
-        conditions.push('(display_name LIKE ? OR fully_qualified_name LIKE ? OR primary_email LIKE ?)')
-        const like = `%${search}%`
-        bindings.push(like, like, like)
+        conditions.push(
+          "(display_name LIKE ? OR fully_qualified_name LIKE ? OR primary_email LIKE ?)",
+        );
+        const like = `%${search}%`;
+        bindings.push(like, like, like);
       }
       const rows = await context.env.DB.prepare(
         `SELECT * FROM qbo_customers
-         WHERE ${conditions.join(' AND ')}
+         WHERE ${conditions.join(" AND ")}
          ORDER BY display_name ASC
-         LIMIT 200`
-      ).bind(...bindings).all()
-      return jsonResponse({ customers: (rows.results || []).map((row) => mapCachedQboCustomer(row as Record<string, unknown>)) })
+         LIMIT 200`,
+      )
+        .bind(...bindings)
+        .all();
+      return jsonResponse({
+        customers: (rows.results || []).map((row) =>
+          mapCachedQboCustomer(row as Record<string, unknown>),
+        ),
+      });
     } catch (error: unknown) {
-      console.error('Error listing QBO customers:', error)
-      return serverError(String(error instanceof Error ? error.message : error))
+      console.error("Error listing QBO customers:", error);
+      return serverError(
+        String(error instanceof Error ? error.message : error),
+      );
     }
-  })
+  });
 
-  app.get('/api/qbo/customers/:id/projects', async (context) => {
+  app.get("/api/qbo/customers/:id/projects", async (context) => {
     try {
-      const authError = requireAuthMode(context, 'microsoft')
-      if (authError) return authError
-      await ensureQboSchemaReady(context.env.DB)
-      const parentId = normalizeString(context.req.param('id'))
+      const authError = requireAuthMode(context, "microsoft");
+      if (authError) return authError;
+      await ensureQboSchemaReady(context.env.DB);
+      const parentId = normalizeString(context.req.param("id"));
       const rows = await context.env.DB.prepare(
         `SELECT * FROM qbo_customers
          WHERE parent_id = ? AND active = 1
          ORDER BY display_name ASC
-         LIMIT 500`
-      ).bind(parentId).all()
-      return jsonResponse({ projects: (rows.results || []).map((row) => mapCachedQboCustomer(row as Record<string, unknown>)) })
+         LIMIT 500`,
+      )
+        .bind(parentId)
+        .all();
+      return jsonResponse({
+        projects: (rows.results || []).map((row) =>
+          mapCachedQboCustomer(row as Record<string, unknown>),
+        ),
+      });
     } catch (error: unknown) {
-      console.error('Error listing QBO projects:', error)
-      return serverError(String(error instanceof Error ? error.message : error))
+      console.error("Error listing QBO projects:", error);
+      return serverError(
+        String(error instanceof Error ? error.message : error),
+      );
     }
-  })
+  });
 
-  return app
+  return app;
 }

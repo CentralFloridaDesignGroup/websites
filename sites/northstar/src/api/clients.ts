@@ -1,14 +1,12 @@
 import type {
-  ClientExtraData,
   Contact,
-  ClientListItem,
   ClientListResponse,
   ListOptions,
-  NorthstarClient,
-  ProjectListItem,
-} from "cfdg/types";
+  ClientProjectListResponse,
+  ClientResponse,
+  ClientContactResponse,
+} from "cfdg/types/v2";
 import { requestJson } from "./common";
-
 
 /**
  * Gets the list of clients at the specified page and page size, sorted by full name in the specified direction.
@@ -28,65 +26,59 @@ export async function fetchClients(
 }
 
 /**
- * Loads the basic information for a single client by ID.
+ * Loads a fully rendered client record by QBO ID, including extra-data fields and contacts.
  * @param id Identifier of the client to fetch.
  * @returns A promise that resolves to the client record.
  */
-export async function fetchClient(id: string): Promise<NorthstarClient> {
-  const response = await requestJson<{ client: NorthstarClient }>(
+export async function fetchClient(id: string): Promise<ClientResponse> {
+  const response = await requestJson<ClientResponse>(
     `/v2/clients/${encodeURIComponent(id)}`,
   );
-  return response.client;
-}
-
-/** Loads the independently stored client extra data. */
-export async function fetchClientExtraData(
-  id: string,
-): Promise<ClientExtraData> {
-  const response = await requestJson<{ extraData: ClientExtraData }>(
-    `/v2/clients/${encodeURIComponent(id)}/extra-data`,
-  );
-  return response.extraData;
+  return response;
 }
 
 /** Loads projects related to a client. */
 export async function fetchClientProjects(
   id: string,
-): Promise<ProjectListItem[]> {
-  const response = await requestJson<{ projects: ProjectListItem[] }>(
-    `/v2/clients/${encodeURIComponent(id)}/projects`,
+  options: ListOptions,
+): Promise<ClientProjectListResponse> {
+  const params = new URLSearchParams({
+    page: String(options.page),
+    pageSize: String(options.pageSize),
+    sort: "fullName",
+    direction: options.direction,
+  });
+  const response = await requestJson<ClientProjectListResponse>(
+    `/v2/clients/${encodeURIComponent(id)}/projects?${params.toString()}`,
   );
-  return response.projects;
-}
-
-/** Updates a client's internal status. */
-export async function updateClientStatus(
-  id: string,
-  status: ClientExtraData["status"],
-): Promise<ClientExtraData> {
-  const response = await requestJson<{ extraData: ClientExtraData }>(
-    `/v2/clients/${encodeURIComponent(id)}/status`,
-    {
-      method: "PUT",
-      body: JSON.stringify({ status }),
-    },
-  );
-  return response.extraData;
+  return response;
 }
 
 export async function fetchClientContacts(id: string): Promise<Contact[]> {
-  const response = await requestJson<{ contacts: Contact[] }>(`/v2/clients/${encodeURIComponent(id)}/contacts`);
+  const response = await requestJson<{ contacts: Contact[] }>(
+    `/v2/clients/${encodeURIComponent(id)}/contacts`,
+  );
   return response.contacts;
 }
 
-export async function createClientContact(id: string, contact: Omit<Contact, "id">): Promise<Contact> {
-  const response = await requestJson<{ contact: Contact }>(`/v2/clients/${encodeURIComponent(id)}/contacts`, { method: "POST", body: JSON.stringify(contact) });
+export async function createClientContact(
+  id: string,
+  contact: Omit<Contact, "id">,
+): Promise<Contact> {
+  const response = await requestJson<{ contact: Contact }>(
+    `/v2/clients/${encodeURIComponent(id)}/contacts`,
+    { method: "POST", body: JSON.stringify(contact) },
+  );
   return response.contact;
 }
 
-export async function updateClientContact(id: string, contact: Contact): Promise<Contact> {
-  const response = await requestJson<{ contact: Contact }>(`/v2/clients/${encodeURIComponent(id)}/contacts/${encodeURIComponent(contact.id)}`, { method: "PUT", body: JSON.stringify(contact) });
-  return response.contact;
+export async function updateClientContact(
+  id: string,
+  contact: Contact,
+): Promise<ClientContactResponse> {
+  const response = await requestJson<{ contact: Contact }>(
+    `/v2/clients/${encodeURIComponent(id)}/contacts/${encodeURIComponent(contact.id)}`,
+    { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(contact) },
+  );
+  return response;
 }
-
-export type { ClientListItem };
