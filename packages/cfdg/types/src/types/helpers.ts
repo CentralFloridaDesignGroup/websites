@@ -1,5 +1,8 @@
 // #region D1 helpers
 
+import { STATES } from "../constants";
+import { Address, State } from "./common";
+
 /** 
  * Normalizes a string value by converting it to a string and trimming whitespace.
  * @param value - The value to normalize.
@@ -72,6 +75,39 @@ export function normalizeType<T>(value: unknown, allowedValues: readonly T[], de
   const normalized = normalizeString(value).toLowerCase();
   const matched = allowedValues.find((candidate) => candidate === normalized);
   return matched ?? defaultValue;
+}
+
+/**
+ * Converts a set of address components into an Address object. If any of the components are invalid, it returns null.
+ * @param line1 - The first line of the address.
+ * @param line2 - The second line of the address.
+ * @param city - The city of the address.
+ * @param state - The state of the address.
+ * @param postalCode - The postal code of the address.
+ * @returns The normalized Address object, or null if any component is invalid.
+ */
+export function normalizeAddress(
+  line1: unknown,
+  line2: unknown,
+  city: unknown,
+  state: unknown,
+  postalCode: unknown,
+): Address | null {
+  try {
+    return {
+      line1: normalizeString(line1),
+      line2: normalizeString(line2) || null,
+      city: normalizeString(city),
+      state: normalizeType<State>(
+        state,
+        Object.keys(STATES) as State[],
+        "FL" as State,
+      ),
+      zip: normalizeString(postalCode),
+    };
+  } catch {
+    return null;
+  }
 }
 
 // #endregion

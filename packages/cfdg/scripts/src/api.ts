@@ -1,25 +1,34 @@
 // #region D1 helpers
 
-/** 
+import { Address, State } from "cfdg/types";
+import { STATES } from "cfdg/types/constants";
+
+/**
  * Normalizes a string value by converting it to a string and trimming whitespace.
  * @param value - The value to normalize.
  * @param limit - An optional limit for the string length. Must be a positive number. If provided, the string will be truncated to this length.
  * @returns The normalized string.
  */
 export function normalizeString(value: unknown, limit?: number): string {
-    if (limit !== undefined && limit > 0)
-        return String(value ?? '').trim().slice(0, limit);
-  return String(value ?? '').trim();
+  if (limit !== undefined && limit > 0)
+    return String(value ?? "")
+      .trim()
+      .slice(0, limit);
+  return String(value ?? "").trim();
 }
 
-/** 
+/**
  * Normalizes a number value by converting it to a number and ensuring it is finite.
  * @param value - The value to normalize.
  * @param min - An optional minimum value. If provided, the normalized number will not be less than this value.
  * @param max - An optional maximum value. If provided, the normalized number will not be greater than this value.
  * @returns The normalized number, or 0 if the value is not finite.
  */
-export function normalizeNumber(value: unknown, min?: number, max?: number): number {
+export function normalizeNumber(
+  value: unknown,
+  min?: number,
+  max?: number,
+): number {
   const parsed = Number(value ?? 0);
   if (!Number.isFinite(parsed)) return 0;
   if (min !== undefined && parsed < min) return min;
@@ -28,30 +37,32 @@ export function normalizeNumber(value: unknown, min?: number, max?: number): num
 }
 
 /**
- * Normalizes an array of values by converting each entry to a string, trimming whitespace, and filtering out any empty strings. If the input value is not an array, it returns an empty array.
- * @param value - The value to normalize.
- * @returns The normalized array of strings.
- */
-export function normalizeStringArray(value: unknown): string[] {
-  return Array.isArray(value) ? value.map((entry) => normalizeString(entry)).filter(Boolean) : [];
-}
-
-/**
  * Normalizes a boolean value by checking if it is true, the string 'true', or the number 1.
  * @param value - The value to normalize.
  * @returns The normalized boolean value.
  */
 export function normalizeBoolean(value: unknown): boolean {
-  return value === true || value === 'true' || normalizeNumber(value) === 1;
+  return value === true || value === "true" || normalizeNumber(value) === 1;
 }
 
-/** 
- * Normalizes a JSON string by parsing it into an object of type T. Returns null if parsing fails. 
+/**
+ * Normalizes an array of values by converting each entry to a string, trimming whitespace, and filtering out any empty strings. If the input value is not an array, it returns an empty array.
+ * @param value - The value to normalize.
+ * @returns The normalized array of strings.
+ */
+export function normalizeStringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.map((entry) => normalizeString(entry)).filter(Boolean)
+    : [];
+}
+
+/**
+ * Normalizes a JSON string by parsing it into an object of type T. Returns null if parsing fails.
  * @param value - The JSON string to normalize.
  * @returns The parsed object of type T, or null if parsing fails.
  */
 export function normalizeJson<T>(value: unknown): T | null {
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     try {
       return JSON.parse(value) as T;
     } catch {
@@ -72,10 +83,47 @@ export function normalizeJson<T>(value: unknown): T | null {
  * ```
  * @returns The normalized value.
  */
-export function normalizeType<T>(value: unknown, allowedValues: readonly T[], defaultValue: T): T {
+export function normalizeType<T>(
+  value: unknown,
+  allowedValues: readonly T[],
+  defaultValue: T,
+): T {
   const normalized = normalizeString(value).toLowerCase();
   const matched = allowedValues.find((candidate) => candidate === normalized);
   return matched ?? defaultValue;
+}
+
+/**
+ * Converts a set of address components into an Address object. If any of the components are invalid, it returns null.
+ * @param line1 - The first line of the address.
+ * @param line2 - The second line of the address.
+ * @param city - The city of the address.
+ * @param state - The state of the address.
+ * @param postalCode - The postal code of the address.
+ * @returns The normalized Address object, or null if any component is invalid.
+ */
+export function normalizeAddress(
+  line1: unknown,
+  line2: unknown,
+  city: unknown,
+  state: unknown,
+  postalCode: unknown,
+): Address | null {
+  try {
+    return {
+      line1: normalizeString(line1),
+      line2: normalizeString(line2) || null,
+      city: normalizeString(city),
+      state: normalizeType<State>(
+        state,
+        Object.keys(STATES) as State[],
+        "FL" as State,
+      ),
+      zip: normalizeString(postalCode),
+    };
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -89,14 +137,16 @@ export function normalizeType<T>(value: unknown, allowedValues: readonly T[], de
  * // compacted will be { a: 1, e: 'hello' }
  * ```
  */
-export function compactRecord<T extends Record<string, unknown>>(record: T): Partial<T> {
-  const compacted: Partial<T> = {}
+export function compactRecord<T extends Record<string, unknown>>(
+  record: T,
+): Partial<T> {
+  const compacted: Partial<T> = {};
   for (const [key, value] of Object.entries(record)) {
-    if (value !== undefined && value !== null && value !== '') {
-      compacted[key as keyof T] = value as T[keyof T]
+    if (value !== undefined && value !== null && value !== "") {
+      compacted[key as keyof T] = value as T[keyof T];
     }
   }
-  return compacted
+  return compacted;
 }
 
 /**
@@ -112,11 +162,11 @@ export function compactRecord<T extends Record<string, unknown>>(record: T): Par
  * ```
  */
 export function parseJsonBody(request: Request): Promise<any> {
-  const contentType = request.headers.get('Content-Type') || ''
-  if (!contentType.toLowerCase().includes('application/json')) {
-    throw new Error('Content-Type must be application/json')
+  const contentType = request.headers.get("Content-Type") || "";
+  if (!contentType.toLowerCase().includes("application/json")) {
+    throw new Error("Content-Type must be application/json");
   }
-  return request.json()
+  return request.json();
 }
 
 /**
@@ -126,7 +176,11 @@ export function parseJsonBody(request: Request): Promise<any> {
  * @param max - An optional maximum value. If provided, the integer must be less than or equal to this value.
  * @returns The validated integer if it is valid and within the specified range; otherwise, null.
  */
-export function validateInt(value: unknown, min?: number, max?: number): number | null {
+export function validateInt(
+  value: unknown,
+  min?: number,
+  max?: number,
+): number | null {
   const num = Number(value);
   if (!Number.isInteger(num)) return null;
   if (min !== undefined && num < min) return null;
@@ -139,13 +193,22 @@ export function validateInt(value: unknown, min?: number, max?: number): number 
  * @returns The current date and time in ISO 8601 format.
  */
 export function getIsoStringNow(): string {
-  return new Date().toISOString()
+  return new Date().toISOString();
 }
 
-export function formatAddress(address?: { line1?: string; line2?: string; city?: string; state?: string; postalCode?: string; country?: string }): string {
-  if (!address) return '';
+export function formatAddress(address?: {
+  line1?: string;
+  line2?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+}): string {
+  if (!address) return "";
   const { line1, line2, city, state, postalCode, country } = address;
-  const parts = [line1, line2, city, state, postalCode, country].filter(Boolean);
-  return parts.join(', ');
+  const parts = [line1, line2, city, state, postalCode, country].filter(
+    Boolean,
+  );
+  return parts.join(", ");
 }
 // #endregion

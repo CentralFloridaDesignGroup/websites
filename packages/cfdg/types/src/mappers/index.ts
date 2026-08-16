@@ -32,4 +32,4 @@ export {
   mapQboCustomerRow,
   mapQboSettingsBlob,
   mapQboAppSettings,
-} from '../types/qbo/mappers';
+} from '../types/v2/qbo/mappers';

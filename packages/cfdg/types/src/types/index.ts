@@ -21,7 +21,7 @@ export type {
 export type { BaseApiEnv } from "./api";
 
 // General Exports
-export type { State, Address } from "./general";
+export type { State, Address, R2FileRecord } from "./common";
 
 // Calculator Exports
 export type {
@@ -58,7 +58,6 @@ export type {
 export type {
   ProjectBillingProfile,
   ProjectBillingProfileRow,
-  ProjectStatus,
   ProjectTask,
   ProjectTaskRow,
   ProjectLifecycle,
@@ -108,95 +107,5 @@ export type {
   ClassNameValue,
   ColorClassNamesFor,
 } from "./ui";
-
-// #endregion
-
-// #region V2 exports
-
-export type {
-  NorthstarPageSize,
-  NorthstarPagination,
-  ListOptions
-} from "./pagination";
-
-export type {
-  ClientExtraData,
-  ClientExtraDataRow,
-  ClientListResponse,
-  ClientStatus,
-  Client,
-  ClientListItem,
-  NorthstarClient,
-  Contact
-} from "./client/types";
-
-export type {
-  NorthstarProject,
-  ProjectExtraData,
-  ProjectExtraDataRow,
-  ProjectListItem,
-  ProjectListResponse,
-} from "./project";
-
-export type {
-  PhaseBillType,
-  PhaseAccounting,
-  Phase,
-  PhaseCreatePayload,
-  PhaseUpdatePayload,
-  ProjectContact,
-  PhaseSummaryResponse,
-} from "./project";
-
-export type {
-  InvoiceAddressSnapshot,
-  InvoiceBrandingSnapshot,
-  InvoiceNumberingSettings,
-  InvoiceLineItemV2,
-  InvoiceV2,
-  InvoiceV2LineItemInput,
-  InvoiceV2CreatePayload,
-  InvoiceV2UpdatePayload,
-  InvoiceV2ListResponse,
-  InvoiceBundle,
-  InvoiceBundleCreatePayload,
-  InvoiceBundleUpdatePayload,
-  InvoiceBundleListResponse,
-  InvoiceV2Status,
-  InvoiceV2DueType,
-  InvoiceV2LineType,
-  InvoiceV2QboSyncStatus,
-} from "./invoiceV2";
-
-// Quickbooks Online Exports
-export type {
-  QboCustomer,
-  QboConnectionStatus,
-  QboServiceItem,
-  QboAccount,
-  QboAddress,
-  QboSettings,
-  QboReferenceItem,
-  QboAppSettings,
-} from "./qbo/types";
-
-export type {
-  QboTokenResponse,
-  QboCustomerResponse,
-  QboInvoiceResponse,
-  QboAccountResponse,
-  QboItemResponse,
-  QboPaymentMethodResponse,
-  QboStatusResponse,
-  QboOptionsResponse,
-} from "./qbo/http";
-
-export { mapQboCustomerRow } from "./qbo/mappers";
-
-export type {
-  GeneralSettings,
-  CompanySettings,
-  CompanySettingsRow,
-} from "./company/types";
 
 // #endregion

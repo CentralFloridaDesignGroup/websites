@@ -28,6 +28,8 @@
       "cfdg/scripts/*": ["./packages/cfdg/scripts/src/*"],
       "cfdg/types": ["./packages/cfdg/types/src/types"],
       "cfdg/types/*": ["./packages/cfdg/types/src/types/*"],
+      "cfdg/types/v2": ["./packages/cfdg/types/src/types/v2"],
+      "cfdg/types/v2/*": ["./packages/cfdg/types/src/types/v2/*"],
       "cfdg/types/mappers": ["./packages/cfdg/types/src/mappers"],
       "cfdg/types/constants": ["./packages/cfdg/types/src/constants"],
       "cfdg/types/constants/*": ["./packages/cfdg/types/src/constants/*"],
@@ -47,6 +49,8 @@
     { "path": "./packages/cfdg/ui" },
     { "path": "./sites/main" },
     { "path": "./sites/document" },
+    { "path": "./sites/northstar" },
+    { "path": "./sites/client" },
     { "path": "./sites/api" }
   ]
 }

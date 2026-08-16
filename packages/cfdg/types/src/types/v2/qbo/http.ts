@@ -24,16 +24,6 @@ export type QboCustomerResponse = {
   DisplayName?: string;
   /** Fully qualified name of the customer */
   FullyQualifiedName?: string;
-  /** Company name of the customer */
-  CompanyName?: string;
-  /** Given name of the customer */
-  GivenName?: string;
-  /** Family name of the customer */
-  FamilyName?: string;
-  /** Primary email address of the customer */
-  PrimaryEmailAddr?: { Address?: string };
-  /** Primary phone number of the customer */
-  PrimaryPhone?: { FreeFormNumber?: string };
   /** Billing address of the customer */
   BillAddr?: QboAddress;
   /** Shipping address of the customer */

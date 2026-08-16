@@ -1,5 +1,5 @@
 import { POSITION_SALARY_TYPES, POSITION_LOCATIONS } from "../constants";
-import { State } from "./general";
+import { State } from "./common";
 
 // #region Type Definitions
 

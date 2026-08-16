@@ -1,3 +1,5 @@
+import { Address } from "../../common";
+
 /** Cached QuickBooks Online customer or sub-customer used by Compass forms. */
 export type QboCustomer = {
   /** Unique identifier of the customer */
@@ -8,36 +10,10 @@ export type QboCustomer = {
   displayName: string;
   /** Fully qualified name of the customer. Typically includes the parent customer's name if applicable */
   fullyQualifiedName: string;
-  /** Company name of the customer */
-  companyName: string;
-  /** Given name of the customer */
-  givenName: string;
-  /** Family name of the customer */
-  familyName: string;
-  /** Primary email address of the customer */
-  primaryEmail: string;
-  /** Primary phone number of the customer */
-  primaryPhone: string;
-  /** Billing address line 1 of the customer */
-  billAddrLine1: string;
-  /** Billing address line 2 of the customer */
-  billAddrLine2: string;
-  /** Billing address city of the customer */
-  billAddrCity: string;
-  /** Billing address state of the customer */
-  billAddrState: string;
-  /** Billing address postal code of the customer */
-  billAddrPostalCode: string;
-  /** Shipping address line 1 of the customer */
-  shipAddrLine1: string;
-  /** Shipping address line 2 of the customer */
-  shipAddrLine2: string;
-  /** Shipping address city of the customer */
-  shipAddrCity: string;
-  /** Shipping address state of the customer */
-  shipAddrState: string;
-  /** Shipping address postal code of the customer */
-  shipAddrPostalCode: string;
+  /** Billing address of the customer */
+  billingAddress: Address;
+  /** Shipping address of the customer */
+  shippingAddress: Address;
   /** Whether the customer is active */
   active: boolean;
   /** Sync token of the customer */
@@ -48,36 +24,18 @@ export type QboCustomer = {
   lastSyncedDate: string;
 };
 
-/** Local sync status for the connected QuickBooks Online company.
- * @deprecated
- */
-export type QboConnectionStatus = {
-  /** Whether the connection to QuickBooks Online is established */
-  connected: boolean;
-  /** Realm ID of the connected QuickBooks Online company */
-  realmId: string;
-  /** Environment of the connected QuickBooks Online company */
-  environment: string;
-  /** Last date when customers were synced */
-  lastCustomerSyncDate: string;
-  /** Last date when items were synced */
-  lastItemSyncDate: string;
-  /** Last date when accounts were synced */
-  lastAccountSyncDate: string;
-  /** Expiration date of the QuickBooks Online access token */
-  tokenExpiresDate: string;
-  /** Default service item ID for invoices */
-  defaultServiceItemId: string;
-  /** Default service item name for invoices */
-  defaultServiceItemName: string;
-  /** Default deposit account ID for payments */
-  defaultDepositAccountId: string;
-  /** Default deposit account name for payments */
-  defaultDepositAccountName: string;
-  /** Stripe fee expense account ID */
-  stripeFeeExpenseAccountId: string;
-  /** Stripe fee expense account name */
-  stripeFeeExpenseAccountName: string;
+/** Cached QuickBooks Online address used for customers, billing, and shipping. */
+export type QboAddress = {
+  /** First line of the address */
+  line1?: string;
+  /** Second line of the address */
+  line2?: string;
+  /** City of the address */
+  city?: string;
+  /** State or province code of the address */
+  CountrySubDivisionCode?: string;
+  /** Postal code of the address */
+  postalCode?: string;
 };
 
 /** Quickbooks Reference Item to be stored */
@@ -98,20 +56,6 @@ export type QboReferenceItem = {
   lastSyncedDate?: string;
   /** The date when the reference was selected */
   selectedDate?: string;
-};
-
-/** Cached QuickBooks Online address used for customers, billing, and shipping. */
-export type QboAddress = {
-  /** First line of the address */
-  line1?: string;
-  /** Second line of the address */
-  line2?: string;
-  /** City of the address */
-  city?: string;
-  /** State or province code of the address */
-  CountrySubDivisionCode?: string;
-  /** Postal code of the address */
-  postalCode?: string;
 };
 
 /** Cached QuickBooks Online service item used for invoice line sync. */

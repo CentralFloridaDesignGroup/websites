@@ -22,6 +22,7 @@ export {
   normalizeBoolean,
   normalizeJson,
   normalizeType,
+  normalizeAddress,
   compactRecord,
   parseJsonBody,
   validateInt,

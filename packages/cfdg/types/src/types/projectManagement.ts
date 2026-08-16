@@ -1,4 +1,4 @@
-import type { Address } from './general';
+import type { Address } from './common';
 import { normalizeBoolean, normalizeNumber, normalizeString } from './helpers';
 import type { PROJECT_STATUSES } from '../constants/projectManagement';
 

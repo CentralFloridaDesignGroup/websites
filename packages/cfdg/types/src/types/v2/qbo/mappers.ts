@@ -1,28 +1,33 @@
 import { QboAppSettings, QboCustomer, QboSettings } from "./types";
-import { normalizeString, normalizeBoolean, normalizeJson } from "../helpers";
+import { normalizeString, normalizeBoolean, normalizeJson, normalizeAddress } from "../../helpers";
+import { Address } from "../../common";
 
 //TODO: Move to customers section once created.
 export function mapQboCustomerRow(row: Record<string, unknown>): QboCustomer {
+
+  const billingAddress = normalizeAddress(
+    row.billAddrLine1,
+    row.billAddrLine2,
+    row.billAddrCity,
+    row.billAddrState,
+    row.billAddrPostalCode,
+  );
+
+  const shippingAddress = normalizeAddress(
+    row.shipAddrLine1,
+    row.shipAddrLine2,
+    row.shipAddrCity,
+    row.shipAddrState,
+    row.shipAddrPostalCode,
+  );
+
   return {
     id: normalizeString(row.qbo_id),
     parentId: normalizeString(row.parent_id),
     displayName: normalizeString(row.display_name),
     fullyQualifiedName: normalizeString(row.fully_qualified_name),
-    companyName: normalizeString(row.company_name),
-    givenName: normalizeString(row.given_name),
-    familyName: normalizeString(row.family_name),
-    primaryEmail: normalizeString(row.primary_email),
-    primaryPhone: normalizeString(row.primary_phone),
-    billAddrLine1: normalizeString(row.bill_addr_line1),
-    billAddrLine2: normalizeString(row.bill_addr_line2),
-    billAddrCity: normalizeString(row.bill_addr_city),
-    billAddrState: normalizeString(row.bill_addr_state),
-    billAddrPostalCode: normalizeString(row.bill_addr_postal_code),
-    shipAddrLine1: normalizeString(row.ship_addr_line1),
-    shipAddrLine2: normalizeString(row.ship_addr_line2),
-    shipAddrCity: normalizeString(row.ship_addr_city),
-    shipAddrState: normalizeString(row.ship_addr_state),
-    shipAddrPostalCode: normalizeString(row.ship_addr_postal_code),
+    billingAddress: billingAddress ?? {} as Address,
+    shippingAddress: shippingAddress ?? {} as Address,
     active: normalizeBoolean(row.active),
     syncToken: normalizeString(row.sync_token),
     qboUpdatedTime: normalizeString(row.qbo_updated_time),
