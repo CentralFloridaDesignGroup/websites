@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { JSON_HEADERS } from 'cfdg/types/constants'
+import { JSON_HEADERS } from 'cfdg/types/v1/constants'
 import { requireAuthMode, type HonoEnv } from './apiTypes'
 const userFavoritesSchemaReadyByDb = new WeakMap<D1Database, Promise<void>>()
 

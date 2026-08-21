@@ -6,12 +6,12 @@ import type {
   InvoicePayment,
   InvoicePaymentKind,
   InvoicePaymentStatus,
-} from "cfdg/types";
+} from "cfdg/types/v1";
 import {
   INVOICE_STATUSES,
   INVOICE_PAYMENT_KINDS,
   INVOICE_PAYMENT_STATUSES,
-} from 'cfdg/types/constants'
+} from 'cfdg/types/v1/constants'
 import { requestJson } from "./client";
 import { normalizeBoolean, normalizeNumber, normalizeString, normalizeStringArray, normalizeType } from "cfdg/scripts";
 

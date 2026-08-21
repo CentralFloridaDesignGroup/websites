@@ -5,7 +5,7 @@ import type {
     ColorClassNamesFor,
     ColorMode,
     InputSize,
-} from "cfdg/types";
+} from "cfdg/types/v2";
 
 /** Properties for the Button component. */
 export type ButtonProperties = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children' | 'className' | 'id' | 'name' | 'type'> & {

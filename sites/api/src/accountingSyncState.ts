@@ -1,5 +1,5 @@
 import { compactRecord, normalizeString } from "cfdg/scripts";
-import type { AccountingSyncState } from "cfdg/types";
+import type { AccountingSyncState } from "cfdg/types/v1";
 
 /**
  * Serializes accounting sync state after removing empty branches and values. Used for storing the state in a compact JSON format in D1.

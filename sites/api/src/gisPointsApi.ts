@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { JSON_HEADERS } from 'cfdg/types/constants'
+import { JSON_HEADERS } from 'cfdg/types/v1/constants'
 import { badRequest, requireAuthMode, serverError, type HonoEnv } from './apiTypes'
 import { normalizeNumber, normalizeString } from 'cfdg/scripts'
 const GIS_DATUMS = ['wgs84', 'nad83-2011-fl-east', 'nad83-2011-fl-north', 'nad83-2011-fl-west'] as const

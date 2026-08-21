@@ -1,6 +1,6 @@
 import { Button, ButtonProperties } from '../core/button';
 import { classValueToString } from 'cfdg/scripts';
-import type { ColorClassNamesFor, ColorMode } from 'cfdg/types';
+import type { ColorClassNamesFor, ColorMode } from 'cfdg/types/v2';
 
 export type NorthstarButtonProperties = ButtonProperties & {
     /** The style of the button.

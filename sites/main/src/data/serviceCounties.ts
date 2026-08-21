@@ -1,4 +1,4 @@
-import { COUNTIES } from 'cfdg/types/constants';
+import { COUNTIES } from 'cfdg/types/v1/constants';
 
 export type CountyName = (typeof COUNTIES)[keyof typeof COUNTIES];
 
@@ -34,4 +34,3 @@ export const ALL_SERVICE_COUNTY_NAMES: CountyName[] = [
     ...coreCountyNames,
     ...secondaryCountyNames
 ];
-

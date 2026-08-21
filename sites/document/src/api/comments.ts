@@ -3,12 +3,12 @@ import type {
   CommentStatus,
   ReviewPackage,
   ReviewPackageStatus,
-} from "cfdg/types";
+} from "cfdg/types/v1";
 import { requestJson } from "./client";
 import {
   REVIEW_PACKAGE_STATUSES,
   COMMENT_STATUSES,
-} from "cfdg/types/constants";
+} from "cfdg/types/v1/constants";
 import { normalizeString, normalizeType } from "cfdg/scripts";
 
 export interface CommentQueryResponse {

@@ -1,6 +1,6 @@
 import { ArrowRight, CheckCircle2, ClipboardList, Mail, MapPin, MessageSquareText, Phone } from "lucide-react";
 import { showNotification } from "cfdg/layout";
-import type { FormSubmission, Package } from "cfdg/types";
+import type { FormSubmission, Package } from "cfdg/types/v1";
 import { useState } from "react";
 import { MarketingButton, MarketingSelect, MarketingTextarea, MarketingTextField } from "../components/marketing";
 import { coreCountyNames } from "../data/serviceCounties";

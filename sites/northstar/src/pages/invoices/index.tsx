@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import type { InvoiceBundle, InvoiceV2, InvoiceV2LineItemInput, Phase, ProjectListItem } from "cfdg/types";
+import type { InvoiceBundle, InvoiceV2, InvoiceV2LineItemInput, Phase, ProjectListItem } from "cfdg/types/v2";
 import { fetchProjectPhases, fetchProjects } from "../../api/projects";
 import { activateInvoice, activateInvoiceBundle, createInvoice, createInvoiceBundle, deleteInvoice, deleteInvoiceBundle, fetchInvoice, fetchInvoiceBundle, fetchInvoiceBundles, fetchInvoices, retryInvoiceQboSync, updateInvoice, voidInvoice, voidInvoiceBundle } from "../../api/invoices";
 import { downloadBundlePdf, downloadInvoicePdf } from "./pdf";

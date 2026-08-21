@@ -17,8 +17,8 @@ import NewPackage from './components/NewPackage';
 import CommentEditor from './components/CommentEditor';
 import { createPdfReport } from './components/createPDF';
 import { Dates } from 'cfdg/scripts';
-import { type CommentStatus, type CommentRecord, type ReviewPackage } from 'cfdg/types';
-import { COMMENT_STATUSES, REVIEW_PACKAGE_STATUSES } from 'cfdg/types/constants';
+import { type CommentStatus, type CommentRecord, type ReviewPackage } from 'cfdg/types/v1';
+import { COMMENT_STATUSES, REVIEW_PACKAGE_STATUSES } from 'cfdg/types/v1/constants';
 import { ListStart, Pencil, FileText, Save, X } from 'lucide-react';
 
 type CommentForm = {

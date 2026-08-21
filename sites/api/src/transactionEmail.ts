@@ -1,4 +1,4 @@
-import type { FormSubmission } from 'cfdg/types';
+import type { FormSubmission } from 'cfdg/types/v1';
 import type { ApiEnv } from './apiTypes';
 
 const corsHeaders = {

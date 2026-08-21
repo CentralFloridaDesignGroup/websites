@@ -3,7 +3,7 @@ import { Button, Textbox } from 'cfdg/input';
 import { CircleX, Folder, FolderOpen } from 'lucide-react';
 import { Modal } from 'cfdg/layout';
 import { Dates } from 'cfdg/scripts';
-import { type ReviewPackage } from 'cfdg/types';
+import { type ReviewPackage } from 'cfdg/types/v1';
 
 type ReviewPackageProperties = {
 	packages: ReviewPackage[];

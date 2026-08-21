@@ -7,10 +7,10 @@ import type {
   ProjectTask,
   QboCustomer,
   State,
-} from 'cfdg/types'
+} from 'cfdg/types/v1'
 import { requestBlob, requestJson } from './client'
 import { normalizeBoolean, normalizeString } from 'cfdg/scripts'
-import { PROJECT_STATUSES } from 'cfdg/types/constants'
+import { PROJECT_STATUSES } from 'cfdg/types/v1/constants'
 
 type UnknownRecord = Record<string, unknown>
 

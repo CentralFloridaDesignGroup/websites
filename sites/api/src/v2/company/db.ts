@@ -1,4 +1,4 @@
-import { mapCompanySettingsObjectToDb } from "cfdg/types/mappers";
+import { mapCompanySettingsObjectToDb } from "cfdg/types/v2/mappers";
 import type { CompanySettings, CompanySettingsDbRow } from "cfdg/types/v2";
 
 const COMPANY_SETTINGS_ID = 1;

@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import type { NorthstarPageSize, NorthstarPagination, ProjectListItem } from "cfdg/types";
+import type { NorthstarPageSize, NorthstarPagination, ProjectListItem } from "cfdg/types/v2";
 import { CheckCircle2, FilePlus2, RefreshCw, Settings2, SquareArrowOutUpRight } from "lucide-react";
 import { fetchProjects } from "../../api/projects";
 import { PaginationControls, RecordStatus, SortHeading } from "../../components/NorthstarRecords";
@@ -125,4 +125,3 @@ export function ProjectsListView() {
 
 /** @deprecated Use {@link NorthstarButton} instead. */
 function ActionButton({ label, icon, onClick, primary = false }: { label: string; icon: ReactNode; onClick: () => void; primary?: boolean }) { return <button type="button" onClick={onClick} className={`inline-flex items-center gap-1.5 rounded border px-2 py-1.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#173244]/30 ${primary ? "border-[#173244] bg-[#173244] text-white hover:bg-[#24495d] dark:border-[#9cc4c9] dark:bg-[#9cc4c9] dark:text-[#10262f]" : "border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-100 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700"}`}><span>{icon}</span>{label}</button>; }
-

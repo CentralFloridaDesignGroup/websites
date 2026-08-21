@@ -14,12 +14,12 @@ import type {
   ProjectMovePayload,
   ProjectUpdatePayload,
   State,
-} from 'cfdg/types'
+} from 'cfdg/types/v1'
 import type {
   ProjectStatus,
   QboCustomer,
-} from 'cfdg/types/v2'
-import { CURRENT_PROJECT_STATUSES, PROJECT_STATUSES } from 'cfdg/types/constants'
+} from 'cfdg/types/v1'
+import { CURRENT_PROJECT_STATUSES, PROJECT_STATUSES } from 'cfdg/types/v1/constants'
 import { Hono } from 'hono'
 import { badRequest, jsonResponse, noContent, requireAuthMode, serverError, type HonoEnv } from './apiTypes'
 import {
@@ -31,7 +31,7 @@ import {
   updateQboClientCustomer,
   updateQboProjectCustomer,
 } from './qboApi'
-import { mapClientContactRow, mapProjectBillingProfileRow, mapProjectInvoiceDocumentRow, mapProjectManagerRow, mapProjectTaskRow } from 'cfdg/types/projectManagement'
+import { mapClientContactRow, mapProjectBillingProfileRow, mapProjectInvoiceDocumentRow, mapProjectManagerRow, mapProjectTaskRow } from 'cfdg/types/v1/projectManagement'
 
 type ContactPayload = {
   name?: unknown
@@ -141,6 +141,11 @@ function mapQboCustomer(row: QboCustomerRow): QboCustomer {
     parentId: normalizeString(row.parent_id),
     displayName: normalizeString(row.display_name),
     fullyQualifiedName: normalizeString(row.fully_qualified_name),
+    companyName: '',
+    givenName: '',
+    familyName: '',
+    primaryEmail: '',
+    primaryPhone: '',
     billingAddress: {
       line1: normalizeString(row.bill_addr_line1),
       line2: normalizeString(row.bill_addr_line2),
@@ -155,6 +160,16 @@ function mapQboCustomer(row: QboCustomerRow): QboCustomer {
       state: normalizeString(row.ship_addr_state) as State,
       zip: normalizeString(row.ship_addr_postal_code),
     },
+    billAddrLine1: normalizeString(row.bill_addr_line1),
+    billAddrLine2: normalizeString(row.bill_addr_line2),
+    billAddrCity: normalizeString(row.bill_addr_city),
+    billAddrState: normalizeString(row.bill_addr_state),
+    billAddrPostalCode: normalizeString(row.bill_addr_postal_code),
+    shipAddrLine1: normalizeString(row.ship_addr_line1),
+    shipAddrLine2: normalizeString(row.ship_addr_line2),
+    shipAddrCity: normalizeString(row.ship_addr_city),
+    shipAddrState: normalizeString(row.ship_addr_state),
+    shipAddrPostalCode: normalizeString(row.ship_addr_postal_code),
     active: normalizeBool(row.active),
     syncToken: normalizeString(row.sync_token),
     qboUpdatedTime: normalizeString(row.qbo_updated_time),

@@ -4,7 +4,7 @@ import { ClientInfoStep, LanguageStep, PreviewStep, ProjectInfoSetup } from './p
 import { useOutletContext } from 'react-router-dom';
 import { OutletContext, SidebarProgressGroup } from '../../../contexts/outletContext';
 import { File, Folder, List, User } from 'lucide-react';
-import type { EntraUserAccount } from 'cfdg/types';
+import type { EntraUserAccount } from 'cfdg/types/v1';
 
 type Stage = 'client' | 'project' | 'language' | 'preview';
 

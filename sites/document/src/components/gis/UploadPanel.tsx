@@ -11,7 +11,7 @@ import {
   verticalEstablishmentMethodOptions,
 } from './constants'
 import type { CreateGisRecordInput, UploadImportSummary } from './types'
-import { KnownStatePlaneProjection } from 'cfdg/types'
+import { KnownStatePlaneProjection } from 'cfdg/types/v1'
 
 type UploadPanelProps = {
   isOpen: boolean

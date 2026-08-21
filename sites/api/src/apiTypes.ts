@@ -1,6 +1,6 @@
 import type { Context } from 'hono'
-import type { AuthContext, AuthMode, BaseApiEnv } from 'cfdg/types'
-import { JSON_HEADERS_V2 } from 'cfdg/types/constants'
+import type { AuthContext, AuthMode, BaseApiEnv } from 'cfdg/types/v1'
+import { JSON_HEADERS_V2 } from 'cfdg/types/v1/constants'
 
 // The following types are used in the API context and environment, and are 
 // not exported from the package due to site-specific requirements. They are 

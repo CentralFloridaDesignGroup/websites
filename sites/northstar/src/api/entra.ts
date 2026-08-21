@@ -1,7 +1,7 @@
 import { InteractionRequiredAuthError } from "@azure/msal-browser";
 import { getMsalSilentRedirectUri, msalInstance } from "../auth/msalConfig";
-import type { EntraUserAccount } from "cfdg/types";
-import { PROJECT_MANAGER_GROUP_ID } from "cfdg/types/constants";
+import type { EntraUserAccount } from "cfdg/types/v2";
+import { PROJECT_MANAGER_GROUP_ID } from "cfdg/types/v2/constants";
 
 type GraphGroup = { id?: string };
 type GraphUser = {

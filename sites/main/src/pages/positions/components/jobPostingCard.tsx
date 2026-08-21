@@ -1,7 +1,7 @@
 ﻿import { MarketingButton } from '../../../components/marketing';
 import { showNotification } from 'cfdg/layout';
 import { Numbers, Dates } from "cfdg/scripts";
-import type { JobPosition } from 'cfdg/types';
+import type { JobPosition } from 'cfdg/types/v1';
 
 export function JobPostingCard({ position }: { position: JobPosition }) {
 

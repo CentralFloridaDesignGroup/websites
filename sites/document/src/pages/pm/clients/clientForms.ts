@@ -1,4 +1,4 @@
-import { type ClientContact, type QboCustomer } from 'cfdg/types'
+import { type ClientContact, type QboCustomer } from 'cfdg/types/v1'
 import { type ClientForm, type ContactForm } from './types'
 
 export const emptyContact: ContactForm = {

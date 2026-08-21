@@ -5,7 +5,7 @@ import type {
   NorthstarProject,
   ProjectContact,
   ProjectExtraData,
-} from "cfdg/types";
+} from "cfdg/types/v2";
 import {
   NorthstarCheckbox,
   NorthstarDropdown,

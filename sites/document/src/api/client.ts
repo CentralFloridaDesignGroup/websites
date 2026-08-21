@@ -1,6 +1,6 @@
 import { normalizeString } from "cfdg/scripts";
 import { acquireApiAccessToken } from "./microsoftAuth";
-import { AuthMode } from "cfdg/types";
+import { AuthMode } from "cfdg/types/v1";
 
 type ApiRequestOptions = Omit<RequestInit, "headers"> & {
   authMode: AuthMode;

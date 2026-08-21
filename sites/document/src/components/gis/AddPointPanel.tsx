@@ -15,7 +15,7 @@ import type {
   PointMaterial,
 } from "./types";
 import { X } from "lucide-react";
-import { KnownStatePlaneProjection, Wgs84Input } from "cfdg/types";
+import { KnownStatePlaneProjection, Wgs84Input } from "cfdg/types/v1";
 
 type AddPointPanelProps = {
   isOpen: boolean;

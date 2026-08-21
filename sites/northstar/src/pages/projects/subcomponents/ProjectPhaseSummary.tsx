@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import type { EntraUserAccount, Phase, PhaseBillType, PhaseCreatePayload, PhaseUpdatePayload } from "cfdg/types";
+import type { EntraUserAccount, Phase, PhaseBillType, PhaseCreatePayload, PhaseUpdatePayload } from "cfdg/types/v2";
 import { Edit3, Minus, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { NorthstarButton, NorthstarDropdown, NorthstarTextbox } from "cfdg/ui/input";
 import { createProjectPhase, deleteProjectPhase, fetchProjectPhases, updateProjectPhase } from "../../../api/projects";

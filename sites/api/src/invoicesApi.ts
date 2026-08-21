@@ -11,14 +11,14 @@ import type {
   InvoiceStatus,
   ProjectManager,
   ProjectInvoiceDocument,
-} from 'cfdg/types'
+} from 'cfdg/types/v1'
 import { Hono } from 'hono'
 import { invoiceSyncState, paymentSyncState, payoutSyncState } from './accountingSyncState'
 import { badRequest, jsonResponse, requireAuthMode, serverError, type HonoEnv } from './apiTypes'
 import { ensureQboSchemaReady, syncInvoiceToQbo, syncStripePayoutDepositToQbo, trySyncInvoicePaymentToQbo, voidInvoiceInQbo } from './qboApi'
 import { ensureProjectManagementSchemaReady, fetchActiveClientContactsByIds, fetchProjectBillingProfile, fetchProjectInvoiceDocuments, fetchProjectManager } from './projectManagementApi'
-import { INVOICE_STATUSES } from 'cfdg/types/constants'
-import { mapInvoiceContactRecipientRow, mapInvoiceLineItemRow, mapInvoicePaymentRow, mapInvoiceRow } from 'cfdg/types/mappers'
+import { INVOICE_STATUSES } from 'cfdg/types/v1/constants'
+import { mapInvoiceContactRecipientRow, mapInvoiceLineItemRow, mapInvoicePaymentRow, mapInvoiceRow } from 'cfdg/types/v1/mappers'
 
 type InvoiceLineItemInput = {
   projectTaskId?: unknown

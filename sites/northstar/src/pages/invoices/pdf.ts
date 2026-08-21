@@ -1,6 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import type { InvoiceBundle, InvoiceV2 } from "cfdg/types";
+import type { InvoiceBundle, InvoiceV2 } from "cfdg/types/v2";
 
 function money(cents: number): string {
   return `$${(cents / 100).toFixed(2)}`;

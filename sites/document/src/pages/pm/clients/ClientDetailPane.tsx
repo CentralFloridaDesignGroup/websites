@@ -1,5 +1,5 @@
 import { Button, Combobox } from 'cfdg/input'
-import type { ClientContact, Invoice, QboCustomer } from 'cfdg/types'
+import type { ClientContact, Invoice, QboCustomer } from 'cfdg/types/v1'
 import { FileText, FolderOpen, Plus, Save, Trash2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { type ProjectSummary } from '../../../api/projectManagement'

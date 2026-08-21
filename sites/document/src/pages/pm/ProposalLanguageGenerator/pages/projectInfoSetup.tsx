@@ -3,11 +3,11 @@ import { ClientInfo } from "../types/proposalTypes";
 import { EMPTY_CLIENT } from "../types/emptyClientInfo";
 import { Button, Checkbox, Combobox, Textbox } from "cfdg/input";
 import { RefreshCw } from 'lucide-react';
-import type { EntraUserAccount } from 'cfdg/types';
+import type { EntraUserAccount } from 'cfdg/types/v1';
 import { fetchEligibleProjectManagers } from '../../../../api/entra';
 import { fetchNextProjectNumber } from '../../../../api/projectManagement';
 import { useMsal } from '@azure/msal-react';
-import { COUNTIES, STATES } from 'cfdg/types/constants';
+import { COUNTIES, STATES } from 'cfdg/types/v1/constants';
 
 interface ProjectInfoSetupProps {
     initialValues: Partial<ClientInfo> | undefined;

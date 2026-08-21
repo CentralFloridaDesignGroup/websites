@@ -16,7 +16,7 @@ export default defineConfig({
       "@styles": path.resolve(__dirname, "../../styles"),
       "cfdg/layout": path.resolve(__dirname, "../../packages/cfdg/layout/src"),
       "cfdg/scripts": path.resolve(__dirname, "../../packages/cfdg/scripts/src"),
-      "cfdg/types": path.resolve(__dirname, "../../packages/cfdg/types/src"),
+      "cfdg/types/v2": path.resolve(__dirname, "../../packages/cfdg/types/src/v2"),
       "cfdg/ui": path.resolve(__dirname, "../../packages/cfdg/ui/src"),
     },
   },

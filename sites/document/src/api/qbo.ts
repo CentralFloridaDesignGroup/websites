@@ -4,7 +4,7 @@ import type {
   QboCustomer,
   QboServiceItem,
   State,
-} from "cfdg/types";
+} from "cfdg/types/v1";
 import { requestJson } from "./client";
 
 type UnknownRecord = Record<string, unknown>;

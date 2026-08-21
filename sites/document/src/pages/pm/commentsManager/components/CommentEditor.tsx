@@ -1,7 +1,7 @@
 import { Combobox, Textarea, Textbox } from 'cfdg/input';
 import { X, Plus } from 'lucide-react';
-import { COMMENT_STATUSES } from 'cfdg/types/constants';
-import { type CommentStatus } from 'cfdg/types';
+import { COMMENT_STATUSES } from 'cfdg/types/v1/constants';
+import { type CommentStatus } from 'cfdg/types/v1';
 import { useMemo } from 'react';
 
 type CommentForm = {

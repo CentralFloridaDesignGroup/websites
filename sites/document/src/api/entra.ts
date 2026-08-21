@@ -1,10 +1,10 @@
 import type {
   EntraUserAccount,
-} from 'cfdg/types'
+} from 'cfdg/types/v1'
 import {
   PROJECT_MANAGER_GROUP_DISPLAY_NAME,
   PROJECT_MANAGER_GROUP_ID,
-} from 'cfdg/types/constants'
+} from 'cfdg/types/v1/constants'
 import { InteractionRequiredAuthError } from '@azure/msal-browser'
 import { getMsalSilentRedirectUri, msalInstance } from '../auth/msalConfig'
 

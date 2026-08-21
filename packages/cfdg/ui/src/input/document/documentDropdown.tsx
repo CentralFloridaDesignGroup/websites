@@ -3,7 +3,7 @@ import type { ChangeEvent } from 'react';
 import { Dropdown } from '../core/dropdown';
 import type { DropdownProperties } from '../core/dropdown';
 import { getRequiredMessage, isRequired } from 'cfdg/scripts';
-import type { ColorClassNamesFor, ColorMode } from 'cfdg/types';
+import type { ColorClassNamesFor, ColorMode } from 'cfdg/types/v2';
 
 /** Properties for the document-styled Dropdown. */
 export type DocumentDropdownProperties = DropdownProperties & {

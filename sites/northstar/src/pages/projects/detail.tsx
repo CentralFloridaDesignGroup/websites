@@ -7,7 +7,7 @@ import type {
     NorthstarProject,
     ProjectContact,
     ProjectExtraData,
-} from 'cfdg/types';
+} from 'cfdg/types/v2';
 import { NorthstarButton } from "cfdg/ui/input";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { EmptyPanel, ErrorPanel } from "./handler";

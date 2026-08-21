@@ -1,4 +1,4 @@
-import { type ProjectInvoiceDocument, type ProjectStatus } from 'cfdg/types'
+import { type ProjectInvoiceDocument, type ProjectStatus } from 'cfdg/types/v1'
 import { type ProjectSummary } from '../../../api/projectManagement'
 
 export function formatProjectAddress(project: ProjectSummary): string {

@@ -1,6 +1,6 @@
 import type { CompanySettings } from "cfdg/types/v2";
 import { getCompanySettingsRow } from "./db";
-import { mapCompanySettingsDbToObject } from "cfdg/types/mappers";
+import { mapCompanySettingsDbToObject } from "cfdg/types/v2/mappers";
 
 /**
  * Retrieves the company settings from the database and maps them to a {@link CompanySettings} object.

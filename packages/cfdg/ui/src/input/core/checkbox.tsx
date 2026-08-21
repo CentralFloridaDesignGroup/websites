@@ -4,7 +4,7 @@ import { compileClasses, isRequired } from "cfdg/scripts";
 import type {
     RequiredProperty,
     ColorClassNamesFor
-} from 'cfdg/types';
+} from 'cfdg/types/v2';
 
 export type CheckboxProperties = Omit<InputHTMLAttributes<HTMLInputElement>, 'required' | 'className' | 'id' | 'name'> & {
     /** The name of the field. Should be unique */

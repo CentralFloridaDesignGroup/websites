@@ -1,5 +1,5 @@
 import { Combobox, Textbox } from 'cfdg/input'
-import { type QboCustomer } from 'cfdg/types'
+import { type QboCustomer } from 'cfdg/types/v1'
 import { formatClientAddress } from './clientForms'
 
 type ClientListProps = {

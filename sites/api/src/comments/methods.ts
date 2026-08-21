@@ -3,13 +3,13 @@ import {
   CommentRecordRow,
   ReviewPackage,
   ReviewPackageRow,
-} from "cfdg/types";
+} from "cfdg/types/v1";
 import {
   mapCommentRecord,
   mapCommentRecordRow,
   mapReviewPackage,
   mapReviewPackageRow,
-} from "cfdg/types/mappers";
+} from "cfdg/types/v1/mappers";
 
 /**
  * Fetches all review packages from the database.

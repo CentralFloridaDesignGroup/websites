@@ -8,7 +8,7 @@ import type {
   ClientListItemDbRow,
   ProjectListItemDbRow,
 } from "cfdg/types/v2";
-import { mapContactObjectToDb } from "cfdg/types/mappers";
+import { mapContactObjectToDb } from "cfdg/types/v2/mappers";
 
 // #region Contacts
 

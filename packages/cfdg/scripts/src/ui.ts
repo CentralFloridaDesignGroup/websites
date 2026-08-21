@@ -3,7 +3,7 @@ import type {
   RequiredProperty,
   RegexProperty,
   ColorClassNamesFor,
-} from "cfdg/types";
+} from "cfdg/types/v1";
 
 /**
  * Compiles the appropriate class names based on the provided color mode and class names.

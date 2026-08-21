@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Button, Combobox, Textarea, Textbox } from 'cfdg/input'
-import { type EntraUserAccount, type Invoice, type ProjectBillingProfile, type ProjectInvoiceDocument, type ProjectManager, type ProjectStatus, type ProjectTask } from 'cfdg/types'
+import { type EntraUserAccount, type Invoice, type ProjectBillingProfile, type ProjectInvoiceDocument, type ProjectManager, type ProjectStatus, type ProjectTask } from 'cfdg/types/v1'
 import { FileText, MoveRight, Save } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { type ProjectSummary } from '../../../api/projectManagement'

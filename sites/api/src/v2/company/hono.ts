@@ -9,7 +9,7 @@ import type { CompanySettings } from "cfdg/types/v2";
 import { upsertCompanySettings } from "./db";
 import { getCompanySettings } from "./internal";
 import { convertBodyToObject } from "cfdg/scripts";
-import { mapCompanySettingsDbToObject } from "cfdg/types/mappers";
+import { mapCompanySettingsDbToObject } from "cfdg/types/v2/mappers";
 
 /** Creates the V2 company settings routes. */
 export function companyApi() {

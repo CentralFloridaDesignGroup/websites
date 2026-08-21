@@ -3,7 +3,7 @@ import type { ChangeEvent, FocusEvent, InputHTMLAttributes, KeyboardEvent } from
 import { Combobox as HeadlessCombobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOptions } from '@headlessui/react';
 import { ChevronDown } from 'lucide-react';
 import { compileClasses, isRequired } from 'cfdg/scripts';
-import type { ColorClassNamesFor, ColorMode, InputSize, RequiredProperty } from 'cfdg/types';
+import type { ColorClassNamesFor, ColorMode, InputSize, RequiredProperty } from 'cfdg/types/v2';
 
 /** A visible label and stored value for a Dropdown option. */
 export type DropdownOption = { label: string; value: string };

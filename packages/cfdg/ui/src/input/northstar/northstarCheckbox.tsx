@@ -2,7 +2,7 @@ import { ChangeEvent, useState } from 'react';
 import { Checkbox } from '../core/checkbox';
 import type { CheckboxProperties } from '../core/checkbox';
 import { classValueToString, isRequired } from 'cfdg/scripts';
-import type { ColorClassNamesFor, ColorMode } from 'cfdg/types';
+import type { ColorClassNamesFor, ColorMode } from 'cfdg/types/v2';
 import { Check, X } from 'lucide-react';
 
 export type NorthstarCheckboxProperties = CheckboxProperties & {

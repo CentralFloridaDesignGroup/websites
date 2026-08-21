@@ -5,7 +5,7 @@ import { showNotification } from 'cfdg/layout';
 import { generateWordDocument } from '../utils/documentGenerator';
 import type { ClientInfo, ServiceEntry } from '../types/proposalTypes';
 import { formatProposalDate, Proposal } from '../types/proposalTypes';
-import type { EntraUserAccount } from 'cfdg/types';
+import type { EntraUserAccount } from 'cfdg/types/v1';
 import { createProject, fetchNextProjectNumber, saveProjectManager } from '../../../../api/projectManagement';
 import { fetchProjectTasks } from '../../../../api/projectManagement';
 import { createInvoice } from '../../../../api/invoices';

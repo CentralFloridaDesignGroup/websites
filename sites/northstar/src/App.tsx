@@ -1,7 +1,7 @@
 import { MsalProvider } from "@azure/msal-react";
 import { lazy, Suspense } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS } from "cfdg/types/constants";
+import { PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS } from "cfdg/types/v2/constants";
 import { msalInstance } from "./auth/msalConfig";
 import { LoginPage } from "./auth/login";
 import { AuthProvider, ProtectedRoutes } from "./auth/AuthContext";

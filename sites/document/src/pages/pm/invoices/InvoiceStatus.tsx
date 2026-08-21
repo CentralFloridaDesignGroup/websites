@@ -1,4 +1,4 @@
-import { type Invoice, type InvoiceStatus } from 'cfdg/types'
+import { type Invoice, type InvoiceStatus } from 'cfdg/types/v1'
 import { AlertTriangle } from 'lucide-react'
 
 const statusLabels: Record<InvoiceStatus, string> = {

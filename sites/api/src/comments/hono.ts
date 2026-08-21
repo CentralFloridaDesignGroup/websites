@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import type { ReviewPackage, CommentRecord } from 'cfdg/types'
+import type { ReviewPackage, CommentRecord } from 'cfdg/types/v1'
 import { badRequest, jsonResponse, noContent, requireAuthMode, serverError, type HonoEnv } from '../apiTypes'
 import { normalizeString, parseJsonBody } from 'cfdg/scripts'
 import { createComment, createReviewPackage, deleteCommentById, deleteReviewPackageById, getCommentById, getCommentsByReviewPackageId, getReviewPackageById, getReviewPackages, upsertComment, upsertReviewPackage } from './methods'

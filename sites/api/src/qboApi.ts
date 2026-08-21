@@ -8,8 +8,8 @@ import type {
   ProjectUpdatePayload,
   QboConnectionStatus,
   State,
-} from "cfdg/types";
-import type { QboAccount, QboCustomer, QboServiceItem } from "cfdg/types/v2";
+} from "cfdg/types/v1";
+import type { QboAccount, QboCustomer, QboServiceItem } from "cfdg/types/v1";
 import { Hono } from "hono";
 import {
   invoiceSyncState,
@@ -24,13 +24,13 @@ import {
   type ApiContext,
   type HonoEnv,
 } from "./apiTypes";
-import { mapInvoicePaymentRow } from "cfdg/types/invoice";
-import { STATES } from "cfdg/types/constants";
+import { mapInvoicePaymentRow } from "cfdg/types/v1/invoice";
+import { STATES } from "cfdg/types/v1/constants";
 import { normalizeString, normalizeType, normalizeBoolean, getIsoStringNow } from "cfdg/scripts";
 
 const QBO_ADMIN_EMAIL = "nwhite@whitepointsurvey.com";
 
-/** @deprecated Use QboTokenResponse from 'cfdg/types/qbo/http' instead */
+/** @deprecated Use QboTokenResponse from 'cfdg/types/v1/qbo/http' instead */
 type QboTokenResponse = {
   access_token?: string;
   refresh_token?: string;
@@ -38,7 +38,7 @@ type QboTokenResponse = {
   x_refresh_token_expires_in?: number;
 };
 
-/** @deprecated Use QboAddress from 'cfdg/types/qbo/types' instead */
+/** @deprecated Use QboAddress from 'cfdg/types/v1/qbo/types' instead */
 type QboAddress = {
   Line1?: string;
   Line2?: string;
@@ -47,7 +47,7 @@ type QboAddress = {
   PostalCode?: string;
 };
 
-/** @deprecated Use QboCustomerResponse from 'cfdg/types/qbo/http' instead */
+/** @deprecated Use QboCustomerResponse from 'cfdg/types/v1/qbo/http' instead */
 type QboCustomerResponse = {
   Id?: string;
   ParentRef?: { value?: string };
@@ -66,7 +66,7 @@ type QboCustomerResponse = {
   MetaData?: { LastUpdatedTime?: string };
 };
 
-/** @deprecated Use QboInvoiceResponse from 'cfdg/types/qbo/http' instead */
+/** @deprecated Use QboInvoiceResponse from 'cfdg/types/v1/qbo/http' instead */
 type QboInvoiceResponse = {
   Invoice?: {
     Id?: string;
@@ -94,7 +94,7 @@ type StripePayoutDepositPayment = {
   payment: InvoicePayment;
 };
 
-/** @deprecated Use QboAccountResponse from 'cfdg/types/qbo/http' instead */
+/** @deprecated Use QboAccountResponse from 'cfdg/types/v1/qbo/http' instead */
 type QboAccountResponse = {
   Id?: string;
   Name?: string;
@@ -107,7 +107,7 @@ type QboAccountResponse = {
   MetaData?: { LastUpdatedTime?: string };
 };
 
-/** @deprecated Use QboItemResponse from 'cfdg/types/qbo/http' instead */
+/** @deprecated Use QboItemResponse from 'cfdg/types/v1/qbo/http' instead */
 type QboItemResponse = {
   Id?: string;
   Name?: string;
@@ -119,7 +119,7 @@ type QboItemResponse = {
   MetaData?: { LastUpdatedTime?: string };
 };
 
-/** @deprecated Use QboPaymentMethodResponse from 'cfdg/types/qbo/http' instead */
+/** @deprecated Use QboPaymentMethodResponse from 'cfdg/types/v1/qbo/http' instead */
 type QboPaymentMethodResponse = {
   Id?: string;
   Name?: string;
@@ -381,13 +381,18 @@ export function ensureQboSchemaReady(db: D1Database): Promise<void> {
   return ready;
 }
 
-/** @deprecated Use mapQboCustomerRow from cfdg/types/src/types/qbo/mappers.ts instead */
+/** @deprecated Use mapQboCustomerRow from cfdg/types/v1/src/types/qbo/mappers.ts instead */
 function mapCachedQboCustomer(row: Record<string, unknown>): QboCustomer {
   return {
     id: normalizeString(row.qbo_id),
     parentId: normalizeString(row.parent_id),
     displayName: normalizeString(row.display_name),
     fullyQualifiedName: normalizeString(row.fully_qualified_name),
+    companyName: normalizeString(row.company_name),
+    givenName: normalizeString(row.given_name),
+    familyName: normalizeString(row.family_name),
+    primaryEmail: normalizeString(row.primary_email),
+    primaryPhone: normalizeString(row.primary_phone),
     billingAddress: {
       line1: normalizeString(row.bill_addr_line1),
       line2: normalizeString(row.bill_addr_line2),
@@ -410,6 +415,16 @@ function mapCachedQboCustomer(row: Record<string, unknown>): QboCustomer {
       ),
       zip: normalizeString(row.ship_addr_postal_code),
     },
+    billAddrLine1: normalizeString(row.bill_addr_line1),
+    billAddrLine2: normalizeString(row.bill_addr_line2),
+    billAddrCity: normalizeString(row.bill_addr_city),
+    billAddrState: normalizeString(row.bill_addr_state),
+    billAddrPostalCode: normalizeString(row.bill_addr_postal_code),
+    shipAddrLine1: normalizeString(row.ship_addr_line1),
+    shipAddrLine2: normalizeString(row.ship_addr_line2),
+    shipAddrCity: normalizeString(row.ship_addr_city),
+    shipAddrState: normalizeString(row.ship_addr_state),
+    shipAddrPostalCode: normalizeString(row.ship_addr_postal_code),
     active: normalizeBoolean(row.active),
     syncToken: normalizeString(row.sync_token),
     qboUpdatedTime: normalizeString(row.qbo_updated_time),

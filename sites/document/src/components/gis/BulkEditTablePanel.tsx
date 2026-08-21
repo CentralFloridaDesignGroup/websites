@@ -9,7 +9,7 @@ import {
   verticalEstablishmentMethodOptions,
 } from "./constants";
 import type { GisRecord, PointMaterial, UpdateGisRecordInput } from "./types";
-import { KnownStatePlaneProjection } from "cfdg/types";
+import { KnownStatePlaneProjection } from "cfdg/types/v1";
 
 type BulkEditTablePanelProps = {
   isOpen: boolean;

@@ -1,5 +1,5 @@
 import type { GisDatum, PointMaterial } from "./types";
-import { KnownStatePlaneProjection } from "cfdg/types";
+import { KnownStatePlaneProjection } from "cfdg/types/v1";
 
 export const gisDatumOptions: Array<{ value: GisDatum; label: string }> = [
   { value: "wgs84", label: "WGS84" },

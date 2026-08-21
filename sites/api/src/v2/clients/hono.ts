@@ -27,7 +27,7 @@ import {
   mapClientListItemDbToObject,
   mapContactDbToObject,
   mapProjectListItemDbToObject,
-} from "cfdg/types/mappers";
+} from "cfdg/types/v2/mappers";
 import { convertBodyToObject } from "cfdg/scripts";
 
 /** Creates v2 client routes for Northstar. */

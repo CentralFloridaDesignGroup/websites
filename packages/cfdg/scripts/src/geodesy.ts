@@ -1,5 +1,5 @@
-import { STATE_PLANE_DEFINITIONS } from "cfdg/types/constants";
-import { StatePlaneProjection, StatePlaneInput, Wgs84Input } from "cfdg/types";
+import { STATE_PLANE_DEFINITIONS } from "cfdg/types/v1/constants";
+import { StatePlaneProjection, StatePlaneInput, Wgs84Input } from "cfdg/types/v1";
 import proj4 from "proj4";
 
 /**

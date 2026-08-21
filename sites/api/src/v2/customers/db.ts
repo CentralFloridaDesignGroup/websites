@@ -1,5 +1,5 @@
 import type { QboCustomerResponse } from "cfdg/types/v2";
-import { mapQboSourceToDb } from "cfdg/types/mappers";
+import { mapQboSourceToDb } from "cfdg/types/v2/mappers";
 
 
 /** Upserts one QBO customer or project into the Northstar customer table. */

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Button, Combobox, Textbox } from 'cfdg/input'
 import { Modal, showNotification } from 'cfdg/layout'
-import type { ClientContact, QboCustomer, State } from 'cfdg/types'
+import type { ClientContact, QboCustomer, State } from 'cfdg/types/v1'
 import { Plus } from 'lucide-react'
 import { createClient, createClientContact, fetchClientContacts, fetchClients, type ContactPayload } from '../../../../api/projectManagement'
 import type { ClientInfo } from '../types/proposalTypes'

@@ -14,7 +14,7 @@ export default defineConfig({
       'cfdg/input': path.resolve(__dirname, '../../packages/cfdg/input/src'),
       'cfdg/layout': path.resolve(__dirname, '../../packages/cfdg/layout/src'),
       'cfdg/scripts': path.resolve(__dirname, '../../packages/cfdg/scripts/src'),
-      'cfdg/types': path.resolve(__dirname, '../../packages/cfdg/types/src'),
+      'cfdg/types/v1': path.resolve(__dirname, '../../packages/cfdg/types/src/v1'),
     },
   },
 })

@@ -1,6 +1,6 @@
 ﻿import { useEffect, useState } from 'react';
 import { Dates } from "cfdg/scripts";
-import type { JobPosition } from 'cfdg/types';
+import type { JobPosition } from 'cfdg/types/v1';
 import { MarketingSelect, MarketingTextField } from '../../components/marketing';
 import { JobPostingCard } from './components/jobPostingCard';
 

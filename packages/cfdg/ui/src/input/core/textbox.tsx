@@ -7,7 +7,7 @@ import type {
     RequiredProperty, 
     RegexProperty, 
     ColorClassNamesFor
-} from 'cfdg/types';
+} from 'cfdg/types/v2';
 
 /** Properties for the Textbox component. */
 export type TextboxProperties = Omit<InputHTMLAttributes<HTMLInputElement>, 'required' | 'size' | 'className' | 'id' | 'name' | 'pattern' | 'maxLength'> & {

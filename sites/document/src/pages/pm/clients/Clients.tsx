@@ -3,7 +3,7 @@ import { useMsal } from '@azure/msal-react'
 import { useSearchParams } from 'react-router-dom'
 import { Button, Textbox } from 'cfdg/input'
 import { Modal, showNotification } from 'cfdg/layout'
-import { type ClientContact, type Invoice, type QboCustomer } from 'cfdg/types'
+import { type ClientContact, type Invoice, type QboCustomer } from 'cfdg/types/v1'
 import { ArrowLeft, Plus, RefreshCw } from 'lucide-react'
 import { fetchInvoices } from '../../../api/invoices'
 import {

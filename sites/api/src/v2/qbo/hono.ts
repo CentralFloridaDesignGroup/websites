@@ -26,7 +26,7 @@ import type {
   QboSettings,
   QboStatusResponse,
 } from "cfdg/types/v2";
-import { mapQboAppSettings } from "cfdg/types/mappers";
+import { mapQboAppSettings } from "cfdg/types/v2/mappers";
 
 const QBO_STATE_PREFIX = "qbo_oauth_state:";
 

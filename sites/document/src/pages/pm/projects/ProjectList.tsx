@@ -1,5 +1,5 @@
 import { Combobox, Textbox } from 'cfdg/input'
-import { type ProjectStatus } from 'cfdg/types'
+import { type ProjectStatus } from 'cfdg/types/v1'
 import { type ProjectSummary } from '../../../api/projectManagement'
 import { formatProjectStatus, projectStatusClassName } from './projectUtils'
 

@@ -1,5 +1,5 @@
-import type { AuthContext } from 'cfdg/types'
-import { REQUEST_AUTH_CONTEXT_KEY } from 'cfdg/types/constants'
+import type { AuthContext } from 'cfdg/types/v1'
+import { REQUEST_AUTH_CONTEXT_KEY } from 'cfdg/types/v1/constants'
 
 /**
  * Sets the authentication context for a request.

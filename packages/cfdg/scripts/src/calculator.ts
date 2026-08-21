@@ -1,4 +1,4 @@
-import { HistoryEntry } from "cfdg/types";
+import { HistoryEntry } from "cfdg/types/v1";
 
 /** Shared key press event type @deprecated This module is being sunset. Migrate to new home before this is deleted. */
 type KeyPressEvent = {

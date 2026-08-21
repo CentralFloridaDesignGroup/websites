@@ -2,7 +2,7 @@ import { ChangeEvent, FocusEvent, useEffect, useState } from 'react';
 import { Textbox } from '../core/textbox';
 import type { TextboxProperties } from '../core/textbox';
 import { classValueToString, getRegexMessage, getRegexPattern, getRequiredMessage, isRequired } from 'cfdg/scripts';
-import type { ColorClassNamesFor, ColorMode } from 'cfdg/types';
+import type { ColorClassNamesFor, ColorMode } from 'cfdg/types/v2';
 
 export type DocumentTextboxProperties = TextboxProperties & {
     /** The name of the field. Should be unique */

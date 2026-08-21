@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { createAuthMiddleware } from './auth/authPolicy'
-import { CORS_HEADERS, CORS_HEADERS_V2, JSON_HEADERS, JSON_HEADERS_V2 } from 'cfdg/types/constants'
+import { CORS_HEADERS, CORS_HEADERS_V2, JSON_HEADERS, JSON_HEADERS_V2 } from 'cfdg/types/v1/constants'
 import { serverError, type HonoEnv } from './apiTypes'
 import { createCommentsApi } from './comments/hono'
 import { createGisPointsApi } from './gisPointsApi'

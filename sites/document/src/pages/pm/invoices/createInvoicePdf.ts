@@ -1,6 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { type Invoice } from "cfdg/types";
+import { type Invoice } from "cfdg/types/v1";
 import { type InvoiceEmailAttachment } from "../../../api/invoices";
 
 function formatCurrency(cents: number): string {

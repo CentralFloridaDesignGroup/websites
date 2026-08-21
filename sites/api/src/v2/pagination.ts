@@ -1,4 +1,4 @@
-import type { UnknownPartial } from "cfdg/types";
+import type { UnknownPartial } from "cfdg/types/v2";
 import type { ListOptions, PageSize, Pagination } from "cfdg/types/v2";
 
 /** 

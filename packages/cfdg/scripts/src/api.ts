@@ -1,7 +1,7 @@
 // #region D1 helpers
 
-import { Address, State } from "cfdg/types";
-import { STATES } from "cfdg/types/constants";
+import { Address, State } from "cfdg/types/v1";
+import { STATES } from "cfdg/types/v1/constants";
 
 /**
  * Normalizes a string value by converting it to a string and trimming whitespace.
