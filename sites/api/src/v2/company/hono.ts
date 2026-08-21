@@ -38,17 +38,16 @@ export function companyApi() {
       const authError = requireAuthMode(c, "microsoft");
       if (authError) return authError;
 
-      const body = (await c.req.json().catch(() => null)) as unknown;
-      if (!body || typeof body !== "object")
-        return badRequest("Invalid request body");
+      const body = await c.req.parseBody();
+      if (!body) return badRequest("Request body is required");
 
-      const settings = convertBodyToObject<CompanySettings>(c.req.raw);
-      if (!settings) return badRequest("Invalid request body");
+      const payload = convertBodyToObject<CompanySettings>(body);
+      if (!payload) return badRequest("Invalid request body");
 
-      await upsertCompanySettings(c.env.DB_NORTHSTAR, settings);
-      if (!settings) return badRequest("Company settings are not configured");
+      const updatedDbRow = await upsertCompanySettings(c.env.DB_NORTHSTAR, payload);
+      if (!updatedDbRow) return badRequest("Company settings are not configured");
       return c.json(
-        { status: "ok", settings: mapCompanySettingsDbToObject(settings) },
+        { status: "ok", settings: mapCompanySettingsDbToObject(updatedDbRow) },
         200,
       ); // Return the updated settings in the response.
     } catch (error: unknown) {

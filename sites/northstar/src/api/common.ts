@@ -1,15 +1,18 @@
 import { normalizeString } from "cfdg/scripts";
 import { getMsalSilentRedirectUri, msalInstance } from "../auth/msalConfig";
 
-/** 
- * Gets the base URL for the Northstar API. 
+/**
+ * Gets the base URL for the Northstar API.
  * @returns The base URL for the Northstar API, or a default value if not configured.
  */
 export function getApiBaseUrl(): string {
-  return normalizeString(import.meta.env.VITE_API_BASE_URL) || "https://api.whitepointsurvey.com";
+  return (
+    normalizeString(import.meta.env.VITE_API_BASE_URL) ||
+    "https://api.whitepointsurvey.com"
+  );
 }
 
-/** 
+/**
  * Gets the authentication scopes for the Northstar API.
  * @returns An array of authentication scopes.
  */
@@ -38,13 +41,14 @@ export class NorthstarApiError extends Error {
   }
 }
 
-/** 
- * Gets an access token for the Northstar API using the active Microsoft account. 
+/**
+ * Gets an access token for the Northstar API using the active Microsoft account.
  * @returns A promise that resolves to the access token string.
  * @throws An error if no active account is found or if token acquisition fails.
  */
 async function getAccessToken(): Promise<string> {
-  const account = msalInstance.getActiveAccount() ?? msalInstance.getAllAccounts()[0];
+  const account =
+    msalInstance.getActiveAccount() ?? msalInstance.getAllAccounts()[0];
   if (!account) {
     throw new Error("No active Microsoft account. Please sign in again.");
   }
@@ -57,20 +61,25 @@ async function getAccessToken(): Promise<string> {
 
   const token = normalizeString(result.accessToken);
   if (!token) {
-    throw new Error("Microsoft token acquisition did not return an access token.");
+    throw new Error(
+      "Microsoft token acquisition did not return an access token.",
+    );
   }
 
   return token;
 }
 
-/** 
+/**
  * Sends an authenticated request to the Northstar API and parses its JSON response.
  * @param path - The API endpoint path.
  * @param init - The fetch request initialization options.
  * @returns A promise that resolves to the parsed JSON response.
  * @throws NorthstarApiError if the response status is not successful.
  */
-export async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> {
+export async function requestJson<T>(
+  path: string,
+  init: RequestInit = {},
+): Promise<T> {
   const response = await fetch(`${getApiBaseUrl()}${path}`, {
     ...init,
     headers: {
@@ -82,8 +91,32 @@ export async function requestJson<T>(path: string, init: RequestInit = {}): Prom
 
   if (!response.ok) {
     const message = await response.text();
-    throw new NorthstarApiError(message || `Northstar API request failed (${response.status}).`, response.status);
+    throw new NorthstarApiError(
+      message || `Northstar API request failed (${response.status}).`,
+      response.status,
+    );
   }
 
   return response.json() as Promise<T>;
+}
+
+/**
+ * Builds a POST or PUT request to the Northstar API with a JSON body and parses its JSON response.
+ * @param path - The API endpoint path.
+ * @param method - The HTTP method (POST or PUT).
+ * @param body - The request body to be sent as JSON.
+ * @returns A promise that resolves to the parsed JSON response.
+ * @throws NorthstarApiError if the response status is not successful.
+ */
+export function buildPackage<T>(
+  method: "POST" | "PUT",
+  body: T,
+): RequestInit {
+  return {
+    method,
+    body: JSON.stringify(body as T),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  };
 }

@@ -239,14 +239,15 @@ export async function updateClientStatus(
   qboId: string,
   status: ClientStatus,
 ): Promise<ClientDbRow> {
-  await db
-    .prepare(
-      `
-    INSERT INTO client_extra_data (qbo_id, status) VALUES (?, ?)
-    ON CONFLICT(qbo_id) DO UPDATE SET status = excluded.status
-  `,
-    )
-    .bind(qboId, status)
+  const updated = await db
+    .prepare("UPDATE client_extra_data SET status = ? WHERE qbo_id = ?")
+    .bind(status, qboId)
     .run();
+  if (!updated.meta.changes) {
+    await db
+      .prepare("INSERT INTO client_extra_data (qbo_id, status) VALUES (?, ?)")
+      .bind(qboId, status)
+      .run();
+  }
   return getClient(db, qboId) as Promise<ClientDbRow>;
 }

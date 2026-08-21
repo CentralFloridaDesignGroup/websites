@@ -1,5 +1,12 @@
 # Mistakes
 
+## 2026-08-17 - Repaired an unobserved address route
+
+- Mistake: Initially fixed the Project Management V1 customer normalizer without first matching it to the browser requests from the affected invoice workflow.
+- Cause: Inferred the active API boundary from the reported feature instead of tracing the observed request URLs.
+- Fix: Used the server logs to identify `/api/qbo/customers/:id/projects` and corrected `sites/document/src/api/qbo.ts`, which the invoice editor actually uses.
+- Reference: For data-loading defects, anchor the first repair to the observed request URL and its exact frontend consumer.
+
 ## 2026-08-15 — Compressed implementation formatting
 
 - Mistake: Added large one-line JSX and handler blocks instead of preserving readable line breaks.

@@ -160,11 +160,7 @@ export function clientsApi() {
 
       const payload = convertBodyToObject<ClientContactRequest>(body);
       if (!payload || !payload.contact) return badRequest("Invalid request body");
-
-      // const payload = contactPayload(
-      //   await c.req.json<Record<string, unknown>>().catch(() => ({})),
-      // );
-      // if (typeof payload === "string") return badRequest(payload);
+      
       const contact = await updateClientContact(
         c.env.DB_NORTHSTAR,
         payload.contact

@@ -3,6 +3,7 @@ import type {
   QboConnectionStatus,
   QboCustomer,
   QboServiceItem,
+  State,
 } from "cfdg/types";
 import { requestJson } from "./client";
 
@@ -22,6 +23,38 @@ function normalizeBool(value: unknown): boolean {
 
 function normalizeCustomer(value: unknown): QboCustomer {
   const row = asRecord(value);
+  const billingAddress = asRecord(row.billingAddress);
+  const shippingAddress = asRecord(row.shippingAddress);
+  const billAddrLine1 = normalizeString(
+    row.billAddrLine1 ?? row.bill_addr_line1 ?? billingAddress.line1,
+  );
+  const billAddrLine2 = normalizeString(
+    row.billAddrLine2 ?? row.bill_addr_line2 ?? billingAddress.line2,
+  );
+  const billAddrCity = normalizeString(
+    row.billAddrCity ?? row.bill_addr_city ?? billingAddress.city,
+  );
+  const billAddrState = normalizeString(
+    row.billAddrState ?? row.bill_addr_state ?? billingAddress.state,
+  );
+  const billAddrPostalCode = normalizeString(
+    row.billAddrPostalCode ?? row.bill_addr_postal_code ?? billingAddress.zip,
+  );
+  const shipAddrLine1 = normalizeString(
+    row.shipAddrLine1 ?? row.ship_addr_line1 ?? shippingAddress.line1,
+  );
+  const shipAddrLine2 = normalizeString(
+    row.shipAddrLine2 ?? row.ship_addr_line2 ?? shippingAddress.line2,
+  );
+  const shipAddrCity = normalizeString(
+    row.shipAddrCity ?? row.ship_addr_city ?? shippingAddress.city,
+  );
+  const shipAddrState = normalizeString(
+    row.shipAddrState ?? row.ship_addr_state ?? shippingAddress.state,
+  );
+  const shipAddrPostalCode = normalizeString(
+    row.shipAddrPostalCode ?? row.ship_addr_postal_code ?? shippingAddress.zip,
+  );
   return {
     id: normalizeString(row.id ?? row.qbo_id),
     parentId: normalizeString(row.parentId ?? row.parent_id),
@@ -34,20 +67,30 @@ function normalizeCustomer(value: unknown): QboCustomer {
     familyName: normalizeString(row.familyName ?? row.family_name),
     primaryEmail: normalizeString(row.primaryEmail ?? row.primary_email),
     primaryPhone: normalizeString(row.primaryPhone ?? row.primary_phone),
-    billAddrLine1: normalizeString(row.billAddrLine1 ?? row.bill_addr_line1),
-    billAddrLine2: normalizeString(row.billAddrLine2 ?? row.bill_addr_line2),
-    billAddrCity: normalizeString(row.billAddrCity ?? row.bill_addr_city),
-    billAddrState: normalizeString(row.billAddrState ?? row.bill_addr_state),
-    billAddrPostalCode: normalizeString(
-      row.billAddrPostalCode ?? row.bill_addr_postal_code,
-    ),
-    shipAddrLine1: normalizeString(row.shipAddrLine1 ?? row.ship_addr_line1),
-    shipAddrLine2: normalizeString(row.shipAddrLine2 ?? row.ship_addr_line2),
-    shipAddrCity: normalizeString(row.shipAddrCity ?? row.ship_addr_city),
-    shipAddrState: normalizeString(row.shipAddrState ?? row.ship_addr_state),
-    shipAddrPostalCode: normalizeString(
-      row.shipAddrPostalCode ?? row.ship_addr_postal_code,
-    ),
+    billingAddress: {
+      line1: billAddrLine1,
+      line2: billAddrLine2,
+      city: billAddrCity,
+      state: billAddrState as State,
+      zip: billAddrPostalCode,
+    },
+    shippingAddress: {
+      line1: shipAddrLine1,
+      line2: shipAddrLine2,
+      city: shipAddrCity,
+      state: shipAddrState as State,
+      zip: shipAddrPostalCode,
+    },
+    billAddrLine1,
+    billAddrLine2,
+    billAddrCity,
+    billAddrState,
+    billAddrPostalCode,
+    shipAddrLine1,
+    shipAddrLine2,
+    shipAddrCity,
+    shipAddrState,
+    shipAddrPostalCode,
     active: normalizeBool(row.active),
     syncToken: normalizeString(row.syncToken ?? row.sync_token),
     qboUpdatedTime: normalizeString(row.qboUpdatedTime ?? row.qbo_updated_time),

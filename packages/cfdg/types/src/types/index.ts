@@ -56,6 +56,7 @@ export type {
 
 // Project Management Exports
 export type {
+  ProjectStatus,
   ProjectBillingProfile,
   ProjectBillingProfileRow,
   ProjectTask,
@@ -109,7 +110,10 @@ export type {
 } from "./ui";
 
 export type {
-  QboConnectionStatus
+  QboAccount,
+  QboConnectionStatus,
+  QboCustomer,
+  QboServiceItem,
 } from "./qbo";
 
 // #endregion

@@ -1392,7 +1392,10 @@ async function fetchAccountingAccessRecipients(env: HonoEnv['Bindings']): Promis
 
   while (url) {
     const response = await fetch(url, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        ConsistencyLevel: 'eventual',
+      },
     })
     const data = await response.json().catch(() => null) as GraphListResponse<GraphUser> | null
     if (!response.ok) {
@@ -1495,7 +1498,6 @@ async function notifyAccountingPaymentSubmitted(db: D1Database, env: HonoEnv['Bi
     ).run()
   } catch (error: unknown) {
     console.error('Error sending accounting payment notification:', error)
-    throw error
   }
 }
 

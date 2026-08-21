@@ -1,6 +1,7 @@
 import type { CompanySettings } from "cfdg/types/v2";
 import { requestJson } from "./client";
 import { updateQboSettings } from "./qbo";
+import { buildPackage } from "./common";
 
 type CompanySettingsResponse = {
   settings: CompanySettings;
@@ -12,11 +13,13 @@ export async function getCompanySettings(): Promise<CompanySettings> {
   return response.settings;
 }
 
-export async function updateCompanySettings(newSettings: CompanySettings): Promise<CompanySettings> {
-  await requestJson<CompanySettingsResponse>("/v2/company", {
-    method: "POST",
-    body: JSON.stringify(newSettings),
-  });
+export async function updateCompanySettings(
+  newSettings: CompanySettings,
+): Promise<CompanySettings> {
+  await requestJson<CompanySettingsResponse>(
+    "/v2/company",
+    buildPackage<CompanySettings>("PUT", newSettings),
+  );
 
   // The general settings endpoint is independent from QBO. A settings row may
   // contain an empty or legacy QBO object before the OAuth connection exists;
