@@ -41,3 +41,6 @@ Thumbs.db
 .pnpm-store/
 
 tsconfig.tsbuildinfo
+
+# real world seed data
+sites/api/migrations/0001_current_snapshot.sql

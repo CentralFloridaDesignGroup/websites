@@ -15,6 +15,7 @@ import type {
 import { Hono } from 'hono'
 import { invoiceSyncState, paymentSyncState, payoutSyncState } from './accountingSyncState'
 import { badRequest, jsonResponse, requireAuthMode, serverError, type HonoEnv } from './apiTypes'
+import { renderPaymentRecordedEmail } from './emailTemplates/paymentRecorded'
 import { ensureQboSchemaReady, syncInvoiceToQbo, syncStripePayoutDepositToQbo, trySyncInvoicePaymentToQbo, voidInvoiceInQbo } from './qboApi'
 import { ensureProjectManagementSchemaReady, fetchActiveClientContactsByIds, fetchProjectBillingProfile, fetchProjectInvoiceDocuments, fetchProjectManager } from './projectManagementApi'
 import { INVOICE_STATUSES } from 'cfdg/types/constants'
@@ -1425,6 +1426,21 @@ async function sendAccountingPaymentSubmittedEmail(env: HonoEnv['Bindings'], inv
     throw new Error('Accounting Access group has no email-enabled user members')
   }
 
+  const emailTemplate = renderPaymentRecordedEmail({
+    invoiceNumber: escapeHtml(invoice.invoiceNumber),
+    clientName: escapeHtml(invoice.clientName),
+    projectReference: escapeHtml(invoice.projectReference || 'Not provided'),
+    method: escapeHtml(payment.method || 'Payment'),
+    referenceNumber: escapeHtml(payment.referenceNumber || 'Not provided'),
+    grossAmount: formatEmailCurrency(payment.grossCents),
+    feeAmount: payment.feeCents > 0 ? formatEmailCurrency(payment.feeCents) : 'None',
+    netAmount: formatEmailCurrency(payment.netCents || Math.max(0, payment.grossCents - payment.feeCents)),
+    paidDate: escapeHtml((payment.paidDate || nowIso()).slice(0, 10)),
+    stripeCheckoutSessionId: escapeHtml(payment.stripeCheckoutSessionId || 'Not provided'),
+    stripePaymentIntentId: escapeHtml(payment.stripePaymentIntentId || 'Not provided'),
+    note: escapeHtml(payment.note || 'None'),
+  })
+
   const brevoSandbox = normalizeString(env.BREVO_SANDBOX).toLowerCase() === 'true'
   const response = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
@@ -1436,22 +1452,8 @@ async function sendAccountingPaymentSubmittedEmail(env: HonoEnv['Bindings'], inv
       sender: { email: senderEmail, name: 'Do Not Reply - White Point' },
       to: recipients,
       replyTo: { email: senderEmail },
-      subject: `Payment submitted for invoice ${invoice.invoiceNumber}`,
-      htmlContent: [
-        '<p>A payment was submitted in Compass.</p>',
-        `<p><strong>Invoice:</strong> ${escapeHtml(invoice.invoiceNumber)}</p>`,
-        `<p><strong>Client:</strong> ${escapeHtml(invoice.clientName)}</p>`,
-        `<p><strong>Project:</strong> ${escapeHtml(invoice.projectReference || 'Not provided')}</p>`,
-        `<p><strong>Method:</strong> ${escapeHtml(payment.method || 'Payment')}</p>`,
-        payment.referenceNumber ? `<p><strong>Reference:</strong> ${escapeHtml(payment.referenceNumber)}</p>` : '',
-        `<p><strong>Gross:</strong> ${formatEmailCurrency(payment.grossCents)}</p>`,
-        payment.feeCents > 0 ? `<p><strong>Stripe fee:</strong> ${formatEmailCurrency(payment.feeCents)}</p>` : '',
-        `<p><strong>Net:</strong> ${formatEmailCurrency(payment.netCents || Math.max(0, payment.grossCents - payment.feeCents))}</p>`,
-        `<p><strong>Paid date:</strong> ${(payment.paidDate || nowIso()).slice(0, 10)}</p>`,
-        payment.stripeCheckoutSessionId ? `<p><strong>Stripe session:</strong> ${escapeHtml(payment.stripeCheckoutSessionId)}</p>` : '',
-        payment.stripePaymentIntentId ? `<p><strong>Stripe payment intent:</strong> ${escapeHtml(payment.stripePaymentIntentId)}</p>` : '',
-        payment.note ? `<p><strong>Note:</strong> ${escapeHtml(payment.note)}</p>` : '',
-      ].join(''),
+      subject: emailTemplate.subject,
+      htmlContent: emailTemplate.htmlContent,
       ...(brevoSandbox ? { headers: { 'X-Sib-Sandbox': 'drop' } } : {}),
     }),
   })

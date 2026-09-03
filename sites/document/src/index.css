@@ -1,6 +1,14 @@
 @import "@styles/globals.css";
 @import "@styles/utilities.css";
 
+.document-outlet-scroll {
+	-ms-overflow-style: none;
+	scrollbar-width: none;
+}
+
+.document-outlet-scroll::-webkit-scrollbar {
+	display: none;
+}
 
 .leaflet-tooltip.gis-point-label {
 	background: transparent;

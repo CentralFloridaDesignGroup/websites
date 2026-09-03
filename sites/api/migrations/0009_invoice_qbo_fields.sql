@@ -1,1 +1,0 @@
--- Runtime schema guard adds these columns idempotently for existing D1 databases.

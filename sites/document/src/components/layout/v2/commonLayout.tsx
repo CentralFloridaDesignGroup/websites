@@ -229,8 +229,8 @@ export function CommonLayout() {
                     <p className="text-sm text-center text-blue-700 dark:text-blue-300 mr-4">You are viewing the public information resource version of this site. If you are an employee, please sign in to access the full features.</p>
                 </div>
             )}
-            <div className="flex flex-1 overflow-hidden">
-                <aside className="w-80 h-screen shrink-0 overflow-y-auto p-4 hidden md:block">
+            <div className="flex min-h-0 flex-1 overflow-hidden">
+                <aside className="hidden h-full w-80 shrink-0 flex-col overflow-hidden p-4 md:flex">
                     <Link
                         to="/"
                         className="text-2xl font-bold mb-6 block text-center"
@@ -238,7 +238,7 @@ export function CommonLayout() {
                         <img src="/compass_Name.webp" alt="Compass Logo" className="w-full inline-block px-5 dark:hidden" />
                         <img src="/compass_Name_Dark.webp" alt="Compass Logo" className="w-full px-5 hidden dark:inline-block" />
                     </Link>
-                    <nav className="flex flex-col h-[calc(100vh-9rem)] overflow-y-auto">
+                    <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto">
                         {sidebarItems.map((item, index) => (
                             (item.type === "link" && addSidebarLinkItem(item as SidebarLinkItem, index)) ||
                             (item.type === "header" && addSidebarHeaderItem(item as SidebarHeaderItem, index)) ||
@@ -247,7 +247,7 @@ export function CommonLayout() {
                         ))}
                     </nav>
                 </aside>
-                <main className="flex-1 h-screen flex flex-col overflow-hidden">
+                <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
                     <div className="shrink-0 flex items-center justify-end px-4">
                         {isAuthenticated ? (
                             <Menu>
@@ -295,7 +295,7 @@ export function CommonLayout() {
 
                         )}
                     </div>
-                    <div className="flex-1 min-h-0 p-4 overflow-y-auto">
+                    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden p-4">
                         <Outlet
                             context={{ sidebarItems, setSidebarItems }}
                         />
