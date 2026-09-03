@@ -29,6 +29,8 @@ export interface ComboboxProperties {
     defaultIndex?: number;
     /** Target color mode for the control. Defaults to "light". */
     colorMode?: InputColorMode;
+    /** Renders the option list in a document-level portal so containing overflow does not clip it. */
+    portal?: boolean;
     /** Called when the selected value changes. */
     onChange?: (field: string, value: string) => void;
     /** Called when the selected value passes validation. */
@@ -62,19 +64,21 @@ export function Combobox({
     placeholder = "Select...",
     defaultIndex,
     colorMode = "light",
+    portal = false,
     onChange,
     onValidChange,
     onValidReport,
     props
 }: ComboboxProperties): React.JSX.Element {
-    const options = useMemo(() => [{ key: placeholder, value: "" }, ...normalizeSelections(selections)], [placeholder, selections]);
-    const initialValue = defaultIndex !== undefined ? options[defaultIndex + 1]?.value ?? "" : "";
+    const options = useMemo(() => normalizeSelections(selections), [selections]);
+    const initialValue = defaultIndex !== undefined ? options[defaultIndex]?.value ?? "" : "";
     const [internalValue, setInternalValue] = useState(initialValue);
     const [query, setQuery] = useState("");
     const [error, setError] = useState<string | null>(null);
     const selectedValue = value ?? internalValue;
 
     const selectedLabel = useMemo(() => {
+        if (!selectedValue) return "";
         return options.find((option) => option.value === selectedValue)?.key ?? "";
     }, [options, selectedValue]);
 
@@ -107,12 +111,14 @@ export function Combobox({
     };
 
     const handleQueryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setQuery(event.target.value);
+        const nextQuery = event.target.value;
+        setQuery(nextQuery);
+        if (!nextQuery) handleChange("");
     };
 
     useEffect(() => {
         if (value !== undefined) return;
-        const nextValue = defaultIndex !== undefined ? options[defaultIndex + 1]?.value ?? "" : "";
+        const nextValue = defaultIndex !== undefined ? options[defaultIndex]?.value ?? "" : "";
         setInternalValue(nextValue);
         if (nextValue) {
             onChange?.(field, nextValue);
@@ -143,7 +149,15 @@ export function Combobox({
                         <ComboboxButton className="absolute inset-y-0 right-0 flex items-center pr-2 disabled:hidden" disabled={disabled}>
                             <ChevronDown className="h-5 w-5 text-gray-400" aria-hidden="true" />
                         </ComboboxButton>
-                        <ComboboxOptions transition className={menuClass(colorMode, props?.optionsClassNames)}>
+                        <ComboboxOptions
+                            transition
+                            portal={portal}
+                            anchor={portal ? "bottom start" : undefined}
+                            className={menuClass(
+                                colorMode,
+                                `${portal ? "!z-[60] !w-[var(--input-width)]" : ""} ${props?.optionsClassNames || ""}`,
+                            )}
+                        >
                             {filteredOptions.length > 0 ? filteredOptions.map((option, index) => (
                                 <ComboboxOption
                                     key={`${option.key}-${option.value}-${index}`}

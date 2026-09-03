@@ -112,13 +112,6 @@
                     "path": "/tools/field-data-parser",
                     "tags": ["Field Data", "Data Analysis", "Surveying"],
                     "requiresAuth": false
-                },
-                {
-                    "name": "CXL Code List Editor",
-                    "description": "Build a new CHC LandStar (.cxl) point code list from scratch.",
-                    "path": "/tools/cxl-editor",
-                    "tags": ["LandStar", "CXL", "Code List", "Field Data"],
-                    "requiresAuth": false
                 }
             ]
         },
@@ -155,13 +148,6 @@
                     "description": "A reference guide to the ALTA Table A requirements for land title surveys.",
                     "path": "/reference/alta-tablea",
                     "tags": ["ALTA Table A", "Reference", "Land Title"],
-                    "requiresAuth": false
-                },
-                {
-                    "name": "C.S.T. Handbook",
-                    "description": "A comprehensive handbook for certified survey technicians, covering best practices and industry standards.",
-                    "path": "/cst-handbook",
-                    "tags": ["CST Handbook", "Reference", "Surveying"],
                     "requiresAuth": false
                 }
             ]

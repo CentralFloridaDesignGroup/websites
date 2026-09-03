@@ -1,3 +1,4 @@
+import { InteractionRequiredAuthError } from '@azure/msal-browser'
 import { getMsalSilentRedirectUri, msalInstance } from '../auth/msalConfig'
 
 function normalizeString(value: unknown): string {
@@ -18,16 +19,47 @@ function getApiScopes(): string[] {
   return scopes
 }
 
+function getMsalErrorCode(error: unknown): string {
+  if (!error || typeof error !== 'object') {
+    return ''
+  }
+
+  const candidate = error as { errorCode?: unknown; code?: unknown }
+  return normalizeString(candidate.errorCode ?? candidate.code)
+}
+
+function isSilentTokenInteractionError(error: unknown): boolean {
+  if (error instanceof InteractionRequiredAuthError) {
+    return true
+  }
+
+  const errorCode = getMsalErrorCode(error)
+  return errorCode === 'timed_out' || errorCode === 'monitor_window_timeout'
+}
+
 export async function acquireApiAccessToken(): Promise<string> {
   const account = msalInstance.getActiveAccount() ?? msalInstance.getAllAccounts()[0]
   if (!account) {
     throw new Error('No active Microsoft account. Please sign in again.')
   }
 
-  const result = await msalInstance.acquireTokenSilent({
+  const request = {
     account,
     scopes: getApiScopes(),
+  }
+
+  const result = await msalInstance.acquireTokenSilent({
+    ...request,
     redirectUri: getMsalSilentRedirectUri(),
+  }).catch(async (error: unknown) => {
+    // A cached account can survive a browser restart even when silent renewal
+    // cannot. Recover through the interactive flow instead of leaving the UI
+    // signed in while protected actions fail with an MSAL timeout.
+    if (isSilentTokenInteractionError(error)) {
+      return msalInstance.acquireTokenPopup(request)
+    }
+
+    throw error
   })
 
   const token = normalizeString(result.accessToken)
