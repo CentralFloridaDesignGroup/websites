@@ -1015,6 +1015,11 @@ function paymentMethodNames(method: string): string[] {
   return supportedMethods[normalizeString(method).toLowerCase()] || []
 }
 
+/** QuickBooks limits payment document/reference numbers to 21 characters. */
+function qboPaymentReferenceNumber(value: string): string {
+  return normalizeString(value).slice(0, 21)
+}
+
 /** Finds the active QuickBooks payment method corresponding to a Compass payment method. */
 async function getQboPaymentMethodId(db: D1Database, env: HonoEnv['Bindings'], method: string): Promise<string> {
   const names = paymentMethodNames(method).map((name) => name.toLowerCase())
@@ -1033,7 +1038,7 @@ async function buildQboPaymentFields(db: D1Database, env: HonoEnv['Bindings'], p
   const referenceNumber = normalizeString(payment.referenceNumber)
   const paymentMethodId = await getQboPaymentMethodId(db, env, payment.method)
   return {
-    ...(referenceNumber ? { PaymentRefNum: referenceNumber } : {}),
+    ...(referenceNumber ? { PaymentRefNum: qboPaymentReferenceNumber(referenceNumber) } : {}),
     ...(paymentMethodId ? { PaymentMethodRef: { value: paymentMethodId } } : {}),
   }
 }

@@ -130,6 +130,11 @@ type StripePaymentIntent = {
   metadata?: Record<string, string>
   payment_method?: string | StripePaymentMethod
   latest_charge?: string | { id?: string; balance_transaction?: string | StripeBalanceTransaction }
+  next_action?: {
+    type?: string
+    verify_with_microdeposits?: { hosted_verification_url?: string }
+  }
+  last_payment_error?: { code?: string; message?: string }
 }
 
 type StripePaymentMethod = {
@@ -139,6 +144,7 @@ type StripePaymentMethod = {
 
 type StripeCharge = {
   id?: string
+  payment_intent?: string | StripePaymentIntent
   balance_transaction?: string | StripeBalanceTransaction
 }
 
@@ -445,6 +451,24 @@ async function ensureInvoicesSchema(db: D1Database): Promise<void> {
     )`
   ).run()
 
+  await db.prepare(
+    `CREATE TABLE IF NOT EXISTS stripe_webhook_events (
+      stripe_event_id TEXT PRIMARY KEY,
+      event_type TEXT NOT NULL,
+      payment_intent_id TEXT,
+      created_date DATETIME NOT NULL
+    )`
+  ).run()
+
+  await db.prepare(
+    `CREATE TABLE IF NOT EXISTS stripe_payment_lifecycle_notifications (
+      stripe_payment_intent_id TEXT NOT NULL,
+      lifecycle_state TEXT NOT NULL,
+      sent_date DATETIME NOT NULL,
+      PRIMARY KEY (stripe_payment_intent_id, lifecycle_state)
+    )`
+  ).run()
+
   const invoiceColumns = [
     'po_number TEXT',
     'previously_billed_cents INTEGER NOT NULL DEFAULT 0',
@@ -556,6 +580,7 @@ async function ensureInvoicesSchema(db: D1Database): Promise<void> {
     'CREATE INDEX IF NOT EXISTS idx_invoice_payments_stripe_payout ON invoice_payments(stripe_payout_id)',
     'CREATE UNIQUE INDEX IF NOT EXISTS idx_invoice_payments_unique_stripe_session ON invoice_payments(stripe_checkout_session_id) WHERE stripe_checkout_session_id IS NOT NULL AND stripe_checkout_session_id != \'\'',
     'CREATE UNIQUE INDEX IF NOT EXISTS idx_invoice_payments_unique_stripe_intent ON invoice_payments(stripe_payment_intent_id) WHERE stripe_payment_intent_id IS NOT NULL AND stripe_payment_intent_id != \'\'',
+    'CREATE INDEX IF NOT EXISTS idx_stripe_webhook_events_payment_intent ON stripe_webhook_events(payment_intent_id)',
   ]
 
   for (const statement of indexes) {
@@ -1500,6 +1525,99 @@ async function notifyAccountingPaymentSubmitted(db: D1Database, env: HonoEnv['Bi
   }
 }
 
+type StripePaymentLifecycleState = 'verification_required' | 'processing' | 'failed'
+
+function getInvoicePaymentRecipients(invoice: Invoice): Array<{ email: string; name: string }> {
+  const recipients = invoice.contacts.length > 0
+    ? invoice.contacts.map((contact) => ({ email: contact.email, name: contact.name || invoice.clientName }))
+    : [{ email: invoice.clientEmail, name: invoice.clientName }]
+  return recipients.filter((recipient) => normalizeString(recipient.email).includes('@'))
+}
+
+function stripePaymentLifecycleContent(env: HonoEnv['Bindings'], invoice: Invoice, state: StripePaymentLifecycleState, verificationUrl: string, reason: string): { subject: string; htmlContent: string } {
+  const paymentUrl = `${getInvoicePublicBaseUrl(env)}/pay/${encodeURIComponent(invoice.publicToken)}`
+  const invoiceNumber = escapeHtml(invoice.invoiceNumber)
+  const project = escapeHtml(invoice.projectReference || invoice.clientName)
+  const amount = formatEmailCurrency(invoice.totalCents)
+  if (state === 'verification_required') {
+    return {
+      subject: `Action needed to verify bank payment for invoice ${invoice.invoiceNumber}`,
+      htmlContent: [
+        '<p>Your bank payment requires verification before it can be processed.</p>',
+        `<p><strong>Invoice:</strong> ${invoiceNumber}<br><strong>Project:</strong> ${project}<br><strong>Amount:</strong> ${amount}</p>`,
+        verificationUrl
+          ? `<p><a href="${escapeHtml(verificationUrl)}">Verify your bank account with Stripe</a></p>`
+          : '<p>Stripe will send verification instructions to complete the bank-account confirmation.</p>',
+        '<p>Your invoice will remain open until Stripe confirms the payment.</p>',
+      ].join(''),
+    }
+  }
+  if (state === 'processing') {
+    return {
+      subject: `Bank payment is processing for invoice ${invoice.invoiceNumber}`,
+      htmlContent: [
+        '<p>Your bank account has been verified and your ACH payment is now processing.</p>',
+        `<p><strong>Invoice:</strong> ${invoiceNumber}<br><strong>Project:</strong> ${project}<br><strong>Amount:</strong> ${amount}</p>`,
+        '<p>We will update the invoice when Stripe confirms the final payment result.</p>',
+      ].join(''),
+    }
+  }
+  return {
+    subject: `Bank payment could not be completed for invoice ${invoice.invoiceNumber}`,
+    htmlContent: [
+      '<p>Stripe could not complete your bank payment. No payment has been applied to this invoice.</p>',
+      `<p><strong>Invoice:</strong> ${invoiceNumber}<br><strong>Project:</strong> ${project}<br><strong>Amount:</strong> ${amount}</p>`,
+      reason ? `<p><strong>Details:</strong> ${escapeHtml(reason)}</p>` : '',
+      `<p><a href="${escapeHtml(paymentUrl)}">Use another payment method or try again</a></p>`,
+    ].join(''),
+  }
+}
+
+async function sendStripePaymentLifecycleEmail(env: HonoEnv['Bindings'], invoice: Invoice, state: StripePaymentLifecycleState, verificationUrl = '', reason = ''): Promise<void> {
+  const apiKey = normalizeString(env.BREVO_API_KEY)
+  const senderEmail = normalizeString(env.SENDER_EMAIL)
+  if (!apiKey || !senderEmail) {
+    throw new Error('Server configuration error: Missing Brevo email configuration')
+  }
+  const recipients = getInvoicePaymentRecipients(invoice)
+  if (recipients.length === 0) {
+    throw new Error('Invoice has no email-enabled payment recipients')
+  }
+  const accountingRecipients = await fetchAccountingAccessRecipients(env)
+  const content = stripePaymentLifecycleContent(env, invoice, state, verificationUrl, reason)
+  const brevoSandbox = normalizeString(env.BREVO_SANDBOX).toLowerCase() === 'true'
+  const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'api-key': apiKey },
+    body: JSON.stringify({
+      sender: { email: senderEmail, name: 'White Point Survey' },
+      to: recipients,
+      cc: accountingRecipients.length > 0 ? accountingRecipients : undefined,
+      replyTo: { email: senderEmail },
+      subject: content.subject,
+      htmlContent: content.htmlContent,
+      ...(brevoSandbox ? { headers: { 'X-Sib-Sandbox': 'drop' } } : {}),
+    }),
+  })
+  if (!response.ok) {
+    const body = await response.text()
+    throw new Error(`Brevo Stripe lifecycle email failed: ${body || response.statusText}`)
+  }
+}
+
+async function notifyStripePaymentLifecycle(db: D1Database, env: HonoEnv['Bindings'], invoice: Invoice, paymentIntentId: string, state: StripePaymentLifecycleState, verificationUrl = '', reason = ''): Promise<void> {
+  if (!paymentIntentId) return
+  const existing = await db.prepare(
+    'SELECT 1 FROM stripe_payment_lifecycle_notifications WHERE stripe_payment_intent_id = ? AND lifecycle_state = ?'
+  ).bind(paymentIntentId, state).first()
+  if (existing) return
+  await sendStripePaymentLifecycleEmail(env, invoice, state, verificationUrl, reason)
+  await db.prepare(
+    `INSERT OR IGNORE INTO stripe_payment_lifecycle_notifications (stripe_payment_intent_id, lifecycle_state, sent_date)
+     VALUES (?, ?, ?)`
+  ).bind(paymentIntentId, state, nowIso()).run()
+}
+
 function getInvoiceBillingEmail(invoice: Invoice): string {
   return invoice.contacts[0]?.email || invoice.clientEmail
 }
@@ -1698,8 +1816,20 @@ async function verifyStripeSignature(rawBody: string, signatureHeader: string, w
     return false
   }
 
+  const timestampSeconds = Number(timestamp)
+  if (!Number.isFinite(timestampSeconds) || Math.abs(Date.now() - timestampSeconds * 1000) > 5 * 60 * 1000) {
+    return false
+  }
+
   const expected = await hmacSha256Hex(webhookSecret, `${timestamp}.${rawBody}`)
-  return signatures.some((signature) => signature.length === expected.length && signature === expected)
+  return signatures.some((signature) => {
+    if (signature.length !== expected.length) return false
+    let difference = 0
+    for (let index = 0; index < expected.length; index += 1) {
+      difference |= expected.charCodeAt(index) ^ signature.charCodeAt(index)
+    }
+    return difference === 0
+  })
 }
 
 async function upsertInvoicePayment(db: D1Database, payment: {
@@ -2127,6 +2257,161 @@ async function markInvoicePaidFromStripePaymentIntent(db: D1Database, env: HonoE
       await trySyncInvoicePaymentToQbo(db, env, syncedInvoice, payment)
     }
   }
+}
+
+function isMicrodepositVerificationRequired(paymentIntent: StripePaymentIntent): boolean {
+  return normalizeString(paymentIntent.next_action?.type) === 'verify_with_microdeposits'
+    || Boolean(normalizeString(paymentIntent.next_action?.verify_with_microdeposits?.hosted_verification_url))
+}
+
+function getMicrodepositVerificationUrl(paymentIntent: StripePaymentIntent): string {
+  return normalizeString(paymentIntent.next_action?.verify_with_microdeposits?.hosted_verification_url)
+}
+
+async function findInvoiceForStripePaymentIntent(db: D1Database, paymentIntent: StripePaymentIntent): Promise<Invoice | null> {
+  const invoiceId = normalizeString(paymentIntent.metadata?.invoice_id)
+  const paymentIntentId = normalizeString(paymentIntent.id)
+  return invoiceId
+    ? fetchInvoiceById(db, invoiceId)
+    : fetchInvoiceByWhere(db, 'stripe_payment_intent_id', paymentIntentId, true)
+}
+
+async function recordStripePendingPayment(db: D1Database, env: HonoEnv['Bindings'], paymentIntent: StripePaymentIntent, state: StripePaymentLifecycleState): Promise<Invoice | null> {
+  const paymentIntentId = normalizeString(paymentIntent.id)
+  if (!paymentIntentId) return null
+  const invoice = await findInvoiceForStripePaymentIntent(db, paymentIntent)
+  if (!invoice || invoice.status === 'void') return null
+  const details = await getStripePaymentDetails(env, paymentIntentId)
+    .catch(() => pendingStripePaymentDetails(normalizeAmountCents(paymentIntent.amount) || invoice.totalCents))
+  const grossCents = details.grossCents || normalizeAmountCents(paymentIntent.amount) || invoice.totalCents
+  const method = state === 'verification_required'
+    ? 'ACH - Awaiting Bank Verification'
+    : 'ACH - Processing'
+  await upsertInvoicePayment(db, {
+    invoiceId: invoice.id,
+    kind: 'payment',
+    status: 'pending',
+    method: details.paymentMethodResolved ? (state === 'processing' ? 'ACH - Processing' : method) : method,
+    referenceNumber: paymentIntentId,
+    grossCents,
+    feeCents: 0,
+    netCents: grossCents,
+    paidDate: nowIso(),
+    stripePaymentIntentId: paymentIntentId,
+    stripeChargeId: details.chargeId,
+    stripeBalanceTransactionId: details.balanceTransactionId,
+    note: state === 'verification_required'
+      ? 'Stripe requires bank-account microdeposit verification.'
+      : 'Stripe verified the bank account; ACH payment is processing.',
+    user: 'stripe-webhook',
+  })
+  await contextlessUpdateInvoiceStripePaymentIntent(db, invoice.id, paymentIntentId)
+  return await fetchInvoiceById(db, invoice.id)
+}
+
+async function contextlessUpdateInvoiceStripePaymentIntent(db: D1Database, invoiceId: string, paymentIntentId: string): Promise<void> {
+  await db.prepare(
+    `UPDATE invoices
+     SET stripe_payment_intent_id = COALESCE(NULLIF(?, ''), stripe_payment_intent_id),
+         accounting_sync_state = json_patch(COALESCE(NULLIF(accounting_sync_state, ''), '{}'), ?),
+         updated_date = ?
+     WHERE id = ? AND status != 'void'`
+  ).bind(paymentIntentId, invoiceSyncState({ stripePaymentIntentId: paymentIntentId }), nowIso(), invoiceId).run()
+}
+
+async function handleStripePaymentIntentRequiresAction(db: D1Database, env: HonoEnv['Bindings'], paymentIntent: StripePaymentIntent): Promise<void> {
+  if (!isMicrodepositVerificationRequired(paymentIntent)) return
+  const invoice = await recordStripePendingPayment(db, env, paymentIntent, 'verification_required')
+  if (invoice) {
+    await notifyStripePaymentLifecycle(db, env, invoice, normalizeString(paymentIntent.id), 'verification_required', getMicrodepositVerificationUrl(paymentIntent))
+  }
+}
+
+async function handleStripePaymentIntentProcessing(db: D1Database, env: HonoEnv['Bindings'], paymentIntent: StripePaymentIntent): Promise<void> {
+  const invoice = await recordStripePendingPayment(db, env, paymentIntent, 'processing')
+  if (invoice) {
+    await notifyStripePaymentLifecycle(db, env, invoice, normalizeString(paymentIntent.id), 'processing')
+  }
+}
+
+async function handleStripePaymentIntentFailed(db: D1Database, env: HonoEnv['Bindings'], paymentIntent: StripePaymentIntent): Promise<void> {
+  const paymentIntentId = normalizeString(paymentIntent.id)
+  if (!paymentIntentId) return
+  const invoice = await findInvoiceForStripePaymentIntent(db, paymentIntent)
+  if (!invoice || invoice.status === 'void') return
+  const existing = await fetchInvoicePaymentByStripe(db, '', paymentIntentId)
+  const grossCents = normalizeAmountCents(paymentIntent.amount) || existing?.grossCents || invoice.totalCents
+  await upsertInvoicePayment(db, {
+    invoiceId: invoice.id,
+    kind: 'payment',
+    status: 'failed',
+    method: 'ACH',
+    referenceNumber: paymentIntentId,
+    grossCents,
+    feeCents: 0,
+    netCents: grossCents,
+    paidDate: existing?.paidDate || nowIso(),
+    stripePaymentIntentId: paymentIntentId,
+    note: 'Stripe reported that the ACH payment could not be completed.',
+    user: 'stripe-webhook',
+  })
+  const failureReason = normalizeString(paymentIntent.last_payment_error?.message || paymentIntent.last_payment_error?.code).slice(0, 1000)
+  await db.prepare(
+    `UPDATE invoices
+     SET internal_note = ?, updated_date = ?
+     WHERE id = ? AND status != 'void'`
+  ).bind(
+    failureReason ? `Stripe reported ACH payment failure: ${failureReason}` : 'Stripe reported ACH payment failure.',
+    nowIso(),
+    invoice.id,
+  ).run()
+  await refreshInvoicePaymentStatus(db, invoice.id)
+  const refreshedInvoice = await fetchInvoiceById(db, invoice.id)
+  if (refreshedInvoice) {
+    await notifyStripePaymentLifecycle(db, env, refreshedInvoice, paymentIntentId, 'failed')
+  }
+}
+
+async function hydrateStripePaymentDetailsFromCharge(db: D1Database, env: HonoEnv['Bindings'], charge: StripeCharge): Promise<void> {
+  const paymentIntentId = getExpandedId(charge.payment_intent)
+  if (!paymentIntentId) return
+  const payment = await fetchInvoicePaymentByStripe(db, '', paymentIntentId)
+  if (!payment || payment.status !== 'succeeded') return
+  const details = await getStripePaymentDetails(env, paymentIntentId)
+  if (!details.balanceTransactionId) return
+  await db.prepare(
+    `UPDATE invoice_payments
+     SET method = ?, gross_cents = ?, fee_cents = ?, net_cents = ?,
+         stripe_charge_id = COALESCE(NULLIF(?, ''), stripe_charge_id),
+         stripe_balance_transaction_id = ?, updated_date = ?
+     WHERE id = ?`
+  ).bind(
+    details.method,
+    details.grossCents || payment.grossCents,
+    details.feeCents,
+    details.netCents || Math.max(0, (details.grossCents || payment.grossCents) - details.feeCents),
+    details.chargeId,
+    details.balanceTransactionId,
+    nowIso(),
+    payment.id,
+  ).run()
+  const invoice = await fetchInvoiceById(db, payment.invoiceId)
+  const refreshedPayment = await fetchInvoicePaymentById(db, payment.id)
+  if (invoice && refreshedPayment) {
+    await trySyncInvoicePaymentToQbo(db, env, invoice, refreshedPayment)
+  }
+}
+
+async function hasProcessedStripeWebhookEvent(db: D1Database, eventId: string): Promise<boolean> {
+  if (!eventId) return false
+  return Boolean(await db.prepare('SELECT 1 FROM stripe_webhook_events WHERE stripe_event_id = ?').bind(eventId).first())
+}
+
+async function recordProcessedStripeWebhookEvent(db: D1Database, eventId: string, eventType: string, paymentIntentId: string): Promise<void> {
+  if (!eventId) return
+  await db.prepare(
+    'INSERT OR IGNORE INTO stripe_webhook_events (stripe_event_id, event_type, payment_intent_id, created_date) VALUES (?, ?, ?, ?)'
+  ).bind(eventId, eventType, paymentIntentId, nowIso()).run()
 }
 
 export function createInvoicesApi() {
@@ -2872,7 +3157,11 @@ export function createInvoicesApi() {
         return jsonResponse({ error: 'Invalid Stripe signature' }, { status: 400 })
       }
 
-      const event = JSON.parse(rawBody) as { type?: string; data?: { object?: StripeCheckoutSession | StripePaymentIntent | StripePayout } }
+      const event = JSON.parse(rawBody) as { id?: string; type?: string; data?: { object?: StripeCheckoutSession | StripePaymentIntent | StripePayout | StripeCharge } }
+      const eventId = normalizeString(event.id)
+      if (await hasProcessedStripeWebhookEvent(context.env.DB, eventId)) {
+        return jsonResponse({ received: true, duplicate: true })
+      }
       const eventObject = event.data?.object
       const session = eventObject as StripeCheckoutSession | undefined
       if (
@@ -2884,16 +3173,19 @@ export function createInvoicesApi() {
       }
 
       if (session && event.type === 'checkout.session.async_payment_failed') {
-        const invoiceId = normalizeString(session.metadata?.invoice_id)
-        if (invoiceId) {
-          await context.env.DB.prepare(
-            `UPDATE invoices
-             SET status = CASE WHEN status = 'paid' THEN status ELSE 'sent' END,
-                 internal_note = 'Stripe reported async payment failed.',
-                 updated_date = ?
-             WHERE id = ? AND status != 'void'`
-          ).bind(nowIso(), invoiceId).run()
-        }
+        await handleStripePaymentIntentFailed(context.env.DB, context.env, {
+          id: normalizeString(session.payment_intent),
+          amount: normalizeAmountCents(session.amount_total),
+          metadata: session.metadata,
+        })
+      }
+
+      if (eventObject && event.type === 'payment_intent.requires_action') {
+        await handleStripePaymentIntentRequiresAction(context.env.DB, context.env, eventObject as StripePaymentIntent)
+      }
+
+      if (eventObject && event.type === 'payment_intent.processing') {
+        await handleStripePaymentIntentProcessing(context.env.DB, context.env, eventObject as StripePaymentIntent)
       }
 
       if (eventObject && event.type === 'payment_intent.succeeded') {
@@ -2901,17 +3193,11 @@ export function createInvoicesApi() {
       }
 
       if (eventObject && event.type === 'payment_intent.payment_failed') {
-        const paymentIntent = eventObject as StripePaymentIntent
-        const invoiceId = normalizeString(paymentIntent.metadata?.invoice_id)
-        if (invoiceId) {
-          await context.env.DB.prepare(
-            `UPDATE invoices
-             SET status = CASE WHEN status = 'paid' THEN status ELSE 'sent' END,
-                 internal_note = 'Stripe reported payment failed.',
-                 updated_date = ?
-             WHERE id = ? AND status != 'void'`
-          ).bind(nowIso(), invoiceId).run()
-        }
+        await handleStripePaymentIntentFailed(context.env.DB, context.env, eventObject as StripePaymentIntent)
+      }
+
+      if (eventObject && event.type === 'charge.updated') {
+        await hydrateStripePaymentDetailsFromCharge(context.env.DB, context.env, eventObject as StripeCharge)
       }
 
       if (eventObject && event.type === 'payout.paid') {
@@ -2921,6 +3207,11 @@ export function createInvoicesApi() {
       if (eventObject && event.type === 'payout.reconciliation_completed') {
         await handleStripePayoutReconciled(context.env.DB, context.env, eventObject as StripePayout)
       }
+
+      const paymentIntentId = eventObject && typeof eventObject === 'object'
+        ? normalizeString((eventObject as StripePaymentIntent).id || (eventObject as StripeCheckoutSession).payment_intent || getExpandedId((eventObject as StripeCharge).payment_intent))
+        : ''
+      await recordProcessedStripeWebhookEvent(context.env.DB, eventId, normalizeString(event.type), paymentIntentId)
 
       return jsonResponse({ received: true })
     } catch (error: unknown) {
