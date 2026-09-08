@@ -12,6 +12,8 @@ import { normalizeString } from 'cfdg/scripts'
 // TODO: Review the route policies to ensure they align with the current API structure and access requirements. Remove any deprecated or unused routes to maintain clarity and security.
 const routePolicies: RoutePolicy[] = [
   { method: 'GET', route: '/api/health', mode: 'public' }, // Health check endpoint. Returns 200 if the service is running.
+  // Wrangler's local scheduled-event bridge. The route itself also rejects non-local hosts.
+  { method: 'GET', route: '/__scheduled', mode: 'public' },
 
   { method: 'POST', route: '/api/email/transactionEmail', mode: 'key' }, // Send an email using the Transaction Email API.
   { method: 'GET', route: '/api/invoices/public/:token', mode: 'public' }, // Get invoice details for a public invoice link.
@@ -25,6 +27,7 @@ const routePolicies: RoutePolicy[] = [
   { method: '*', route: '/api/invoices', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
   // Routes relating to a specific invoice
   { method: '*', route: '/api/invoices/:id', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: 'GET', route: '/api/invoice-reports/client', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
   // Create a new invoice based on the referenced invoice.
   { method: 'POST', route: '/api/invoices/:id/copy', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
   // Mark an invoice as sent. This will update the invoice status and send an email to the client.

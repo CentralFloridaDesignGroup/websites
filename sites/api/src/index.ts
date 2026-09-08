@@ -10,6 +10,7 @@ import { createInvoicesApi } from './invoicesApi'
 import { createQboApi } from './qboApi'
 import { createUserFavoritesApi } from './userFavoritesApi'
 import { createProjectManagementApi } from './projectManagementApi'
+import { createInvoiceReportsApi, isWeeklyInvoiceReportTime, runWeeklyInvoiceReport } from './invoiceReports'
 
 const app = new Hono<HonoEnv>()
 
@@ -38,6 +39,26 @@ app.use(
 // Auth middleware for all routes
 app.use('*', createAuthMiddleware())
 
+// Wrangler forwards local scheduled-event test requests through fetch in this Worker setup.
+// Keep this bridge constrained to localhost so it cannot trigger production email delivery.
+app.get('/__scheduled', async (context) => {
+  const hostname = new URL(context.req.url).hostname
+  if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
+    return new Response('Not Found', { status: 404 })
+  }
+  const cron = context.req.query('cron') || ''
+  const scheduledTime = Number(context.req.query('scheduledTime') || Date.now())
+  if (!['0 0 * * MON', '0 1 * * MON'].includes(cron) || !Number.isFinite(scheduledTime)) {
+    return new Response('Invalid scheduled event', { status: 400 })
+  }
+  const scheduledAt = new Date(scheduledTime)
+  if (!isWeeklyInvoiceReportTime(scheduledAt)) {
+    return new Response('Scheduled time is not Sunday 8 PM Eastern', { status: 400 })
+  }
+  await runWeeklyInvoiceReport(context.env, scheduledAt)
+  return new Response('Weekly invoice report sent', { status: 200 })
+})
+
 // Health check endpoint for V1 (and technically V2 as well)
 app.get('/api/health', () => {
   return new Response(JSON.stringify({ status: 'ok' }), {
@@ -57,6 +78,7 @@ app.get('/v2/health', () => {
 app.route('/', createCommentsApi())
 app.route('/', createGisPointsApi())
 app.route('/', createInvoicesApi())
+app.route('/', createInvoiceReportsApi())
 app.route('/', createQboApi())
 app.route('/', createUserFavoritesApi())
 app.route('/', createProjectManagementApi())
@@ -76,4 +98,10 @@ app.onError((error) => {
   return serverError(String(error?.message || error));
 })
 
-export default app
+export default {
+  fetch: app.fetch,
+  async scheduled(controller: ScheduledController, env: HonoEnv['Bindings'], ctx: ExecutionContext): Promise<void> {
+    if (!isWeeklyInvoiceReportTime(new Date(controller.scheduledTime))) return
+    ctx.waitUntil(runWeeklyInvoiceReport(env, new Date(controller.scheduledTime)).catch((error) => { console.error('Weekly invoice report failed:', error); throw error }))
+  },
+}

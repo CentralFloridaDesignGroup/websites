@@ -5,6 +5,9 @@ compatibility_date = "2026-06-10"
 workers_dev = true
 preview_urls = true
 
+[triggers]
+crons = ["0 0 * * MON", "0 1 * * MON"]
+
 [vars]
 MICROSOFT_TENANT_ID="1398eec4-9845-4a21-8b11-4a0245047b16"
 MICROSOFT_CLIENT_ID="394b1593-0cd8-4306-8472-6b99995c944b"

@@ -12,6 +12,8 @@ export type ApiEnv = BaseApiEnv & {
   DB: D1Database
   WPS_KV_BINDING: KVNamespace
   INVOICE_DOCUMENTS: R2Bucket
+  /** Comma-separated internal recipients for the weekly accounts-receivable report. */
+  WEEKLY_INVOICE_REPORT_RECIPIENTS?: string
 }
 
 /** API variables available in the context. */
