@@ -74,6 +74,9 @@ export function ClientAccountReport({
           field="client-account-report"
           label="Client"
           colorMode="auto"
+          portal
+          required
+          maxOptionsHeight={300}
           value={clientId}
           onChange={(_, value) => {
             setClientId(String(value));

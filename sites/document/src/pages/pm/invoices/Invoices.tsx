@@ -1315,17 +1315,17 @@ export function InvoicesManager() {
           </div>
           <div className="flex flex-wrap gap-2">
             <Button
+              label="Client Invoice Report"
+              style="secondary"
+              icon={File}
+              onClick={() => setClientReportOpen(true)}
+            />
+            <Button
               label="Refresh"
               style="secondary"
               icon={RefreshCw}
               onClick={() => void loadInvoices()}
               properties={{ disabled: loading }}
-            />
-            <Button
-              label="Client Invoice Report"
-              style="secondary"
-              icon={File}
-              onClick={() => setClientReportOpen(true)}
             />
             {senderEmail && (
               <Button
