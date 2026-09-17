@@ -1,7 +1,7 @@
 {
     "Meta": {
         "Category": "Land Development",
-        "Title": "Topographic Survey Checklist",
+        "Title": "Lot Combination Checklist",
         "WIP": true
     },
     "Sections": [
@@ -78,83 +78,124 @@
             ]
         },
         {
-            "title": "Topographic Scope and Field Coverage",
+            "title": "Combination Scope and Records",
             "items": [
                 {
-                    "title": "Survey Limits and Intended Use",
-                    "statement": "Confirm limits, off-site coverage, expected design use, feature list, and required accuracy against the agreed scope.",
+                    "title": "Combination Process",
+                    "statement": "Confirm the jurisdiction's lot-combination process and whether a replat, unity instrument, or other approval is required; distinguish tax parcel changes from legal lot changes.",
+                    "code": "Local requirements—verify",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Source Parcel Reconciliation",
+                    "statement": "Compare deeds, plats, ownership information, parcel identifiers, and exceptions for every source parcel.",
                     "code": "QA review",
                     "options": "YesNo"
                 },
                 {
-                    "title": "Benchmark Verification",
-                    "statement": "Recheck benchmark elevations and control ties; record units, datum realization, and any conversions.",
+                    "title": "Combined Perimeter",
+                    "statement": "Verify the proposed outside perimeter includes the intended land and resolves gaps, overlaps, and retained exceptions.",
                     "code": "QA review",
                     "options": "YesNo"
                 },
                 {
-                    "title": "Terrain Breaklines and Coverage",
-                    "statement": "Check sufficient observations at grade changes, ridges, swales, banks, walls, pavement edges, and other terrain breaks.",
+                    "title": "Removed Interior Lines",
+                    "statement": "Clearly distinguish existing interior lot lines from the proposed combined perimeter.",
                     "code": "QA review",
                     "options": "YesNo"
                 },
                 {
-                    "title": "Drainage Features",
-                    "statement": "Review accessible structures, rims, inverts, pipe sizes/directions, and flow features within scope; identify inaccessible observations.",
-                    "code": "QA review",
-                    "options": "YesNoN/A"
-                },
-                {
-                    "title": "Improvements and Utilities",
-                    "statement": "Confirm scoped visible improvements and utility evidence; distinguish measured, supplied, and inferred locations.",
+                    "title": "Combined Area Check",
+                    "statement": "Independently reconcile combined area with source parcel areas and documented differences.",
                     "code": "QA review",
                     "options": "YesNo"
                 },
                 {
-                    "title": "Coverage Gaps",
-                    "statement": "Identify inaccessible areas, vegetation obstructions, omitted features, and limits of interpolation.",
+                    "title": "Continuing Rights and Access",
+                    "statement": "Review access, easements, restrictions, and rights-of-way; do not imply combining parcels extinguishes existing interests.",
+                    "code": "QA review",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Combination Eligibility",
+                    "statement": "Verify applicable ownership, zoning, frontage, dimensional, and existing-improvement criteria.",
+                    "code": "Local requirements—verify",
+                    "options": "YesNo"
+                }
+            ]
+        },
+        {
+            "title": "Description and Sketch",
+            "items": [
+                {
+                    "title": "Definitive Boundary Calls",
+                    "statement": "Write metes-and-bounds calls that unambiguously identify each boundary line.",
+                    "code": "5J-17.052(6)(a), F.A.C.",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Sketch Matches Description",
+                    "statement": "Depict every referenced description element and identify the sketch as not a survey.",
+                    "code": "5J-17.052(6)(b), F.A.C.",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Initial Point Tie",
+                    "statement": "Tie the initial description point to a government corner, recorded corner, or established survey point.",
+                    "code": "5J-17.052(6)(b), F.A.C.",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Commencement and Beginning",
+                    "statement": "Distinguish commencement from beginning; verify ties, directions, distances, and referenced monuments.",
+                    "code": "QA review",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Independent Closure and Area",
+                    "statement": "Independently compute perimeter closure and area; reconcile rounding, curve geometry, exceptions, and stated units.",
+                    "code": "QA review",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Record References and Location",
+                    "statement": "Check source instruments, recording references, section/township/range or subdivision identifiers, county, and state.",
+                    "code": "QA review",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Curve and Line Agreement",
+                    "statement": "Compare every line and curve call to the sketch, including radial/nonradial relationships and tables.",
+                    "code": "QA review",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Intended Estate or Purpose",
+                    "statement": "Confirm the described parcel, easement, or other intended interest matches the client's instructions; resolve ambiguous scope before release.",
                     "code": "QA review",
                     "options": "YesNo"
                 }
             ]
         },
         {
-            "title": "Surface and Deliverables",
+            "title": "Combination Submission",
             "items": [
                 {
-                    "title": "Surface Model Checks",
-                    "statement": "Inspect triangulation, breaklines, boundaries, spikes, voids, and unintended interpolation across walls or water.",
-                    "code": "QA review",
-                    "options": "YesNo"
-                },
-                {
-                    "title": "Contours and Spot Elevations",
-                    "statement": "Verify contour interval, index labels, spot elevations, and consistency with independently checked observations.",
-                    "code": "QA review",
-                    "options": "YesNo"
-                },
-                {
-                    "title": "Water Observations",
-                    "statement": "Label the observed water feature and observation date; distinguish an observed water edge from a resolved property boundary.",
-                    "code": "QA review",
-                    "options": "YesNoN/A"
-                },
-                {
-                    "title": "Boundary Context",
-                    "statement": "Identify the source and limitations of displayed boundary information; complete boundary review when a boundary survey is included.",
-                    "code": "QA review",
-                    "options": "YesNo"
-                },
-                {
-                    "title": "Digital Surface Agreement",
-                    "statement": "Confirm CAD/surface exports agree with the map in coordinates, units, elevations, extent, and revisions.",
-                    "code": "QA review",
-                    "options": "YesNoN/A"
-                },
-                {
-                    "title": "Topographic Submission Criteria",
-                    "statement": "Check recipient-specific datum, contour interval, feature coverage, accuracy, and digital submission requirements.",
+                    "title": "Required Instruments and Signatures",
+                    "statement": "Confirm required applications, owner authorizations, supporting instruments, fees, and submission formats.",
                     "code": "Local requirements—verify",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Final Combination Package",
+                    "statement": "Check consistent parcel labels and descriptions across the sketch, application, and proposed instruments.",
+                    "code": "QA review",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Approval and Recording Follow-Up",
+                    "statement": "Record approval/recording status and references when available; keep proposed and completed changes distinguishable.",
+                    "code": "QA review",
                     "options": "YesNoN/A"
                 }
             ]

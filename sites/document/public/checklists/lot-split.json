@@ -1,7 +1,7 @@
 {
     "Meta": {
         "Category": "Land Development",
-        "Title": "Topographic Survey Checklist",
+        "Title": "Lot Split Checklist",
         "WIP": true
     },
     "Sections": [
@@ -78,83 +78,130 @@
             ]
         },
         {
-            "title": "Topographic Scope and Field Coverage",
+            "title": "Split Scope and Parcel Review",
             "items": [
                 {
-                    "title": "Survey Limits and Intended Use",
-                    "statement": "Confirm limits, off-site coverage, expected design use, feature list, and required accuracy against the agreed scope.",
+                    "title": "Split Eligibility and Process",
+                    "statement": "Verify the local definition, permitted process, parcel-count criteria, and whether platting or other approval is required.",
+                    "code": "Local requirements—verify",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Parent Parcel Records",
+                    "statement": "Reconcile the parent deed, recorded plat, ownership information, parcel identifier, and exceptions.",
                     "code": "QA review",
                     "options": "YesNo"
                 },
                 {
-                    "title": "Benchmark Verification",
-                    "statement": "Recheck benchmark elevations and control ties; record units, datum realization, and any conversions.",
+                    "title": "Resulting Parcels and Remainder",
+                    "statement": "Identify every proposed parcel and any retained remainder; check that their union matches the intended parent land.",
                     "code": "QA review",
                     "options": "YesNo"
                 },
                 {
-                    "title": "Terrain Breaklines and Coverage",
-                    "statement": "Check sufficient observations at grade changes, ridges, swales, banks, walls, pavement edges, and other terrain breaks.",
+                    "title": "Shared Line Agreement",
+                    "statement": "Check adjoining proposed parcel calls agree in reverse direction and create no gaps or overlaps.",
                     "code": "QA review",
                     "options": "YesNo"
                 },
                 {
-                    "title": "Drainage Features",
-                    "statement": "Review accessible structures, rims, inverts, pipe sizes/directions, and flow features within scope; identify inaccessible observations.",
+                    "title": "Resulting Areas",
+                    "statement": "Independently compute closure and areas for every resulting parcel and reconcile the total with the parent.",
                     "code": "QA review",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Parcel Dimensions and Improvements",
+                    "statement": "Check applicable area, width, frontage, setbacks, and existing-improvement constraints for each resulting parcel.",
+                    "code": "Local requirements—verify",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Access and Easement Review",
+                    "statement": "Check each proposed parcel's access and affected easements; identify new instruments or revisions needing coordination.",
+                    "code": "QA review",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Services and Approval Conditions",
+                    "statement": "Verify applicable utility, drainage, access, and other local approval conditions.",
+                    "code": "Local requirements—verify",
                     "options": "YesNoN/A"
+                }
+            ]
+        },
+        {
+            "title": "Description and Sketch",
+            "items": [
+                {
+                    "title": "Definitive Boundary Calls",
+                    "statement": "Write metes-and-bounds calls that unambiguously identify each boundary line.",
+                    "code": "5J-17.052(6)(a), F.A.C.",
+                    "options": "YesNo"
                 },
                 {
-                    "title": "Improvements and Utilities",
-                    "statement": "Confirm scoped visible improvements and utility evidence; distinguish measured, supplied, and inferred locations.",
+                    "title": "Sketch Matches Description",
+                    "statement": "Depict every referenced description element and identify the sketch as not a survey.",
+                    "code": "5J-17.052(6)(b), F.A.C.",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Initial Point Tie",
+                    "statement": "Tie the initial description point to a government corner, recorded corner, or established survey point.",
+                    "code": "5J-17.052(6)(b), F.A.C.",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Commencement and Beginning",
+                    "statement": "Distinguish commencement from beginning; verify ties, directions, distances, and referenced monuments.",
                     "code": "QA review",
                     "options": "YesNo"
                 },
                 {
-                    "title": "Coverage Gaps",
-                    "statement": "Identify inaccessible areas, vegetation obstructions, omitted features, and limits of interpolation.",
+                    "title": "Independent Closure and Area",
+                    "statement": "Independently compute perimeter closure and area; reconcile rounding, curve geometry, exceptions, and stated units.",
+                    "code": "QA review",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Record References and Location",
+                    "statement": "Check source instruments, recording references, section/township/range or subdivision identifiers, county, and state.",
+                    "code": "QA review",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Curve and Line Agreement",
+                    "statement": "Compare every line and curve call to the sketch, including radial/nonradial relationships and tables.",
+                    "code": "QA review",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Intended Estate or Purpose",
+                    "statement": "Confirm the described parcel, easement, or other intended interest matches the client's instructions; resolve ambiguous scope before release.",
                     "code": "QA review",
                     "options": "YesNo"
                 }
             ]
         },
         {
-            "title": "Surface and Deliverables",
+            "title": "Split Submission",
             "items": [
                 {
-                    "title": "Surface Model Checks",
-                    "statement": "Inspect triangulation, breaklines, boundaries, spikes, voids, and unintended interpolation across walls or water.",
+                    "title": "Individual Parcel Exhibits",
+                    "statement": "Provide consistent identifiers and matching descriptions/sketches for each parcel and remainder.",
                     "code": "QA review",
                     "options": "YesNo"
                 },
                 {
-                    "title": "Contours and Spot Elevations",
-                    "statement": "Verify contour interval, index labels, spot elevations, and consistency with independently checked observations.",
-                    "code": "QA review",
-                    "options": "YesNo"
-                },
-                {
-                    "title": "Water Observations",
-                    "statement": "Label the observed water feature and observation date; distinguish an observed water edge from a resolved property boundary.",
-                    "code": "QA review",
-                    "options": "YesNoN/A"
-                },
-                {
-                    "title": "Boundary Context",
-                    "statement": "Identify the source and limitations of displayed boundary information; complete boundary review when a boundary survey is included.",
-                    "code": "QA review",
-                    "options": "YesNo"
-                },
-                {
-                    "title": "Digital Surface Agreement",
-                    "statement": "Confirm CAD/surface exports agree with the map in coordinates, units, elevations, extent, and revisions.",
-                    "code": "QA review",
-                    "options": "YesNoN/A"
-                },
-                {
-                    "title": "Topographic Submission Criteria",
-                    "statement": "Check recipient-specific datum, contour interval, feature coverage, accuracy, and digital submission requirements.",
+                    "title": "Split Application Package",
+                    "statement": "Confirm required applications, owner signatures, supporting documents, and recording/submission instructions.",
                     "code": "Local requirements—verify",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Split Completion Status",
+                    "statement": "Distinguish proposed parcel geometry from approved/recorded changes and retain approval references when available.",
+                    "code": "QA review",
                     "options": "YesNoN/A"
                 }
             ]

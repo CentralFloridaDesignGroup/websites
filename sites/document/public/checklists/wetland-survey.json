@@ -1,7 +1,7 @@
 {
     "Meta": {
         "Category": "Land Development",
-        "Title": "Topographic Survey Checklist",
+        "Title": "Wetland Survey Checklist",
         "WIP": true
     },
     "Sections": [
@@ -78,84 +78,84 @@
             ]
         },
         {
-            "title": "Topographic Scope and Field Coverage",
+            "title": "Supplied Delineation and Field Location",
             "items": [
                 {
-                    "title": "Survey Limits and Intended Use",
-                    "statement": "Confirm limits, off-site coverage, expected design use, feature list, and required accuracy against the agreed scope.",
+                    "title": "Delineation Source and Date",
+                    "statement": "Identify the delineator, organization, delineation date, supplied map, and flag sequence being surveyed.",
                     "code": "QA review",
                     "options": "YesNo"
                 },
                 {
-                    "title": "Benchmark Verification",
-                    "statement": "Recheck benchmark elevations and control ties; record units, datum realization, and any conversions.",
+                    "title": "Wetland Survey Scope",
+                    "statement": "State that work locates supplied delineation; distinguish it from performing a delineation or determining agency jurisdiction.",
                     "code": "QA review",
                     "options": "YesNo"
                 },
                 {
-                    "title": "Terrain Breaklines and Coverage",
-                    "statement": "Check sufficient observations at grade changes, ridges, swales, banks, walls, pavement edges, and other terrain breaks.",
+                    "title": "Flag Identification and Location",
+                    "statement": "Match surveyed flag IDs and coordinates to field tags and supplied records.",
                     "code": "QA review",
                     "options": "YesNo"
                 },
                 {
-                    "title": "Drainage Features",
-                    "statement": "Review accessible structures, rims, inverts, pipe sizes/directions, and flow features within scope; identify inaccessible observations.",
-                    "code": "QA review",
-                    "options": "YesNoN/A"
-                },
-                {
-                    "title": "Improvements and Utilities",
-                    "statement": "Confirm scoped visible improvements and utility evidence; distinguish measured, supplied, and inferred locations.",
+                    "title": "Flag Sequence and Gaps",
+                    "statement": "Resolve missing, damaged, duplicate, or out-of-sequence flags with the delineator; document unresolved gaps.",
                     "code": "QA review",
                     "options": "YesNo"
                 },
                 {
-                    "title": "Coverage Gaps",
-                    "statement": "Identify inaccessible areas, vegetation obstructions, omitted features, and limits of interpolation.",
+                    "title": "Limits Between Flags",
+                    "statement": "Confirm connections and endpoints with supplied delineation information; distinguish surveyed points from connecting or inferred lines.",
+                    "code": "QA review",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Field Changes",
+                    "statement": "Record replaced flags, changes requested by the delineator, observation dates, and revision history.",
                     "code": "QA review",
                     "options": "YesNo"
                 }
             ]
         },
         {
-            "title": "Surface and Deliverables",
+            "title": "Wetland Mapping and Supporting Information",
             "items": [
                 {
-                    "title": "Surface Model Checks",
-                    "statement": "Inspect triangulation, breaklines, boundaries, spikes, voids, and unintended interpolation across walls or water.",
+                    "title": "Wetland Line Attribution",
+                    "statement": "Identify who established each mapped limit, and distinguish different delineations or dates on the map.",
                     "code": "QA review",
                     "options": "YesNo"
                 },
                 {
-                    "title": "Contours and Spot Elevations",
-                    "statement": "Verify contour interval, index labels, spot elevations, and consistency with independently checked observations.",
-                    "code": "QA review",
-                    "options": "YesNo"
-                },
-                {
-                    "title": "Water Observations",
-                    "statement": "Label the observed water feature and observation date; distinguish an observed water edge from a resolved property boundary.",
+                    "title": "Buffers and Setbacks",
+                    "statement": "Identify the source and method for any depicted buffer or setback; distinguish it from the delineated wetland boundary.",
                     "code": "QA review",
                     "options": "YesNoN/A"
                 },
                 {
-                    "title": "Boundary Context",
-                    "statement": "Identify the source and limitations of displayed boundary information; complete boundary review when a boundary survey is included.",
-                    "code": "QA review",
-                    "options": "YesNo"
-                },
-                {
-                    "title": "Digital Surface Agreement",
-                    "statement": "Confirm CAD/surface exports agree with the map in coordinates, units, elevations, extent, and revisions.",
-                    "code": "QA review",
-                    "options": "YesNoN/A"
-                },
-                {
-                    "title": "Topographic Submission Criteria",
-                    "statement": "Check recipient-specific datum, contour interval, feature coverage, accuracy, and digital submission requirements.",
+                    "title": "Agency and Local Criteria",
+                    "statement": "Confirm applicable agency/local submission requirements and whether a determination or approval must accompany the survey.",
                     "code": "Local requirements—verify",
-                    "options": "YesNoN/A"
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Supporting Delineation Documents",
+                    "statement": "Reconcile flag logs, delineator correspondence, supplied reports, and any agency determination with the mapped line.",
+                    "code": "QA review",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Approval Status and Limitations",
+                    "statement": "Describe known approval status, incomplete flag coverage, and supplied-data limitations without implying surveying flags establishes regulatory approval.",
+                    "code": "QA review",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Wetland Deliverable Agreement",
+                    "statement": "Confirm map, CAD, coordinate list, and flag identifiers describe the same revision and limits.",
+                    "code": "QA review",
+                    "options": "YesNo"
                 }
             ]
         }

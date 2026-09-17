@@ -43,4 +43,4 @@ Thumbs.db
 tsconfig.tsbuildinfo
 
 # real world seed data
-sites/api/migrations/0001_current_snapshot.sql
+sites/api/migrations/0001_snapshot_import.sql

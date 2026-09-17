@@ -134,6 +134,102 @@
                     "path": "/checklists/alta-survey",
                     "tags": ["ALTA Survey", "Checklist", "Land Title"],
                     "requiresAuth": false
+                },
+                {
+                    "name": "Topographic Survey Checklist",
+                    "description": "Draft Florida requirements and QA review for topographic survey.",
+                    "path": "/checklists/topographic-survey",
+                    "tags": [
+                        "Topographic Survey",
+                        "Checklist",
+                        "Florida",
+                        "Draft"
+                    ],
+                    "requiresAuth": false
+                },
+                {
+                    "name": "Tree Survey Checklist",
+                    "description": "Draft Florida requirements and QA review for tree survey.",
+                    "path": "/checklists/tree-survey",
+                    "tags": [
+                        "Tree Survey",
+                        "Checklist",
+                        "Florida",
+                        "Draft"
+                    ],
+                    "requiresAuth": false
+                },
+                {
+                    "name": "Wetland Survey Checklist",
+                    "description": "Draft Florida requirements and QA review for wetland survey.",
+                    "path": "/checklists/wetland-survey",
+                    "tags": [
+                        "Wetland Survey",
+                        "Checklist",
+                        "Florida",
+                        "Draft"
+                    ],
+                    "requiresAuth": false
+                },
+                {
+                    "name": "Legal Sketch & Description Checklist",
+                    "description": "Draft Florida requirements and QA review for legal sketch & description.",
+                    "path": "/checklists/legal-sketch-description",
+                    "tags": [
+                        "Legal Sketch & Description",
+                        "Checklist",
+                        "Florida",
+                        "Draft"
+                    ],
+                    "requiresAuth": false
+                },
+                {
+                    "name": "Lot Combination Checklist",
+                    "description": "Draft Florida requirements and QA review for lot combination.",
+                    "path": "/checklists/lot-combination",
+                    "tags": [
+                        "Lot Combination",
+                        "Checklist",
+                        "Florida",
+                        "Draft"
+                    ],
+                    "requiresAuth": false
+                },
+                {
+                    "name": "Lot Split Checklist",
+                    "description": "Draft Florida requirements and QA review for lot split.",
+                    "path": "/checklists/lot-split",
+                    "tags": [
+                        "Lot Split",
+                        "Checklist",
+                        "Florida",
+                        "Draft"
+                    ],
+                    "requiresAuth": false
+                },
+                {
+                    "name": "Plat Checklist",
+                    "description": "Draft Florida requirements and QA review for plat.",
+                    "path": "/checklists/plat",
+                    "tags": [
+                        "Plat",
+                        "Checklist",
+                        "Florida",
+                        "Draft"
+                    ],
+                    "requiresAuth": false
+                },
+                {
+                    "name": "Minor Plat Checklist",
+                    "description": "Draft Florida requirements and QA review for minor plat.",
+                    "path": "/checklists/minor-plat",
+                    "tags": [
+                        "Minor Plat",
+                        "Checklist",
+                        "Florida",
+                        "Draft"
+                    ],
+                    "requiresAuth": false
                 }
             ]
         },

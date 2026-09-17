@@ -1,0 +1,211 @@
+{
+    "Meta": {
+        "Category": "Land Development",
+        "Title": "Plat Checklist",
+        "WIP": true
+    },
+    "Sections": [
+        {
+            "title": "General Map and Report Review",
+            "subtitle": "Florida baseline; apply data-related items to the work performed.",
+            "items": [
+                {
+                    "title": "Purpose and Scope",
+                    "statement": "Identify the product type and intended purpose.",
+                    "code": "5J-17.051(3)(b), F.A.C.",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Horizontal Control and Accuracy",
+                    "statement": "State the horizontal datum and control; retain independent accuracy checks and methods.",
+                    "code": "5J-17.051(2), (2)(b), F.A.C.",
+                    "options": "YesNoN/A"
+                },
+                {
+                    "title": "Vertical Control and Accuracy",
+                    "statement": "For elevation data, state datum and control and document accuracy and verification methods.",
+                    "code": "5J-17.051(2)(a), F.A.C.",
+                    "options": "YesNoN/A"
+                },
+                {
+                    "title": "Assumed Datum Control",
+                    "statement": "If using an assumed datum, distinguish it from published datums and provide reproducible control.",
+                    "code": "5J-17.051(2)(a)-(c), F.A.C.",
+                    "options": "YesNoN/A"
+                },
+                {
+                    "title": "Dated Supporting Records",
+                    "statement": "Retain dated measurements and computations supporting the product.",
+                    "code": "5J-17.051(2)(d), F.A.C.",
+                    "options": "YesNoN/A"
+                },
+                {
+                    "title": "Responsible Surveyor and Business",
+                    "statement": "Show responsible surveyor name/license and issuing business name, authorization number, and street/mailing addresses.",
+                    "code": "5J-17.051(3)(c), F.A.C.",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Acquisition and Revision Dates",
+                    "statement": "Identify the last acquisition date and subsequent graphic revision dates.",
+                    "code": "5J-17.051(3)(d), F.A.C.",
+                    "options": "YesNoN/A"
+                },
+                {
+                    "title": "Signature and Seal Statement",
+                    "statement": "Include the required original-signature/seal validity statement unless electronically signed and sealed.",
+                    "code": "5J-17.051(3)(e), F.A.C.",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Map Orientation and Legend",
+                    "statement": "Show north, scale, defined survey abbreviations, and the bearing reference to an established monumented line.",
+                    "code": "5J-17.051(3)(f)-(h), F.A.C.",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Mapped Feature Responsibility",
+                    "statement": "Identify responsibility for mapped features and integration of others' work.",
+                    "code": "5J-17.051(3)(i), F.A.C.",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Final Delivery Review",
+                    "statement": "Confirm signed/sealed deliverables, sheet references, filenames, revision consistency, and contracted formats before release.",
+                    "code": "QA review",
+                    "options": "YesNo"
+                }
+            ]
+        },
+        {
+            "title": "Florida Plat Requirements",
+            "items": [
+                {
+                    "title": "Boundary Survey Support",
+                    "statement": "Provide the boundary survey required for initial submittal; document any applicable replat exception.",
+                    "code": "177.041(1), F.S.",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Title and Mortgage Evidence",
+                    "statement": "Obtain the required title opinion or property information report identifying owners and unreleased mortgages.",
+                    "code": "177.041(2), F.S.",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Sheet Format and Index",
+                    "statement": "Check recording medium, margins, sheet format, index, numbering, and matchlines.",
+                    "code": "177.091(1)-(3), F.S.",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Plat Identification and Scale",
+                    "statement": "Check subdivision name, surveyor/business address, location, scale, north, and bearing reference on required sheets.",
+                    "code": "177.091(4)-(6), (10), F.S.",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Permanent Reference Monuments",
+                    "statement": "Verify PRM placement, spacing, identification, offsets, and installation before recording.",
+                    "code": "177.091(7), F.S.",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Permanent Control Points",
+                    "statement": "Check applicable PCP placement, spacing, depiction, and installation deadline.",
+                    "code": "177.091(8), F.S.",
+                    "options": "YesNoN/A"
+                },
+                {
+                    "title": "Interior Corner Monuments",
+                    "statement": "Check required corner monuments, permitted exceptions, and installation timing.",
+                    "code": "177.091(9), F.S.",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Plat and Title Description Agreement",
+                    "statement": "Match the plat description to title certification; ensure the boundary can be determined independently.",
+                    "code": "177.091(11), F.S.",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Dedications and Review Evidence",
+                    "statement": "Verify owner execution, mortgagee joinder, and evidence of required surveyor review.",
+                    "code": "177.081, F.S.",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Approvals and Certificates",
+                    "statement": "Show required approvals, clerk certificate, and surveyor seal and statement.",
+                    "code": "177.091(12)-(13), F.S.",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Boundary and Adjoining Information",
+                    "statement": "Show required government lines, description calls, adjoining identification, and replat ties.",
+                    "code": "177.091(14), (17), F.S.",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Rights-of-Way and Easements",
+                    "statement": "Show rights-of-way and easement locations, widths, purposes, and required ties.",
+                    "code": "177.091(15)-(16), F.S.",
+                    "options": "YesNoN/A"
+                },
+                {
+                    "title": "Lot and Curve Geometry",
+                    "statement": "Check numbering, boundary data, dimensions, bearings, curves, centerlines, units, and precision.",
+                    "code": "177.091(18)-(22), F.S.",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Special Areas and Tables",
+                    "statement": "Identify recreation, excepted, and dedicated areas; place tables on applicable sheets.",
+                    "code": "177.091(23)-(26), F.S.",
+                    "options": "YesNoN/A"
+                },
+                {
+                    "title": "Required Notices and Legend",
+                    "statement": "Include statutory notices, applicable utility-easement provisions, and a complete legend.",
+                    "code": "177.091(27)-(29), F.S.",
+                    "options": "YesNo"
+                }
+            ]
+        },
+        {
+            "title": "Plat QA and Submission",
+            "items": [
+                {
+                    "title": "Independent Plat Computations",
+                    "statement": "Independently close boundary, lots, tracts, rights-of-way, and easements; reconcile areas, curves, and shared lines.",
+                    "code": "QA review",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Plat Submission Requirements",
+                    "statement": "Verify current local application, sheet size, approval process, required certificates, fees, and supporting documents.",
+                    "code": "Local requirements—verify",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Recording Readiness",
+                    "statement": "Confirm current clerk acceptance requirements and required approval evidence before recording.",
+                    "code": "Local requirements—verify",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Plat Package Consistency",
+                    "statement": "Reconcile final plat, title documents, survey, dedication, supporting exhibits, and revision responses.",
+                    "code": "QA review",
+                    "options": "YesNo"
+                },
+                {
+                    "title": "Monumentation Follow-Up",
+                    "statement": "Track any permitted deferred monument installation, responsible party, deadline, and completion evidence.",
+                    "code": "QA review",
+                    "options": "YesNoN/A"
+                }
+            ]
+        }
+    ]
+}
