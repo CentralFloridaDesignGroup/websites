@@ -1,7 +1,7 @@
 {
     "Meta": {
-        "Title": "Plat Checklist",
-        "Category": "Land Development",
+        "Title": "Unincorporated Orange County Platting Checklist",
+        "Category": "Land Development - Platting",
         "WIP": true
     },
     "Sections": [
@@ -393,6 +393,24 @@
                     "id": "white-point-006",
                     "source": {
                         "label": "White Point standards"
+                    },
+                    "reviewStatus": "draft",
+                    "reviewedAt": null
+                }
+            ]
+        },
+        {
+            "title": "Unincorporated Orange County requirements",
+            "subtitle": "Authoring template - local requirements have not been researched.",
+            "items": [
+                {
+                    "id": "orange-county-unincorporated-001",
+                    "title": "Unincorporated Orange County requirements review",
+                    "statement": "AUTHORING PLACEHOLDER: Replace this item with sourced requirements after reviewing the applicable official documents. This is not a verified jurisdictional requirement.",
+                    "code": "Local requirements - verify",
+                    "options": "YesNo",
+                    "source": {
+                        "label": "Unincorporated Orange County - source pending"
                     },
                     "reviewStatus": "draft",
                     "reviewedAt": null

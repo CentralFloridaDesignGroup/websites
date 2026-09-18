@@ -77,6 +77,11 @@
             "content": "Symbols depicted hereon do not reflect actual size. Published dimensions precede map scaling."
         },
         {
+            "title": "No Improvements Located Disclaimer",
+            "description": "If a boundary survey does not include improvements under Chapter 5J-17, Florida Administrative Code, a disclaimer stating that no improvements were located must be included pursuant to Florida Statutes. This statement is required on all boundary surveys that do not include improvements.",
+            "content": "No improvements were located as part of this survey pursuant to 5J-17.052(5)(B), Florida Administrative Code."
+        },
+        {
             "title": "Jurisdictional Authority Disclaimer",
             "description": "All surveys must include a statement indicating that the survey was conducted in accordance with the minimum requirements under Chapter 5J-17, Florida Administrative Code and may be subject to additional jurisdictional requirements pursuant to Florida Statutes. This statement is required on all surveys.",
             "content": "This survey was conducted in accordance with the minimum requirements under Chapter 5J-17, Florida Administrative Code and may be subject to additional jurisdictional requirements."

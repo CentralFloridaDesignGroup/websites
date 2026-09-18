@@ -4,8 +4,7 @@ import * as LucideIcons from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { fetchUserFavoritePaths, saveUserFavoritePaths } from "../homeFavoritesApi";
 import { Keyboard, LucideIcon, Star } from "lucide-react";
-import { OutletContext, SidebarHeaderItem, SidebarLinkItem } from "../../contexts/outletContext";
-import { useOutletContext } from "react-router-dom";
+import { SidebarHeaderItem, SidebarLinkItem, useSidebarContext } from "../../contexts/outletContext";
 import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from "@headlessui/react";
 import { useAuth } from "../../auth/AuthContext";
 
@@ -56,7 +55,7 @@ export function HomeV2() {
     const [favoritesHydrated, setFavoritesHydrated] = useState(false);
     const [recentHydrated, setRecentHydrated] = useState(false);
     const [favoritesLoaded, setFavoritesLoaded] = useState(false);
-    const { setSidebarItems } = useOutletContext<OutletContext>();
+    const { setSidebarItems } = useSidebarContext();
     const [filterQuery, setFilterQuery] = useState<string | null>(null);
     const [searchResults, setSearchResults] = useState<SectionLink[]>([]);
     const searchInputRef = useRef<HTMLInputElement | null>(null);

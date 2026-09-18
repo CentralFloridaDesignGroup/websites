@@ -4,19 +4,19 @@ import { createChecklistPdf, checklistPdfFilename } from "../sites/document/src/
 
 const output = new URL("../sites/document/dist/pdf-smoke/", import.meta.url);
 await mkdir(output, { recursive: true });
-for (const slug of ["topographic-survey", "alta-survey", "minor-plat"]) {
+for (const slug of ["topographic-survey", "alta-survey", "minor-plat", "platting/orange", "platting/orange/orlando"]) {
     const data = JSON.parse(await readFile(new URL(`../sites/document/public/checklists/${slug}.json`, import.meta.url), "utf8"));
     const items = data.Sections.flatMap(section => section.items);
     items[0].reason = "Control documentation needs review before release.";
     const pdf = createChecklistPdf({
         meta: data.Meta,
         sections: data.Sections,
-        noEntries: [items[0].title],
-        naEntries: [items[1].title],
+        noEntries: [(items[0].id ?? items[0].title)],
+        naEntries: [(items[1].id ?? items[1].title)],
         review: { reviewer: "Sample Reviewer", jobNumber: "26-1234", date: "2026-09-17", notes: "QA sample only.\nConfirm remaining exceptions before release." },
     });
     assert(pdf.getNumberOfPages() >= data.Sections.length + 1);
-    await writeFile(new URL(`${slug}.pdf`, output), new Uint8Array(pdf.output("arraybuffer")));
+    await writeFile(new URL(`${slug.replaceAll("/", "-")}.pdf`, output), new Uint8Array(pdf.output("arraybuffer")));
     console.log(`${slug}: ${pdf.getNumberOfPages()} pages`);
 }
 const longText = "Long review text exercising wrapping and page boundaries. ".repeat(180);

@@ -12,7 +12,7 @@ export interface ReviewData {
 export interface ChecklistSection {
     title: string;
     subtitle?: string;
-    items: { title: string; statement: string; code?: string; reason?: string; options: string }[];
+    items: { id?: string; source?: { label: string; url?: string }; reviewStatus?: string; reviewedAt?: string | null; title: string; statement: string; code?: string; reason?: string; options: string }[];
 }
 
 interface ChecklistPdfInput {
@@ -38,7 +38,7 @@ export function createChecklistPdf({ meta, sections, noEntries, naEntries, revie
     const width = 528;
     const status = (title: string) => noEntries.includes(title) ? "Not Satisfied" : naEntries.includes(title) ? "N/A" : "Satisfied";
     const items = sections.flatMap(section => section.items);
-    const count = (value: string) => items.filter(item => status(item.title) === value).length;
+    const count = (value: string) => items.filter(item => status(item.id ?? item.title) === value).length;
     const title = text(meta.Title || "Survey Checklist");
     pdf.setProperties({ title, author: "White Point Surveying & Mapping LLC", subject: "Checklist review" });
 
@@ -103,8 +103,9 @@ export function createChecklistPdf({ meta, sections, noEntries, naEntries, revie
             const blocks = [
                 { content: `${index + 1}.${itemIndex + 1}  ${item.title}`, bold: true, color: "#243447" },
                 { content: item.statement, bold: false, color: "#243447" },
+                { content: item.source ? `Source: ${item.source.label}${item.source.url ? ` (${item.source.url})` : ''} | ${item.reviewStatus === 'reviewed' ? 'Reviewed' : 'DRAFT - needs review'}${item.reviewedAt ? ` (${item.reviewedAt})` : ''}` : "", bold: false, color: "#526173" },
                 { content: item.code ? `Reference: ${item.code}` : "", bold: false, color: "#243447" },
-                { content: status(item.title) === "Not Satisfied" && reason ? `Denial reason: ${reason}` : "", bold: true, color: "#9f2424" },
+                { content: status(item.id ?? item.title) === "Not Satisfied" && reason ? `Denial reason: ${reason}` : "", bold: true, color: "#9f2424" },
             ].filter(block => block.content);
             const lines: StyledLine[] = [];
             blocks.forEach((block, blockIndex) => {
@@ -117,7 +118,7 @@ export function createChecklistPdf({ meta, sections, noEntries, naEntries, revie
             });
             const row = [
                 { content: lines.map(line => line.content).join("\n"), styles: { overflow: "visible" as const } },
-                status(item.title),
+                status(item.id ?? item.title),
             ];
             richRows.set(row, { lines, offset: 0 });
             return row;

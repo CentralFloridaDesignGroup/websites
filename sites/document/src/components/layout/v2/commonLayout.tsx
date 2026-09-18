@@ -1,8 +1,8 @@
 import { Fragment, useEffect, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import {
-    SidebarItem, SidebarLinkItem, SidebarHeaderItem,
-    SidebarDividerItem, SidebarProgressGroup
+    SidebarLinkItem, SidebarHeaderItem,
+    SidebarDividerItem, SidebarProgressGroup, OutletProvider, useSidebarContext
 } from "../../../contexts/outletContext";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
 import { getMsalSilentRedirectUri, loginRequest } from '../../../auth/msalConfig'
@@ -12,7 +12,15 @@ import { NotificationCard } from "cfdg/layout";
 import { QboSettingsModal } from "../../qbo/QboSettingsModal";
 
 export function CommonLayout() {
-    const [sidebarItems, setSidebarItems] = useState<SidebarItem[]>([]);
+    return (
+        <OutletProvider>
+            <CommonLayoutContent />
+        </OutletProvider>
+    );
+}
+
+function CommonLayoutContent() {
+    const { sidebarItems } = useSidebarContext();
     const location = useLocation();
 
     const isAuthenticated = useIsAuthenticated();
@@ -296,9 +304,7 @@ export function CommonLayout() {
                         )}
                     </div>
                     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden p-4">
-                        <Outlet
-                            context={{ sidebarItems, setSidebarItems }}
-                        />
+                        <Outlet />
                     </div>
                 </main>
             </div>

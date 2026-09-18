@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
-import { Navigate, Outlet, useLocation, useOutletContext } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { fetchSignedInUserGroupIds, isGraphInteractionRequired } from "../api/entra";
 
 type GroupLoadStatus = "idle" | "loading" | "loaded" | "requiresInteraction" | "error";
@@ -97,7 +97,6 @@ export function ProtectedRoutes({ allowedGroupIds }: { allowedGroupIds?: string[
   const isAuthenticated = useIsAuthenticated();
   const { groupError, groupStatus, hasAnyGroup, refreshGroupIds } = useAuth();
   const location = useLocation();
-  const outletContext = useOutletContext();
 
   if (!isAuthenticated) {
     const returnTo = `${location.pathname}${location.search}`;
@@ -133,5 +132,5 @@ export function ProtectedRoutes({ allowedGroupIds }: { allowedGroupIds?: string[
     );
   }
 
-  return <Outlet context={outletContext} />;
+  return <Outlet />;
 }

@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ClientInfo, ServiceEntry } from './types/proposalTypes';
 import { ClientInfoStep, LanguageStep, PreviewStep, ProjectInfoSetup } from './pages';
-import { useOutletContext } from 'react-router-dom';
-import { OutletContext, SidebarProgressGroup } from '../../../contexts/outletContext';
+import { SidebarProgressGroup, useSidebarContext } from '../../../contexts/outletContext';
 import { File, Folder, List, User } from 'lucide-react';
 import type { EntraUserAccount } from 'cfdg/types';
 
@@ -24,7 +23,7 @@ export function ProposalGenerator() {
     const [manager, setManager] = useState<EntraUserAccount | null>(null);
     const [createdProjectId, setCreatedProjectId] = useState('');
     const [createdRetainerInvoiceId, setCreatedRetainerInvoiceId] = useState('');
-    const { setSidebarItems } = useOutletContext<OutletContext>();
+    const { setSidebarItems } = useSidebarContext();
     const setSidebarItemsRef = useRef(setSidebarItems);
 
     useEffect(() => {

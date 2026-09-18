@@ -1,0 +1,88 @@
+{
+  "id": "white-point",
+  "Sections": [
+    {
+      "title": "White Point standards - General Map and Report Review",
+      "subtitle": "Existing internal workflow checks - pending White Point review.",
+      "items": [
+        {
+          "title": "Final Delivery Review",
+          "statement": "Confirm signed/sealed deliverables, sheet references, filenames, revision consistency, and contracted formats before release.",
+          "code": "QA review",
+          "options": "YesNo",
+          "id": "white-point-001",
+          "source": {
+            "label": "White Point standards"
+          },
+          "reviewStatus": "draft",
+          "reviewedAt": null
+        }
+      ]
+    },
+    {
+      "title": "White Point standards - Plat QA and Submission",
+      "items": [
+        {
+          "title": "Independent Plat Computations",
+          "statement": "Independently close boundary, lots, tracts, rights-of-way, and easements; reconcile areas, curves, and shared lines.",
+          "code": "QA review",
+          "options": "YesNo",
+          "id": "white-point-002",
+          "source": {
+            "label": "White Point standards"
+          },
+          "reviewStatus": "draft",
+          "reviewedAt": null
+        },
+        {
+          "title": "Plat Submission Requirements",
+          "statement": "Verify current local application, sheet size, approval process, required certificates, fees, and supporting documents.",
+          "code": "Local requirements—verify",
+          "options": "YesNo",
+          "id": "white-point-003",
+          "source": {
+            "label": "White Point standards"
+          },
+          "reviewStatus": "draft",
+          "reviewedAt": null
+        },
+        {
+          "title": "Recording Readiness",
+          "statement": "Confirm current clerk acceptance requirements and required approval evidence before recording.",
+          "code": "Local requirements—verify",
+          "options": "YesNo",
+          "id": "white-point-004",
+          "source": {
+            "label": "White Point standards"
+          },
+          "reviewStatus": "draft",
+          "reviewedAt": null
+        },
+        {
+          "title": "Plat Package Consistency",
+          "statement": "Reconcile final plat, title documents, survey, dedication, supporting exhibits, and revision responses.",
+          "code": "QA review",
+          "options": "YesNo",
+          "id": "white-point-005",
+          "source": {
+            "label": "White Point standards"
+          },
+          "reviewStatus": "draft",
+          "reviewedAt": null
+        },
+        {
+          "title": "Monumentation Follow-Up",
+          "statement": "Track any permitted deferred monument installation, responsible party, deadline, and completion evidence.",
+          "code": "QA review",
+          "options": "YesNoN/A",
+          "id": "white-point-006",
+          "source": {
+            "label": "White Point standards"
+          },
+          "reviewStatus": "draft",
+          "reviewedAt": null
+        }
+      ]
+    }
+  ]
+}

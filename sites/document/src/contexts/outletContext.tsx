@@ -1,4 +1,6 @@
-export type OutletContext = {
+import { createContext, ReactNode, useContext, useState } from "react";
+
+export type OutletContextType = {
     sidebarItems: SidebarItem[];
     setSidebarItems: (items: SidebarItem[]) => void;
 }
@@ -36,4 +38,30 @@ export interface SidebarProgressGroup extends SidebarItem {
         onClick: () => void;
         icon?: React.ReactNode;
     }[];
+}
+
+
+const OutletContext = createContext<OutletContextType | undefined>(undefined);
+
+export function OutletProvider( { children }: { children: ReactNode }) {
+    const [sidebarItems, setSidebarItems] = useState<SidebarItem[]>([]);
+
+    const contextValue: OutletContextType = {
+        sidebarItems,
+        setSidebarItems
+    };
+
+    return (
+        <OutletContext.Provider value={contextValue}>
+            {children}
+        </OutletContext.Provider>
+    );
+}
+
+export function useSidebarContext() {
+    const context = useContext(OutletContext);
+    if (!context) {
+        throw new Error("useSidebarContext must be used within an OutletProvider");
+    }
+    return context;
 }

@@ -20,8 +20,9 @@ interface ChecklistConfig {
 }
 
 export default function Checklist() {
-    const { checklistType } = useParams();
-    return <ChecklistReview key={checklistType} checklistType={checklistType} />;
+    const { checklistType, "*": checklistPath } = useParams();
+    const resolvedChecklistType = checklistType || checklistPath;
+    return <ChecklistReview key={resolvedChecklistType} checklistType={resolvedChecklistType} />;
 }
 
 function ChecklistReview({ checklistType }: { checklistType?: string }) {
@@ -112,7 +113,7 @@ function ChecklistReview({ checklistType }: { checklistType?: string }) {
                 return {
                     ...section,
                     items: section.items.map((item: any) => {
-                        if (item.title === itemId) {
+                        if ((item.id ?? item.title) === itemId) {
                             return { ...item, reason };
                         }
                         return item;
@@ -136,7 +137,7 @@ function ChecklistReview({ checklistType }: { checklistType?: string }) {
         setExportError(null);
         try {
             const { createChecklistPdf, checklistPdfFilename } = await import("./createChecklistPdf");
-            const pdf = createChecklistPdf({ meta: { ...meta, WIP: !review.isFinal }, sections, noEntries, naEntries, review });
+            const pdf = createChecklistPdf({ meta: { ...meta, WIP: meta.WIP || !review.isFinal }, sections, noEntries, naEntries, review });
             if (previewWindow) {
                 if (previewWindow.closed) return;
                 previewUrl = URL.createObjectURL(pdf.output("blob"));
@@ -220,7 +221,7 @@ function ChecklistReview({ checklistType }: { checklistType?: string }) {
                             {section.subtitle && <h4 className="text-xl font-semibold text-gray-600 text-center dark:text-gray-400">{section.subtitle}</h4>}
                             <div className="grid grid-cols-1 gap-4">
                                 {section.items.map((item: any, itemIndex: number) => (
-                                    <ChecklistItem key={itemIndex} item={item} checklistItem={itemIndex} onStatusChange={onStatusChange} onNoteChange={onNoteChange} />
+                                    <ChecklistItem key={item.id ?? item.title} item={item} checklistItem={itemIndex} onStatusChange={onStatusChange} onNoteChange={onNoteChange} />
                                 ))}
                             </div>
                         </div>
@@ -325,7 +326,7 @@ const ReviewerModal = ({ defaultFinal, isOpen, exporting, error, onClose, onSave
                     />
                     <span>
                         <span className="font-semibold">Final review</span>
-                        <span className="block text-gray-600 dark:text-gray-400">Uncheck to label the PDF as draft / work in progress.</span>
+                        <span className="block text-gray-600 dark:text-gray-400">Uncheck to label the PDF as draft / work in progress. Draft source checklists remain draft even for a final review.</span>
                     </span>
                 </label>
                 {error && <p role="alert" className="mb-4 text-sm text-red-600 dark:text-red-400">{error}</p>}

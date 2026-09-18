@@ -11,6 +11,10 @@ import { CircleCheck, CircleX, CircleSlash } from "lucide-react"
  */
 export default function ChecklistItem({ item, checklistItem, onStatusChange, onNoteChange } : {
     item: {
+        id?: string;
+        source?: { label: string; url?: string };
+        reviewStatus?: string;
+        reviewedAt?: string | null;
         title: string;
         code: string;
         statement: string;
@@ -20,26 +24,28 @@ export default function ChecklistItem({ item, checklistItem, onStatusChange, onN
     onStatusChange: (title: string, status: string) => void;
     onNoteChange: (title: string, note: string) => void;
 }) {
+    const itemId = item.id ?? item.title;
     const [selectedOption, setSelectedOption] = useState(item.options === 'YesNo' ? 'no' : 'na');
     const [reason, setReason] = useState('');
 
     useEffect(() => {
-        onStatusChange(item.title, selectedOption);
-    }, [selectedOption, item.title, onStatusChange]);
+        onStatusChange(itemId, selectedOption);
+    }, [selectedOption, itemId, onStatusChange]);
 
     useEffect(() => {
-        onNoteChange(item.title, reason);
-    }, [reason, item.title, onNoteChange]);
+        onNoteChange(itemId, reason);
+    }, [reason, itemId, onNoteChange]);
 
     return (
         <div className="flex items-start justify-between p-4 border-l-4 border-mercury-700">
             <div className="w-full">
                 <div className='flex items-center justify-between gap-4'>
                     <h3 className="text-lg font-medium text-gray-900 flex-grow text-center md:text-left dark:text-white">Item {checklistItem+1}. {item.title}</h3>
-                    {item.options === 'YesNo' && <YesNoOption group_id={item.title} onOptionChange={setSelectedOption} />}
-                    {item.options === 'YesNoN/A' && <YesNoNAOption group_id={item.title} onOptionChange={setSelectedOption} />}
+                    {item.options === 'YesNo' && <YesNoOption group_id={itemId} onOptionChange={setSelectedOption} />}
+                    {item.options === 'YesNoN/A' && <YesNoNAOption group_id={itemId} onOptionChange={setSelectedOption} />}
                 </div>
                 <p className="text-sm mt-1 w-full text-center md:text-left dark:text-gray-300">Reference: {item.code}</p>
+                {item.source && <p className="text-sm mt-1 dark:text-gray-300">Source: {item.source.url ? <a className="underline" href={item.source.url} target="_blank" rel="noreferrer">{item.source.label}</a> : item.source.label} | {item.reviewStatus === 'reviewed' ? 'Reviewed' : 'DRAFT - needs review'}{item.reviewedAt ? ` (${item.reviewedAt})` : ''}</p>}
                 <p className="mt-1 w-full text-center md:text-left dark:text-gray-300">{item.statement}</p>
                 {((item.options === 'YesNoN/A' && selectedOption === 'no') || (item.options === 'YesNo' && selectedOption === 'no')) && (
                     <div className="mt-2 flex items-center">

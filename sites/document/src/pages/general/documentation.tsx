@@ -2,8 +2,7 @@ import { Fragment, cloneElement, isValidElement, useEffect, useState, type React
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeSlug from "rehype-slug";
-import { useOutletContext } from "react-router-dom";
-import { OutletContext, SidebarHeaderItem, SidebarLinkItem } from "../../contexts/outletContext";
+import { SidebarHeaderItem, SidebarLinkItem, useSidebarContext } from "../../contexts/outletContext";
 import { Textbox } from "cfdg/input";
 
 interface HeaderItem {
@@ -23,7 +22,7 @@ export function Documentation({
     const [markdown, setMarkdown] = useState("");
     const [headers, setHeaders] = useState<HeaderItem[]>([]);
     const [search, setSearch] = useState("");
-    const { setSidebarItems } = useOutletContext<OutletContext>();
+    const { setSidebarItems } = useSidebarContext();
 
     useEffect(() => {
         document.title = `${title} - The Compass`;

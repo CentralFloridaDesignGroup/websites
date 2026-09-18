@@ -12,6 +12,7 @@ import { msalInstance } from "./auth/msalConfig";
 const FieldDataParser = lazy(() => import("./pages/field/tools/fieldDataParser/fieldDataParser").then((module) => ({ default: module.FieldDataParser })));
 const CxlEditor = lazy(() => import("./pages/field/tools/cxlEditor/LayeredCxlEditor").then((module) => ({ default: module.LayeredCxlEditor })));
 const Checklist = lazy(() => import("./pages/office/checklists/checklist"));
+const Platting = lazy(() => import("./pages/office/checklists/Platting"));
 const AltaTableA2026 = lazy(() => import("./pages/office/Alta_TableA_2026").then((module) => ({ default: module.Alta_TableA_2026 })));
 const AltaStandards2026 = lazy(() => import("./pages/office/alta_standards_2026"));
 const Documentation = lazy(() => import("./pages/general/documentation").then((module) => ({ default: module.Documentation })));
@@ -47,8 +48,10 @@ const router = createBrowserRouter([
       { path: 'field/data-parser', element: <FieldDataParser /> },
       { path: 'tools/cxl-editor', element: <CxlEditor /> },
       { path: 'field/cxl-editor', element: <CxlEditor /> },
-      { path: 'checklists/:checklistType', element: <Checklist /> },
-      { path: 'office/checklists/:checklistType', element: <Checklist /> },
+      { path: 'checklists/*', element: <Checklist /> },
+      { path: 'office/checklists/*', element: <Checklist /> },
+      { path: 'platting', element: <Platting /> },
+      { path: 'office/platting', element: <Platting /> },
       { path: 'reference/alta-tablea', element: <AltaTableA2026 /> },
       { path: 'office/alta-tablea', element: <AltaTableA2026 /> },
       { path: 'office/alta-standards', element: <AltaStandards2026 /> },

@@ -10,7 +10,11 @@
                 {
                     "name": "Graphic Information System",
                     "description": "Manage GIS control points with edit, add, and upload workflows.",
-                    "tags": ["GIS", "Control Points", "Data Management"],
+                    "tags": [
+                        "GIS",
+                        "Control Points",
+                        "Data Management"
+                    ],
                     "path": "/gis",
                     "requiresAuth": false
                 }
@@ -27,7 +31,12 @@
                     "name": "Clients",
                     "description": "Review QuickBooks clients and manage internal invoice contacts.",
                     "path": "/clients",
-                    "tags": ["Clients", "Contacts", "QuickBooks", "Billing"],
+                    "tags": [
+                        "Clients",
+                        "Contacts",
+                        "QuickBooks",
+                        "Billing"
+                    ],
                     "requiresAuth": true,
                     "allowedGroupIds": []
                 },
@@ -35,7 +44,12 @@
                     "name": "Projects",
                     "description": "Review QuickBooks projects and assign internal project managers.",
                     "path": "/projects",
-                    "tags": ["Projects", "QuickBooks", "Managers", "Billing"],
+                    "tags": [
+                        "Projects",
+                        "QuickBooks",
+                        "Managers",
+                        "Billing"
+                    ],
                     "requiresAuth": true,
                     "allowedGroupIds": []
                 },
@@ -43,7 +57,12 @@
                     "name": "Invoices",
                     "description": "Create invoices, send payment links, and manage paid or void statuses.",
                     "path": "/invoices",
-                    "tags": ["Invoices", "Payments", "Stripe", "Billing"],
+                    "tags": [
+                        "Invoices",
+                        "Payments",
+                        "Stripe",
+                        "Billing"
+                    ],
                     "requiresAuth": true,
                     "allowedGroupIds": []
                 }
@@ -59,7 +78,11 @@
                     "name": "Employee Handbook",
                     "description": "Comprehensive guide to company policies, procedures, and employee benefits.",
                     "path": "/documents/employee-handbook",
-                    "tags": ["Company Policies", "Employee Benefits", "Guidelines"],
+                    "tags": [
+                        "Company Policies",
+                        "Employee Benefits",
+                        "Guidelines"
+                    ],
                     "requiresAuth": true
                 }
             ]
@@ -74,28 +97,44 @@
                     "name": "Surveyor Notes Tool",
                     "description": "A tool to help drafters create and manage surveyor notes efficiently.",
                     "path": "/tools/survey-notes",
-                    "tags": ["Surveyor Notes", "Drafting", "Data Management"],
+                    "tags": [
+                        "Surveyor Notes",
+                        "Drafting",
+                        "Data Management"
+                    ],
                     "requiresAuth": true
                 },
                 {
                     "name": "Comments Manager",
                     "description": "A tool to manage and organize comments and responses for projects.",
                     "path": "/tools/comments-manager",
-                    "tags": ["Comments", "Project Management", "Collaboration"],
+                    "tags": [
+                        "Comments",
+                        "Project Management",
+                        "Collaboration"
+                    ],
                     "requiresAuth": true
                 },
                 {
                     "name": "Closure Report Generator",
                     "description": "A tool to generate closure reports for survey projects, summarizing key findings and data.",
                     "path": "/tools/closure-report-generator",
-                    "tags": ["Closure Reports", "Survey Projects", "Data Analysis"],
+                    "tags": [
+                        "Closure Reports",
+                        "Survey Projects",
+                        "Data Analysis"
+                    ],
                     "requiresAuth": true
                 },
                 {
                     "name": "Proposal Language Generator",
                     "description": "A tool to generate standardized proposal language for various surveying services.",
                     "path": "/tools/proposal-generator",
-                    "tags": ["Proposal Language", "Surveying Services", "Standardization"],
+                    "tags": [
+                        "Proposal Language",
+                        "Surveying Services",
+                        "Standardization"
+                    ],
                     "requiresAuth": true
                 }
             ]
@@ -110,7 +149,11 @@
                     "name": "Field Data Parser",
                     "description": "A tool to parse and analyze field data collected during surveys.",
                     "path": "/tools/field-data-parser",
-                    "tags": ["Field Data", "Data Analysis", "Surveying"],
+                    "tags": [
+                        "Field Data",
+                        "Data Analysis",
+                        "Surveying"
+                    ],
                     "requiresAuth": false
                 }
             ]
@@ -125,14 +168,22 @@
                     "name": "Boundary Survey Checklist",
                     "description": "Checklist to ensure required information for a Florida boundary survey.",
                     "path": "/checklists/boundary-survey",
-                    "tags": ["Boundary Survey", "Checklist", "Florida"],
+                    "tags": [
+                        "Boundary Survey",
+                        "Checklist",
+                        "Florida"
+                    ],
                     "requiresAuth": false
                 },
                 {
                     "name": "ALTA Survey Checklist",
                     "description": "Checklist to ensure required information for an ALTA/NSPS land title survey.",
                     "path": "/checklists/alta-survey",
-                    "tags": ["ALTA Survey", "Checklist", "Land Title"],
+                    "tags": [
+                        "ALTA Survey",
+                        "Checklist",
+                        "Land Title"
+                    ],
                     "requiresAuth": false
                 },
                 {
@@ -208,26 +259,13 @@
                     "requiresAuth": false
                 },
                 {
-                    "name": "Plat Checklist",
-                    "description": "Draft Florida requirements and QA review for plat.",
-                    "path": "/checklists/plat",
+                    "name": "Platting Checklists",
+                    "description": "Browse county and municipality platting checklists.",
+                    "path": "/platting",
                     "tags": [
-                        "Plat",
+                        "Platting",
                         "Checklist",
-                        "Florida",
-                        "Draft"
-                    ],
-                    "requiresAuth": false
-                },
-                {
-                    "name": "Minor Plat Checklist",
-                    "description": "Draft Florida requirements and QA review for minor plat.",
-                    "path": "/checklists/minor-plat",
-                    "tags": [
-                        "Minor Plat",
-                        "Checklist",
-                        "Florida",
-                        "Draft"
+                        "Florida"
                     ],
                     "requiresAuth": false
                 }
@@ -243,7 +281,11 @@
                     "name": "ALTA Table A Requirements",
                     "description": "A reference guide to the ALTA Table A requirements for land title surveys.",
                     "path": "/reference/alta-tablea",
-                    "tags": ["ALTA Table A", "Reference", "Land Title"],
+                    "tags": [
+                        "ALTA Table A",
+                        "Reference",
+                        "Land Title"
+                    ],
                     "requiresAuth": false
                 }
             ]
