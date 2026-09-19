@@ -16,7 +16,7 @@ for (const slug of ['boundary-survey', 'alta-survey', ...added]) {
 const authored = [
     { path: '/checklists/minor-plat', name: 'Minor Plat Checklist' },
     { path: '/checklists/plat', name: 'Plat Checklist' },
-    { path: '/checklists/platting/orange', name: 'Unincorporated Orange County Platting Checklist' },
+    { path: '/checklists/platting/orange', name: 'Orange County Platting Checklist' },
     { path: '/checklists/platting/orange/orlando', name: 'Orlando, Orange County Platting Checklist' },
 ];
 for (const link of [...links, ...authored.filter(item => !paths.includes(item.path))]) {

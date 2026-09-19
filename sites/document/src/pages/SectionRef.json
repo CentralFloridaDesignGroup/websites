@@ -159,6 +159,25 @@
             ]
         },
         {
+            "name": "Platting",
+            "description": "County and municipality platting checklists with local requirements placeholders.",
+            "icon": "Map",
+            "requiresAuth": false,
+            "links": [
+                {
+                    "name": "Platting Checklists",
+                    "description": "Browse county and municipality platting checklists.",
+                    "path": "/platting",
+                    "tags": [
+                        "Platting",
+                        "Checklist",
+                        "Florida"
+                    ],
+                    "requiresAuth": false
+                }
+            ]
+        },
+        {
             "name": "Checklists",
             "description": "Checklists to ensure all necessary steps are followed in various processes.",
             "icon": "Checklist",

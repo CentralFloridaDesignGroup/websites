@@ -1,5 +1,5 @@
 import { readFile, readdir, mkdir, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { dirname, join, relative, sep } from "node:path";
 
 export function composeChecklist(profile, sets) {
   if (
@@ -56,9 +56,8 @@ export function composeChecklist(profile, sets) {
   };
 }
 
-// Folder names organize authoring files; profiles reference only each set's ID.
-export async function loadRequirementSets(directory) {
-  const sets = new Map();
+async function jsonFiles(directory) {
+  const files = [];
   async function visit(folder) {
     const entries = await readdir(folder, { withFileTypes: true });
     entries.sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
@@ -67,20 +66,43 @@ export async function loadRequirementSets(directory) {
       if (entry.isDirectory()) {
         await visit(path);
       } else if (entry.isFile() && entry.name.endsWith(".json")) {
-        const set = JSON.parse(await readFile(path, "utf8"));
-        if (sets.has(set.id))
-          throw new Error(`Duplicate requirement set: ${set.id}`);
-        sets.set(set.id, set);
+        files.push(path);
       }
     }
   }
   await visit(directory);
+  return files;
+}
+
+// Folder names organize authoring files; profiles reference only each set's ID.
+export async function loadRequirementSets(directory) {
+  const sets = new Map();
+  for (const path of await jsonFiles(directory)) {
+    const set = JSON.parse(await readFile(path, "utf8"));
+    if (sets.has(set.id))
+      throw new Error(`Duplicate requirement set: ${set.id}`);
+    sets.set(set.id, set);
+  }
   return sets;
+}
+
+export async function loadJurisdictionProfiles(directory) {
+  const profiles = [];
+  const ids = new Set();
+  for (const path of await jsonFiles(directory)) {
+    const profile = JSON.parse(await readFile(path, "utf8"));
+    if (!profile.id || ids.has(profile.id))
+      throw new Error(`Missing or duplicate jurisdiction ID: ${profile.id}`);
+    ids.add(profile.id);
+    // Explicit outputs preserve established URLs; otherwise mirror source folders.
+    const sourcePath = relative(directory, path).split(sep).join("/").slice(0, -5);
+    profiles.push({ ...profile, output: profile.output ?? `platting/${sourcePath}` });
+  }
+  return profiles;
 }
 
 export async function generateAuthoredChecklists(siteDirectory) {
   const root = join(siteDirectory, "src/pages/office/checklists/platting");
-  const readJson = async (path) => JSON.parse(await readFile(path, "utf8"));
   const sets = await loadRequirementSets(join(root, "requirements"));
   const profiles = [
     {
@@ -94,11 +116,7 @@ export async function generateAuthoredChecklists(siteDirectory) {
       include: ["florida", "white-point"],
     },
   ];
-  for (const file of (await readdir(join(root, "jurisdictions")))
-    .filter((file) => file.endsWith(".json"))
-    .sort()) {
-    profiles.push(await readJson(join(root, "jurisdictions", file)));
-  }
+  profiles.push(...await loadJurisdictionProfiles(join(root, "jurisdictions")));
   const outputs = new Set();
   // Validate every profile before writing any output.
   const generated = profiles.map((profile) => {

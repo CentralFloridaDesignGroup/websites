@@ -1,14 +1,29 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
-import { composeChecklist, generateAuthoredChecklists, loadRequirementSets } from '../sites/document/scripts/composePlattingChecklists.mjs';
+import { readFile, mkdir, mkdtemp, writeFile } from 'node:fs/promises';
+import { composeChecklist, generateAuthoredChecklists, loadRequirementSets, loadJurisdictionProfiles } from '../sites/document/scripts/composePlattingChecklists.mjs';
 import { fileURLToPath } from 'node:url';
 
 const site = new URL('../sites/document/', import.meta.url);
 const root = new URL('src/pages/office/checklists/platting/', site);
-const json = async path => JSON.parse(await readFile(new URL(path, root), 'utf8'));
 const sets = await loadRequirementSets(fileURLToPath(new URL('requirements/', root)));
-const county = await json('jurisdictions/orange-county.json');
-const city = await json('jurisdictions/orlando.json');
+const profiles = await loadJurisdictionProfiles(fileURLToPath(new URL('jurisdictions/', root)));
+const county = profiles.find(profile => profile.id === 'orange-county');
+const city = profiles.find(profile => profile.id === 'orlando');
+assert(county && city, 'Missing Orange County/Orlando profiles');
+// Keep loader fixtures in ignored build output, independent of authored content.
+const fixtureRoot = new URL('dist/platting-loader-tests/', site);
+await mkdir(fixtureRoot, { recursive: true });
+const fixture = await mkdtemp(fileURLToPath(new URL('run-', fixtureRoot)));
+const { join } = await import('node:path');
+await mkdir(join(fixture, 'orange', 'cities'), { recursive: true });
+await writeFile(join(fixture, 'orange', 'cities', 'orlando.json'), JSON.stringify({ ...city, output: undefined }));
+await writeFile(join(fixture, 'orange', 'county.json'), JSON.stringify(county));
+let loaded = await loadJurisdictionProfiles(fixture);
+assert.equal(loaded.find(profile => profile.id === 'orlando').output, 'platting/orange/cities/orlando');
+assert.equal(loaded.find(profile => profile.id === 'orange-county').output, county.output);
+assert.deepEqual(await loadJurisdictionProfiles(fixture), loaded);
+await writeFile(join(fixture, 'duplicate.json'), JSON.stringify(city));
+await assert.rejects(() => loadJurisdictionProfiles(fixture), /duplicate jurisdiction ID/);
 const items = checklist => checklist.Sections.flatMap(section => section.items);
 for (const profile of [county, city]) {
     const result = composeChecklist(profile, sets);
