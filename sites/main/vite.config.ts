@@ -15,6 +15,7 @@ export default defineConfig({
       'cfdg/layout': path.resolve(__dirname, '../../packages/cfdg/layout/src'),
       'cfdg/scripts': path.resolve(__dirname, '../../packages/cfdg/scripts/src'),
       'cfdg/types': path.resolve(__dirname, '../../packages/cfdg/types/src'),
+      'react-router-dom': path.resolve(__dirname, 'node_modules/react-router-dom'),
     },
   },
 })
