@@ -2803,6 +2803,48 @@ export function createInvoicesApi() {
     }
   })
 
+  app.post('/api/invoices/:id/mark-sent', async (context) => {
+    try {
+      const authError = requireAuthMode(context, 'microsoft')
+      if (authError) return authError
+      await ensureInvoicesSchemaReady(context.env.DB)
+      const invoiceId = normalizeString(context.req.param('id'))
+      const invoice = await fetchInvoiceById(context.env.DB, invoiceId)
+      if (!invoice) {
+        return jsonResponse({ error: 'Invoice not found' }, { status: 404 })
+      }
+      if (invoice.status === 'void') {
+        return badRequest('Void invoices cannot be marked as sent')
+      }
+      if (invoice.status === 'paid') {
+        return badRequest('Paid invoices cannot be marked as sent')
+      }
+      if (!invoice.qboCustomerId) {
+        return badRequest('Invoice must be linked to a QuickBooks customer before marking as sent')
+      }
+      if (!invoice.qboProjectId) {
+        return badRequest('Invoice must be linked to a QuickBooks project before marking as sent')
+      }
+
+      const sentDate = nowIso()
+      await context.env.DB.prepare(
+        `UPDATE invoices
+         SET status = 'sent', sent_date = COALESCE(sent_date, ?), updated_date = ?, updated_by = ?
+         WHERE id = ?`
+      ).bind(sentDate, sentDate, context.get('auth').subject || 'unknown-user', invoiceId).run()
+
+      const sentInvoice = await fetchInvoiceById(context.env.DB, invoiceId)
+      if (!sentInvoice) {
+        return jsonResponse({ error: 'Invoice not found after marking sent' }, { status: 404 })
+      }
+      await syncInvoiceToQbo(context.env.DB, context.env, sentInvoice)
+      return jsonResponse({ invoice: await fetchInvoiceById(context.env.DB, invoiceId) })
+    } catch (error: unknown) {
+      console.error('Error marking invoice as sent:', error)
+      return serverError(String(error instanceof Error ? error.message : error))
+    }
+  })
+
   app.post('/api/invoices/:id/void', async (context) => {
     try {
       const authError = requireAuthMode(context, 'microsoft')

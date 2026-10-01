@@ -32,6 +32,8 @@ const routePolicies: RoutePolicy[] = [
   { method: 'POST', route: '/api/invoices/:id/copy', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
   // Mark an invoice as sent. This will update the invoice status and send an email to the client.
   { method: 'POST', route: '/api/invoices/:id/send', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  // Mark an invoice as sent without sending an email to the client.
+  { method: 'POST', route: '/api/invoices/:id/mark-sent', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
   // Mark an invoice as void. This will update the invoice status and prevent further payments.
   { method: 'POST', route: '/api/invoices/:id/void', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
   // Pulls the project address from QuickBooks Online and updates the invoice with the new address.

@@ -42,7 +42,7 @@ export function Company() {
             name: "Nathan White",
             suffix: "PSM, CST-IV",
             title: "Owner and President",
-            image: "./headshots/nathan_white.jpg",
+            image: "/headshots/nathan_white.jpg",
             description: "Nathan is the owner and president of White Point Surveying & Mapping. He has been in the surveying industry since 2016, and has a wide range of experience in both field and office work. He is a licensed Professional Surveyor and Mapper in the state of Florida, and is also a Certified Survey Technician IV in both field and office operations. Nathan is passionate about providing high-quality surveying services to his clients, and is committed to maintaining the highest standards of practice in the industry.",
             certifications: [
                 {

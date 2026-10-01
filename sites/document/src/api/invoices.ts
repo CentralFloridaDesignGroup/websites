@@ -335,6 +335,19 @@ export async function sendInvoice(
   return normalizeInvoice(data.invoice);
 }
 
+/** Marks an invoice as sent without delivering an email. */
+export async function markInvoiceSent(id: string): Promise<Invoice> {
+  const data = await requestJson<{ invoice?: unknown }>(
+    `/api/invoices/${encodeURIComponent(id)}/mark-sent`,
+    {
+      method: "POST",
+      authMode: "microsoft",
+      body: JSON.stringify({}),
+    },
+  );
+  return normalizeInvoice(data.invoice);
+}
+
 export async function refreshInvoiceProjectAddress(
   id: string,
 ): Promise<Invoice> {

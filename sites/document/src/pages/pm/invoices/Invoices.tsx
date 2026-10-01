@@ -37,6 +37,7 @@ import {
   ExternalLink,
   File,
   Mail,
+  MailX,
   Plus,
   RefreshCw,
   Save,
@@ -51,6 +52,7 @@ import {
   fetchInvoice,
   fetchInvoices,
   fetchPublicInvoice,
+  markInvoiceSent,
   markInvoicePaid,
   refreshInvoiceProjectAddress,
   retryPayoutSync,
@@ -480,6 +482,19 @@ export function InvoicesManager() {
               : "";
   const canSendSelectedInvoice = Boolean(
     selectedInvoice && !selectedInvoiceSendBlockMessage,
+  );
+  const selectedInvoiceMarkSentBlockMessage =
+    selectedInvoice?.status === "paid"
+      ? "Paid invoices cannot be marked as sent"
+      : selectedInvoice?.status === "void"
+        ? "Void invoices cannot be marked as sent"
+        : !form.qboCustomerId
+          ? "Invoice must be linked to a QuickBooks customer before marking as sent"
+          : !form.qboProjectId
+            ? "Invoice must be linked to a QuickBooks project before marking as sent"
+            : "";
+  const canMarkSelectedInvoiceSent = Boolean(
+    selectedInvoice && !selectedInvoiceMarkSentBlockMessage,
   );
   const publicUrl = selectedInvoice
     ? `${window.location.origin}/pay/${encodeURIComponent(selectedInvoice.publicToken)}`
@@ -1051,6 +1066,21 @@ export function InvoicesManager() {
     );
   }
 
+  async function markSelectedInvoiceSent() {
+    if (!selectedInvoice) return;
+    if (
+      !window.confirm(
+        `Mark invoice ${selectedInvoice.invoiceNumber} as sent? No email will be sent.`,
+      )
+    ) {
+      return;
+    }
+    await runInvoiceAction(
+      () => markInvoiceSent(selectedInvoice.id),
+      "Invoice Marked as Sent",
+    );
+  }
+
   async function refreshSelectedInvoiceProjectAddress() {
     if (!selectedInvoice) return;
     await runInvoiceAction(
@@ -1491,6 +1521,30 @@ export function InvoicesManager() {
                             {(invoice.status === "draft" ||
                               invoice.status === "sent") && (
                               <>
+                                {invoice.status === "draft" && (
+                                  <Button
+                                    size="small"
+                                    style="secondary"
+                                    icon={Check}
+                                    onClick={() => {
+                                      if (
+                                        window.confirm(
+                                          `Mark invoice ${invoice.invoiceNumber} as sent? No email will be sent.`,
+                                        )
+                                      ) {
+                                        void runInvoiceRowAction(
+                                          invoice,
+                                          (target) => markInvoiceSent(target.id),
+                                          "Invoice Marked as Sent",
+                                        );
+                                      }
+                                    }}
+                                    properties={{
+                                      disabled: actionBusy || isClosed,
+                                      title: "Mark as Sent Without Email",
+                                    }}
+                                  />
+                                )}
                                 <Button
                                   size="small"
                                   style="success"
@@ -1687,6 +1741,20 @@ export function InvoicesManager() {
                   properties={{
                     disabled: actionBusy || !canSendSelectedInvoice,
                     title: selectedInvoiceSendBlockMessage || "Email Invoice",
+                  }}
+                />
+              )}
+              {selectedInvoice?.status === "draft" && (
+                <Button
+                  style="textonly"
+                  icon={MailX}
+                  onClick={() => void markSelectedInvoiceSent()}
+                  properties={{
+                    disabled: actionBusy || !canMarkSelectedInvoiceSent,
+                    title:
+                      selectedInvoiceMarkSentBlockMessage ||
+                      "Mark as Sent Without Email",
+                      classNames: "!bg-blue-500 text-white"
                   }}
                 />
               )}
