@@ -14,7 +14,7 @@ import type {
 } from 'cfdg/types'
 import { Hono } from 'hono'
 import { invoiceSyncState, paymentSyncState, payoutSyncState } from './accountingSyncState'
-import { badRequest, jsonResponse, requireAuthMode, serverError, type HonoEnv } from './apiTypes'
+import { badRequest, jsonResponse, requireAuthMode, serverError, serverTimingHeaders, type HonoEnv } from './apiTypes'
 import { renderPaymentRecordedEmail } from './emailTemplates/paymentRecorded'
 import { ensureQboSchemaReady, syncInvoiceToQbo, syncStripePayoutDepositToQbo, trySyncInvoicePaymentToQbo, voidInvoiceInQbo } from './qboApi'
 import { ensureProjectManagementSchemaReady, fetchActiveClientContactsByIds, fetchProjectBillingProfile, fetchProjectInvoiceDocuments, fetchProjectManager } from './projectManagementApi'
@@ -172,7 +172,6 @@ type StripePaymentDetails = {
   paymentMethodResolved: boolean
 }
 
-const invoiceSchemaReadyByDb = new WeakMap<D1Database, Promise<void>>()
 const ACCOUNTING_ACCESS_GROUP_ID = '1cb77436-5086-490c-8b77-49056339667b'
 
 type GraphTokenResponse = {
@@ -588,16 +587,13 @@ async function ensureInvoicesSchema(db: D1Database): Promise<void> {
   }
 }
 
-function ensureInvoicesSchemaReady(db: D1Database): Promise<void> {
-  const existing = invoiceSchemaReadyByDb.get(db)
-  if (existing) {
-    return existing
-  }
-
-  const ready = ensureInvoicesSchema(db)
-  invoiceSchemaReadyByDb.set(db, ready)
-  return ready
+/** Schema changes and one-time backfills are applied by D1 migrations. */
+async function ensureInvoicesSchemaReady(_db: D1Database): Promise<void> {
 }
+
+// Kept reachable until the retired builder can be deleted in a dedicated cleanup.
+// It is intentionally never invoked by a request handler.
+void ensureInvoicesSchema
 
 async function parseJsonBody(request: Request): Promise<Record<string, unknown>> {
   const contentType = request.headers.get('Content-Type') || ''
@@ -2421,6 +2417,7 @@ export function createInvoicesApi() {
     try {
       const authError = requireAuthMode(context, 'microsoft')
       if (authError) return authError
+      const requestStartedAt = performance.now()
       await ensureInvoicesSchemaReady(context.env.DB)
       await ensureQboSchemaReady(context.env.DB)
 
@@ -2449,6 +2446,7 @@ export function createInvoicesApi() {
       }
 
       const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+      const d1StartedAt = performance.now()
       const rows = await context.env.DB.prepare(
         `SELECT id, invoice_number, status,
                 qbo_customer_id, qbo_project_id, qbo_invoice_id, qbo_invoice_sync_token, qbo_payment_id,
@@ -2466,7 +2464,14 @@ export function createInvoicesApi() {
          ORDER BY created_date DESC`
       ).bind(...bindings).all()
 
-      return jsonResponse({ invoices: (rows.results || []).map((row) => mapInvoiceRow(row as InvoiceRow)) })
+      const d1Duration = performance.now() - d1StartedAt
+      return jsonResponse(
+        { invoices: (rows.results || []).map((row) => mapInvoiceRow(row as InvoiceRow)) },
+        { headers: serverTimingHeaders([
+          { name: 'd1', duration: d1Duration },
+          { name: 'app', duration: performance.now() - requestStartedAt },
+        ]) },
+      )
     } catch (error: unknown) {
       console.error('Error listing invoices:', error)
       return serverError(String(error instanceof Error ? error.message : error))

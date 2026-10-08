@@ -19,11 +19,10 @@ import type {
 } from 'cfdg/types'
 import { CURRENT_PROJECT_STATUSES, PROJECT_STATUSES } from 'cfdg/types/constants'
 import { Hono } from 'hono'
-import { badRequest, jsonResponse, noContent, requireAuthMode, serverError, type HonoEnv } from './apiTypes'
+import { badRequest, jsonResponse, noContent, requireAuthMode, serverError, serverTimingHeaders, type HonoEnv } from './apiTypes'
 import {
   createQboClientCustomer,
   createQboProjectCustomer,
-  ensureQboSchemaReady,
   moveQboProjectCustomer,
   updateQboCustomerActiveState,
   updateQboClientCustomer,
@@ -161,146 +160,8 @@ function mapQboCustomer(row: QboCustomerRow): QboCustomer {
   }
 }
 
-async function ensureProjectManagementSchema(db: D1Database): Promise<void> {
-  await db.prepare(
-    `CREATE TABLE IF NOT EXISTS client_contacts (
-      id INTEGER PRIMARY KEY,
-      qbo_customer_id TEXT NOT NULL,
-      name TEXT NOT NULL,
-      email TEXT NOT NULL,
-      phone TEXT,
-      role TEXT,
-      is_invoice_recipient INTEGER NOT NULL DEFAULT 1,
-      active INTEGER NOT NULL DEFAULT 1,
-      notes TEXT,
-      created_date DATETIME NOT NULL,
-      updated_date DATETIME,
-      created_by TEXT NOT NULL,
-      updated_by TEXT
-    )`
-  ).run()
-
-  await db.prepare(
-    `CREATE TABLE IF NOT EXISTS invoice_contact_recipients (
-      id INTEGER PRIMARY KEY,
-      invoice_id INTEGER NOT NULL,
-      contact_id INTEGER NOT NULL,
-      name TEXT NOT NULL,
-      email TEXT NOT NULL,
-      FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE,
-      FOREIGN KEY (contact_id) REFERENCES client_contacts(id)
-    )`
-  ).run()
-
-  await db.prepare(
-    `CREATE TABLE IF NOT EXISTS project_managers (
-      qbo_project_id TEXT PRIMARY KEY,
-      manager_name TEXT NOT NULL,
-      manager_email TEXT NOT NULL,
-      updated_date DATETIME NOT NULL,
-      updated_by TEXT NOT NULL
-    )`
-  ).run()
-
-  await db.prepare(
-    `CREATE TABLE IF NOT EXISTS project_billing_profiles (
-      qbo_project_id TEXT PRIMARY KEY,
-      po_number TEXT,
-      invoice_document_note TEXT,
-      updated_date DATETIME NOT NULL,
-      updated_by TEXT NOT NULL
-    )`
-  ).run()
-
-  await db.prepare(
-    `CREATE TABLE IF NOT EXISTS project_invoice_documents (
-      id INTEGER PRIMARY KEY,
-      qbo_project_id TEXT NOT NULL,
-      r2_key TEXT NOT NULL UNIQUE,
-      filename TEXT NOT NULL,
-      content_type TEXT NOT NULL,
-      size_bytes INTEGER NOT NULL DEFAULT 0,
-      active INTEGER NOT NULL DEFAULT 1,
-      created_date DATETIME NOT NULL,
-      created_by TEXT NOT NULL,
-      updated_date DATETIME,
-      updated_by TEXT
-    )`
-  ).run()
-
-  await db.prepare(
-    `CREATE TABLE IF NOT EXISTS project_lifecycle (
-      qbo_project_id TEXT PRIMARY KEY,
-      status TEXT NOT NULL CHECK (status IN ('proposal', 'active', 'hold', 'complete', 'cancelled')),
-      updated_date DATETIME NOT NULL,
-      updated_by TEXT NOT NULL,
-      FOREIGN KEY (qbo_project_id) REFERENCES qbo_customers(qbo_id)
-    )`
-  ).run()
-
-  await db.prepare(
-    `CREATE TABLE IF NOT EXISTS project_property_profiles (
-      qbo_project_id TEXT PRIMARY KEY,
-      parcel_id TEXT NOT NULL DEFAULT '',
-      updated_date DATETIME NOT NULL,
-      updated_by TEXT NOT NULL,
-      FOREIGN KEY (qbo_project_id) REFERENCES qbo_customers(qbo_id)
-    )`
-  ).run()
-
-  await db.prepare(
-    `CREATE TABLE IF NOT EXISTS project_tasks (
-      id INTEGER PRIMARY KEY, qbo_project_id TEXT NOT NULL, name TEXT NOT NULL, scope_of_work TEXT NOT NULL DEFAULT '',
-      contract_amount_cents INTEGER NOT NULL DEFAULT 0, retainer_cents INTEGER NOT NULL DEFAULT 0, price_type TEXT NOT NULL DEFAULT '',
-      sort_order INTEGER NOT NULL DEFAULT 0, active INTEGER NOT NULL DEFAULT 1, created_date DATETIME NOT NULL, updated_date DATETIME NOT NULL,
-      created_by TEXT NOT NULL, updated_by TEXT NOT NULL, FOREIGN KEY (qbo_project_id) REFERENCES qbo_customers(qbo_id)
-    )`
-  ).run()
-
-  for (const column of [
-    "scope_of_work TEXT NOT NULL DEFAULT ''",
-    'contract_amount_cents INTEGER NOT NULL DEFAULT 0',
-    'retainer_cents INTEGER NOT NULL DEFAULT 0',
-    "price_type TEXT NOT NULL DEFAULT ''",
-    'sort_order INTEGER NOT NULL DEFAULT 0',
-    'active INTEGER NOT NULL DEFAULT 1',
-    "created_date DATETIME NOT NULL DEFAULT ''",
-    "updated_date DATETIME NOT NULL DEFAULT ''",
-    "created_by TEXT NOT NULL DEFAULT ''",
-    "updated_by TEXT NOT NULL DEFAULT ''",
-  ]) {
-    try {
-      await db.prepare(`ALTER TABLE project_tasks ADD COLUMN ${column}`).run()
-    } catch (error: unknown) {
-      const message = String(error instanceof Error ? error.message : error).toLowerCase()
-      if (!message.includes('duplicate column name')) throw error
-    }
-  }
-
-  await db.prepare(
-    `INSERT OR IGNORE INTO project_lifecycle (qbo_project_id, status, updated_date, updated_by)
-     SELECT qbo_id, CASE WHEN active = 1 THEN 'active' ELSE 'complete' END, CURRENT_TIMESTAMP, 'migration'
-     FROM qbo_customers
-     WHERE parent_id IS NOT NULL AND parent_id != ''`
-  ).run()
-
-  for (const statement of [
-    'CREATE INDEX IF NOT EXISTS idx_client_contacts_qbo_customer_id ON client_contacts(qbo_customer_id)',
-    'CREATE INDEX IF NOT EXISTS idx_client_contacts_email ON client_contacts(email)',
-    'CREATE INDEX IF NOT EXISTS idx_invoice_contact_recipients_invoice_id ON invoice_contact_recipients(invoice_id)',
-    'CREATE INDEX IF NOT EXISTS idx_project_managers_email ON project_managers(manager_email)',
-    'CREATE INDEX IF NOT EXISTS idx_project_invoice_documents_project_id ON project_invoice_documents(qbo_project_id)',
-    'CREATE INDEX IF NOT EXISTS idx_project_lifecycle_status ON project_lifecycle(status)',
-    'CREATE INDEX IF NOT EXISTS idx_project_property_profiles_parcel_id ON project_property_profiles(parcel_id)',
-    'CREATE INDEX IF NOT EXISTS idx_project_tasks_project_active ON project_tasks(qbo_project_id, active, sort_order)',
-  ]) {
-    await db.prepare(statement).run()
-  }
-}
-
-export async function ensureProjectManagementSchemaReady(db: D1Database): Promise<void> {
-  await ensureQboSchemaReady(db)
-  await ensureProjectManagementSchema(db)
+/** Schema changes are applied through D1 migrations, never during a request. */
+export async function ensureProjectManagementSchemaReady(_db: D1Database): Promise<void> {
 }
 
 export async function fetchProjectManager(db: D1Database, qboProjectId: string) {
@@ -881,15 +742,46 @@ export function createProjectManagementApi() {
       if (!project) {
         return jsonResponse({ error: 'Project not found' }, { status: 404 })
       }
-      const client = await fetchCustomer(context.env.DB, project.parentId)
-      const manager = await fetchProjectManager(context.env.DB, project.id)
-      const billingProfile = await fetchProjectBillingProfile(context.env.DB, project.id)
-      const invoiceDocuments = await fetchProjectInvoiceDocuments(context.env.DB, project.id)
-      const tasks = await fetchProjectTasks(context.env.DB, project.id, true)
-      const summary = await fetchProjectSummary(context.env.DB, project.id)
+      const [client, manager, billingProfile, invoiceDocuments, tasks, summary] = await Promise.all([
+        fetchCustomer(context.env.DB, project.parentId),
+        fetchProjectManager(context.env.DB, project.id),
+        fetchProjectBillingProfile(context.env.DB, project.id),
+        fetchProjectInvoiceDocuments(context.env.DB, project.id),
+        fetchProjectTasks(context.env.DB, project.id, true),
+        fetchProjectSummary(context.env.DB, project.id),
+      ])
       return jsonResponse({ project: summary || project, client, manager, billingProfile, invoiceDocuments, tasks })
     } catch (error: unknown) {
       console.error('Error fetching project:', error)
+      return serverError(String(error instanceof Error ? error.message : error))
+    }
+  })
+
+  app.get('/api/projects/:id/invoice-context', async (context) => {
+    try {
+      const authError = requireAuthMode(context, 'microsoft')
+      if (authError) return authError
+      const requestStartedAt = performance.now()
+      await ensureProjectManagementSchemaReady(context.env.DB)
+      const projectId = normalizeString(context.req.param('id'))
+      const d1StartedAt = performance.now()
+      const [project, manager, billingProfile, tasks] = await Promise.all([
+        fetchProjectSummary(context.env.DB, projectId),
+        fetchProjectManager(context.env.DB, projectId),
+        fetchProjectBillingProfile(context.env.DB, projectId),
+        fetchProjectTasks(context.env.DB, projectId),
+      ])
+      const d1Duration = performance.now() - d1StartedAt
+      if (!project) return jsonResponse({ error: 'Project not found' }, { status: 404 })
+      return jsonResponse(
+        { project, manager, billingProfile, tasks },
+        { headers: serverTimingHeaders([
+          { name: 'd1', duration: d1Duration },
+          { name: 'app', duration: performance.now() - requestStartedAt },
+        ]) },
+      )
+    } catch (error: unknown) {
+      console.error('Error fetching invoice project context:', error)
       return serverError(String(error instanceof Error ? error.message : error))
     }
   })

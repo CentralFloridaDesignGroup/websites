@@ -51,6 +51,18 @@ export function jsonResponse(body: unknown, init: ResponseInit = {}): Response {
 }
 
 /**
+ * Produces browser-readable Server-Timing headers for targeted API diagnostics.
+ */
+export function serverTimingHeaders(metrics: ReadonlyArray<{ name: string; duration: number }>): HeadersInit {
+  return {
+    'Server-Timing': metrics
+      .map(({ name, duration }) => `${name};dur=${Math.max(0, duration).toFixed(1)}`)
+      .join(', '),
+    'Access-Control-Expose-Headers': 'Server-Timing',
+  }
+}
+
+/**
  * Creates a 400 Bad Request response with the specified error message.
  * @param message - The error message to include in the response.
  * @returns A Response object with a 400 status code and the specified error message.

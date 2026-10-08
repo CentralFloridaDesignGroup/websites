@@ -107,8 +107,6 @@ type QboPaymentMethodResponse = {
   Active?: boolean
 }
 
-const qboSchemaReadyByDb = new WeakMap<D1Database, Promise<void>>()
-
 function normalizeString(value: unknown): string {
   return String(value ?? '').trim()
 }
@@ -161,141 +159,6 @@ function requireQboConfig(env: HonoEnv['Bindings']): { clientId: string; clientS
   return { clientId, clientSecret, redirectUri }
 }
 
-async function ensureColumn(db: D1Database, tableName: 'invoices', columnDefinitionSql: string): Promise<void> {
-  try {
-    await db.prepare(`ALTER TABLE ${tableName} ADD COLUMN ${columnDefinitionSql}`).run()
-  } catch (error: unknown) {
-    const message = String(error instanceof Error ? error.message : error).toLowerCase()
-    if (!message.includes('duplicate column name')) {
-      throw error
-    }
-  }
-}
-
-async function ensureQboSchema(db: D1Database): Promise<void> {
-  await db.prepare(
-    `CREATE TABLE IF NOT EXISTS qbo_connection (
-      id INTEGER PRIMARY KEY CHECK (id = 1),
-      realm_id TEXT NOT NULL,
-      environment TEXT NOT NULL,
-      access_token TEXT NOT NULL,
-      refresh_token TEXT NOT NULL,
-      token_expires_date DATETIME NOT NULL,
-      refresh_expires_date DATETIME,
-      last_customer_sync_date DATETIME,
-      last_item_sync_date DATETIME,
-      last_account_sync_date DATETIME,
-      default_service_item_id TEXT,
-      default_deposit_account_id TEXT,
-      stripe_fee_expense_account_id TEXT,
-      connected_date DATETIME NOT NULL,
-      updated_date DATETIME NOT NULL
-    )`
-  ).run()
-
-  for (const column of ['last_item_sync_date DATETIME', 'last_account_sync_date DATETIME', 'default_service_item_id TEXT', 'default_deposit_account_id TEXT', 'stripe_fee_expense_account_id TEXT']) {
-    try {
-      await db.prepare(`ALTER TABLE qbo_connection ADD COLUMN ${column}`).run()
-    } catch (error: unknown) {
-      const message = String(error instanceof Error ? error.message : error).toLowerCase()
-      if (!message.includes('duplicate column name')) {
-        throw error
-      }
-    }
-  }
-
-  await db.prepare(
-    `CREATE TABLE IF NOT EXISTS qbo_oauth_states (
-      state TEXT PRIMARY KEY,
-      return_path TEXT,
-      created_date DATETIME NOT NULL
-    )`
-  ).run()
-
-  await db.prepare(
-    `CREATE TABLE IF NOT EXISTS qbo_customers (
-      qbo_id TEXT PRIMARY KEY,
-      parent_id TEXT,
-      display_name TEXT NOT NULL,
-      fully_qualified_name TEXT,
-      company_name TEXT,
-      given_name TEXT,
-      family_name TEXT,
-      primary_email TEXT,
-      primary_phone TEXT,
-      bill_addr_line1 TEXT,
-      bill_addr_line2 TEXT,
-      bill_addr_city TEXT,
-      bill_addr_state TEXT,
-      bill_addr_postal_code TEXT,
-      ship_addr_line1 TEXT,
-      ship_addr_line2 TEXT,
-      ship_addr_city TEXT,
-      ship_addr_state TEXT,
-      ship_addr_postal_code TEXT,
-      active INTEGER NOT NULL DEFAULT 1,
-      sync_token TEXT,
-      qbo_updated_time DATETIME,
-      last_synced_date DATETIME NOT NULL
-    )`
-  ).run()
-
-  await db.prepare(
-    `CREATE TABLE IF NOT EXISTS qbo_service_items (
-      qbo_id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      fully_qualified_name TEXT,
-      description TEXT,
-      active INTEGER NOT NULL DEFAULT 1,
-      sync_token TEXT,
-      qbo_updated_time DATETIME,
-      last_synced_date DATETIME NOT NULL
-    )`
-  ).run()
-
-  await db.prepare(
-    `CREATE TABLE IF NOT EXISTS qbo_accounts (
-      qbo_id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      fully_qualified_name TEXT,
-      account_type TEXT,
-      account_sub_type TEXT,
-      classification TEXT,
-      active INTEGER NOT NULL DEFAULT 1,
-      sync_token TEXT,
-      qbo_updated_time DATETIME,
-      last_synced_date DATETIME NOT NULL
-    )`
-  ).run()
-
-  for (const column of [
-    'qbo_customer_id TEXT',
-    'qbo_project_id TEXT',
-    'qbo_invoice_id TEXT',
-    'qbo_invoice_sync_token TEXT',
-    'qbo_payment_id TEXT',
-    'qbo_last_sync_date DATETIME',
-    'qbo_sync_status TEXT',
-    'qbo_sync_message TEXT',
-  ]) {
-    await ensureColumn(db, 'invoices', column)
-  }
-
-  for (const statement of [
-    'CREATE INDEX IF NOT EXISTS idx_qbo_customers_parent_id ON qbo_customers(parent_id)',
-    'CREATE INDEX IF NOT EXISTS idx_qbo_customers_display_name ON qbo_customers(display_name)',
-    'CREATE INDEX IF NOT EXISTS idx_qbo_customers_primary_email ON qbo_customers(primary_email)',
-    'CREATE INDEX IF NOT EXISTS idx_qbo_service_items_name ON qbo_service_items(name)',
-    'CREATE INDEX IF NOT EXISTS idx_qbo_accounts_name ON qbo_accounts(name)',
-    'CREATE INDEX IF NOT EXISTS idx_qbo_accounts_account_type ON qbo_accounts(account_type)',
-    'CREATE INDEX IF NOT EXISTS idx_invoices_qbo_customer_id ON invoices(qbo_customer_id)',
-    'CREATE INDEX IF NOT EXISTS idx_invoices_qbo_project_id ON invoices(qbo_project_id)',
-    'CREATE INDEX IF NOT EXISTS idx_invoices_qbo_invoice_id ON invoices(qbo_invoice_id)',
-  ]) {
-    await db.prepare(statement).run()
-  }
-}
-
 function mapCachedQboAccount(row: Record<string, unknown>): QboAccount {
   return {
     id: normalizeString(row.qbo_id),
@@ -324,12 +187,11 @@ function mapCachedQboServiceItem(row: Record<string, unknown>): QboServiceItem {
   }
 }
 
-export function ensureQboSchemaReady(db: D1Database): Promise<void> {
-  const existing = qboSchemaReadyByDb.get(db)
-  if (existing) return existing
-  const ready = ensureQboSchema(db)
-  qboSchemaReadyByDb.set(db, ready)
-  return ready
+/**
+ * Retained while call sites transition to migration-owned schema management.
+ * D1 schema setup and backfills must never run in a request path.
+ */
+export async function ensureQboSchemaReady(_db: D1Database): Promise<void> {
 }
 
 function mapCachedQboCustomer(row: Record<string, unknown>): QboCustomer {

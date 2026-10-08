@@ -74,8 +74,7 @@ import {
 } from "../../../api/qbo";
 import {
   fetchClientContacts,
-  fetchProjectDetails,
-  fetchProjectTasks,
+  fetchInvoiceProjectContext,
   type ProjectSummary,
 } from "../../../api/projectManagement";
 import {
@@ -505,15 +504,9 @@ export function InvoicesManager() {
   const loadInvoices = useCallback(async () => {
     setLoading(true);
     try {
-      const [data, summaryData] = await Promise.all([
-        fetchInvoices({
-          status: statusFilter === "all" ? undefined : statusFilter,
-          search: searchTerm,
-        }),
-        fetchInvoices(),
-      ]);
+      const data = await fetchInvoices();
       setInvoices(data);
-      setSummaryInvoices(summaryData);
+      setSummaryInvoices(data);
     } catch (error) {
       showNotification({
         title: "Invoices Failed To Load",
@@ -523,16 +516,16 @@ export function InvoicesManager() {
     } finally {
       setLoading(false);
     }
-  }, [searchTerm, statusFilter]);
+  }, []);
 
   const loadQboData = useCallback(async () => {
     try {
-      const status = await fetchQboStatus();
+      const [status, customers] = await Promise.all([
+        fetchQboStatus(),
+        fetchQboCustomers(),
+      ]);
       setQboStatus(status);
-      if (status.connected) {
-        const customers = await fetchQboCustomers();
-        setQboCustomers(customers);
-      }
+      setQboCustomers(status.connected ? customers : []);
     } catch {
       setQboStatus({
         connected: false,
@@ -610,17 +603,30 @@ export function InvoicesManager() {
         return;
       }
       try {
-        const details = await fetchProjectDetails(form.qboProjectId);
+        const details = await fetchInvoiceProjectContext(form.qboProjectId);
         if (!cancelled) {
           setCurrentProject(details.project);
           setCurrentProjectManager(details.manager);
-          if (details.billingProfile.poNumber) {
-            setForm((previous) =>
-              previous.poNumber
-                ? previous
-                : { ...previous, poNumber: details.billingProfile.poNumber },
-            );
-          }
+          const billableTasks = selectedInvoice
+            ? []
+            : details.tasks.filter((task) => task.remainingCents > 0);
+          setForm((previous) => {
+            if (previous.qboProjectId !== details.project.id) return previous;
+            return {
+              ...previous,
+              poNumber: previous.poNumber || details.billingProfile.poNumber,
+              lineItems: billableTasks.length > 0
+                ? billableTasks.map((task) => ({
+                    localId: createLocalId(),
+                    projectTaskId: task.id,
+                    description: task.name,
+                    percentComplete: "100",
+                    contractAmount: (task.remainingCents / 100).toFixed(2),
+                    billInFull: false,
+                  }))
+                : previous.lineItems,
+            };
+          });
         }
       } catch {
         if (!cancelled) {
@@ -633,7 +639,7 @@ export function InvoicesManager() {
     return () => {
       cancelled = true;
     };
-  }, [form.qboProjectId]);
+  }, [form.qboProjectId, selectedInvoice]);
 
   useEffect(() => {
     if (selectedInvoice || previouslyBilledManuallyEdited || !form.qboProjectId)
@@ -1153,41 +1159,18 @@ export function InvoicesManager() {
     }));
   }
 
-  async function applyQboProject(projectId: string) {
+  function applyQboProject(projectId: string) {
     const project = qboProjects.find((entry) => entry.id === projectId);
     if (!selectedInvoice) setPreviouslyBilledManuallyEdited(false);
     const previouslyBilledCents = getProjectPreviouslyBilledCents(
       summaryInvoices,
       projectId,
     );
-    const tasks = selectedInvoice ? [] : await fetchProjectTasks(projectId);
     setForm((previous) => ({
       ...previous,
       qboCustomerId: project?.parentId || previous.qboCustomerId,
       qboProjectId: projectId,
       projectReference: project?.displayName || "",
-      lineItems:
-        tasks
-          .filter((task) => task.remainingCents > 0)
-          .map((task) => ({
-            localId: createLocalId(),
-            projectTaskId: task.id,
-            description: task.name,
-            percentComplete: "100",
-            contractAmount: (task.remainingCents / 100).toFixed(2),
-            billInFull: false,
-          })).length > 0
-          ? tasks
-              .filter((task) => task.remainingCents > 0)
-              .map((task) => ({
-                localId: createLocalId(),
-                projectTaskId: task.id,
-                description: task.name,
-                percentComplete: "100",
-                contractAmount: (task.remainingCents / 100).toFixed(2),
-                billInFull: false,
-              }))
-          : previous.lineItems,
       previouslyBilled: selectedInvoice
         ? previous.previouslyBilled
         : centsToInput(previouslyBilledCents),
@@ -1222,12 +1205,24 @@ export function InvoicesManager() {
   }
 
   const sortedInvoices = useMemo(() => {
-    return showClosedInvoices
-      ? invoices
-      : invoices.filter(
-          (invoice) => invoice.status !== "paid" && invoice.status !== "void",
-        );
-  }, [invoices, showClosedInvoices]);
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+    return invoices.filter((invoice) => {
+      if (!showClosedInvoices && (invoice.status === "paid" || invoice.status === "void")) {
+        return false;
+      }
+      if (statusFilter !== "all" && invoice.status !== statusFilter) {
+        return false;
+      }
+      if (!normalizedSearch) return true;
+      return [
+        invoice.invoiceNumber,
+        invoice.clientName,
+        invoice.clientEmail,
+        invoice.poNumber,
+        invoice.projectReference,
+      ].some((value) => value.toLowerCase().includes(normalizedSearch));
+    });
+  }, [invoices, searchTerm, showClosedInvoices, statusFilter]);
   const openInvoices = useMemo(
     () => summaryInvoices.filter((invoice) => isOpenInvoice(invoice)),
     [summaryInvoices],
@@ -1524,8 +1519,8 @@ export function InvoicesManager() {
                                 {invoice.status === "draft" && (
                                   <Button
                                     size="small"
-                                    style="secondary"
-                                    icon={Check}
+                                    style="textonly"
+                                    icon={MailX}
                                     onClick={() => {
                                       if (
                                         window.confirm(
@@ -1542,6 +1537,7 @@ export function InvoicesManager() {
                                     properties={{
                                       disabled: actionBusy || isClosed,
                                       title: "Mark as Sent Without Email",
+                                      classNames: "!bg-blue-500 text-white"
                                     }}
                                   />
                                 )}

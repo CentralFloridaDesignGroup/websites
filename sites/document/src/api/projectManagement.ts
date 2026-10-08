@@ -375,6 +375,27 @@ export async function fetchProjectDetails(qboProjectId: string): Promise<{ proje
   }
 }
 
+/** Fetches only the project data required while editing an invoice. */
+export async function fetchInvoiceProjectContext(qboProjectId: string): Promise<{ project: ProjectSummary; manager: ProjectManager | null; billingProfile: ProjectBillingProfile; tasks: ProjectTask[] }> {
+  const data = await requestJson<{ project?: unknown; manager?: unknown; billingProfile?: unknown; tasks?: unknown[] }>(`/api/projects/${encodeURIComponent(qboProjectId)}/invoice-context`, {
+    method: 'GET',
+    authMode: 'microsoft',
+  })
+  const projectRow = asRecord(data.project)
+  const projectCustomer = normalizeCustomer(data.project)
+  return {
+    project: {
+      ...projectCustomer,
+      parentDisplayName: normalizeString(projectRow.parentDisplayName ?? projectRow.parent_display_name),
+      parcelId: normalizeString(projectRow.parcelId ?? projectRow.parcel_id),
+      status: normalizeProjectStatus(projectRow.status, projectCustomer.active ? 'active' : 'complete'),
+    },
+    manager: normalizeManager(data.manager),
+    billingProfile: normalizeBillingProfile(data.billingProfile, qboProjectId),
+    tasks: (data.tasks || []).map(normalizeProjectTask),
+  }
+}
+
 export async function saveProjectManager(qboProjectId: string, managerName: string, managerEmail: string): Promise<ProjectManager | null> {
   const data = await requestJson<{ manager?: unknown }>(`/api/projects/${encodeURIComponent(qboProjectId)}/manager`, {
     method: 'PUT',

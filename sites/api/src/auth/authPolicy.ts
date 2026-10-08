@@ -86,6 +86,7 @@ const routePolicies: RoutePolicy[] = [
   { method: 'GET', route: '/api/projects/next-number', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
   // Allows multiple methods for handling QB sub-customer / project details.
   { method: '*', route: '/api/projects/:id', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
+  { method: 'GET', route: '/api/projects/:id/invoice-context', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
   { method: '*', route: '/api/projects/:id/tasks', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
   { method: '*', route: '/api/projects/:id/tasks/:taskId', mode: 'microsoft', allowedGroupIds: PROJECT_MANAGEMENT_ALLOWED_GROUP_IDS },
   // Allows changing Compass project lifecycle status.
